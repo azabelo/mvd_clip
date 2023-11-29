@@ -256,10 +256,11 @@ def pretraining_accuracy(model, args):
     two_layer_criterion = nn.CrossEntropyLoss()
     two_layer_optimizer = optim.SGD(two_layer_model.parameters(), lr=0.01)
 
+    empty_mask = torch.zeros((16, 1568), dtype=torch.bool)
     for batch_idx, (input_data, target, _, _) in enumerate(data_loader_train):
         print(batch_idx)
         with torch.no_grad():
-            features = model(input_data)
+            features = model(input_data, empty_mask.cuda())
 
             linear_output = linear_model(features)
             linear_loss = linear_criterion(linear_output, target)
