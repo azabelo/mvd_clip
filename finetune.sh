@@ -3,7 +3,7 @@
 GPUS=1
 MASTER_PORT=41043
 OUTPUT_DIR='OUTPUT/pretraining'
-DATA_PATH='official_pretrain.csv'
+DATA_PATH='official_splits/train.csv'
 DATA_ROOT='hmdb51_mp4'
 
 OMP_NUM_THREADS=1 python -m torch.distributed.launch --nproc_per_node=${GPUS} \
