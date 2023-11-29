@@ -17,12 +17,17 @@ import wandb
 
 
 def train_class_batch(model, samples, target, criterion):
-    # MY CHANGES
-    print(target)
-    # END MY CHANGES
 
     outputs = model(samples)
     loss = criterion(outputs, target)
+
+    # MY CHANGES
+    print("targets")
+    print(target)
+    print("outputs")
+    print(outputs)
+    # END MY CHANGES
+
     return loss, outputs
 
 
