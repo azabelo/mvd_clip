@@ -446,7 +446,7 @@ def main(args, ds_init):
 
     # MY CHANGES
     if args.use_wandb != 0:
-        run_name = f"finetune {args.notes_for_wandb_run} finetunin: {args.checkpoint}, bs: {args.batch_size}, update: {args.update_freq}, lr: {args.lr}, epochs: {args.epochs}, \
+        run_name = f"finetune {args.notes_for_wandb_run} model: {checkpoint}, bs: {args.batch_size}, update: {args.update_freq}, lr: {args.lr}, epochs: {args.epochs}, \
  warmup: {args.warmup_epochs}, "
         print(run_name)
         wandb.init(project=args.wandb_project_name, name=run_name)
