@@ -174,7 +174,7 @@ def get_args():
     parser.add_argument('--use_wandb', default=0, type=int)
     parser.add_argument('--wandb_project_name', default='no_name', type=str)
     parser.add_argument('--notes_for_wandb_run', default='', type=str)
-    parser.add_argument(' --cls', default=0, type=int)
+    parser.add_argument('--cls', default=0, type=int)
 
     args_ret = parser.parse_args()
     if args_ret.cls == 1:
