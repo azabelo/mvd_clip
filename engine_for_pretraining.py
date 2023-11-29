@@ -14,6 +14,7 @@ import wandb
 from datasets import build_dataset
 from utils import multiple_samples_collate
 from functools import partial
+import copy
 # END MY CHANGES
 
 Loss_func_choice = {'L1': torch.nn.L1Loss, 'L2': torch.nn.MSELoss, 'SmoothL1': torch.nn.SmoothL1Loss}
@@ -171,6 +172,9 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
 
 def pretraining_accuracy(model, args):
+    args_copy = copy.deepcopy(args)
+    args_copy.data_set = 'Kinetics-400'
+
     dataset_train, args.nb_classes = build_dataset(is_train=True, test_mode=False, args=args)
     dataset_val, _ = build_dataset(is_train=False, test_mode=False, args=args)
 
