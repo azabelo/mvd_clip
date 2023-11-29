@@ -195,6 +195,7 @@ def pretraining_accuracy(model, args):
         drop_last=True,
         collate_fn=collate_func,
     )
+
     data_loader_val = torch.utils.data.DataLoader(
         dataset_val, sampler=sampler_val,
         batch_size=int(args.batch_size),
