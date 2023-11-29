@@ -11,6 +11,9 @@ from timm.loss import LabelSmoothingCrossEntropy, SoftTargetCrossEntropy
 
 # MY CHANGES
 import wandb
+from datasets import build_dataset
+from utils import multiple_samples_collate
+from functools import partial
 # END MY CHANGES
 
 Loss_func_choice = {'L1': torch.nn.L1Loss, 'L2': torch.nn.MSELoss, 'SmoothL1': torch.nn.SmoothL1Loss}
@@ -158,3 +161,45 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger)
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
+
+
+def pretraining_accuracy(model, args):
+    dataset_train, args.nb_classes = build_dataset(is_train=True, test_mode=False, args=args)
+    dataset_val, _ = build_dataset(is_train=False, test_mode=False, args=args)
+
+    num_tasks = utils.get_world_size()
+    global_rank = utils.get_rank()
+    sampler_train = torch.utils.data.DistributedSampler(
+        dataset_train, num_replicas=num_tasks, rank=global_rank, shuffle=True
+    )
+    sampler_val = torch.utils.data.DistributedSampler(
+        dataset_val, num_replicas=num_tasks, rank=global_rank, shuffle=False)
+
+    if args.num_sample > 1:
+        collate_func = partial(multiple_samples_collate, fold=False)
+    else:
+        collate_func = None
+
+    data_loader_train = torch.utils.data.DataLoader(
+        dataset_train, sampler=sampler_train,
+        batch_size=args.batch_size,
+        num_workers=args.num_workers,
+        pin_memory=args.pin_mem,
+        drop_last=True,
+        collate_fn=collate_func,
+    )
+    data_loader_val = torch.utils.data.DataLoader(
+        dataset_val, sampler=sampler_val,
+        batch_size=int(args.batch_size),
+        num_workers=args.num_workers,
+        pin_memory=args.pin_mem,
+        drop_last=False
+    )
+
+    for batch_idx, (input_data, target) in enumerate(data_loader_train):
+        print(batch_idx)
+
+    for batch_idx, (input_data, target) in enumerate(data_loader_val):
+        print(batch_idx)
+
+
