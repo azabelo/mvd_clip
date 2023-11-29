@@ -175,6 +175,8 @@ def pretraining_accuracy(model, args):
     args_copy = copy.deepcopy(args)
     args_copy.data_set = 'HMDB51'
     args_copy.nb_classes = 51
+    args_copy.test_num_segment = 2
+    args_copy.test_num_crop = 3
 
     dataset_train, args.nb_classes = build_dataset(is_train=True, test_mode=False, args=args_copy)
     dataset_val, _ = build_dataset(is_train=False, test_mode=False, args=args_copy)
