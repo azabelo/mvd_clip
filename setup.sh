@@ -187,7 +187,7 @@ if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
                 relative_path="${file#"$directory"}"
                 frame_count=$(get_frame_count "$file")
                 video_label=$(basename "$current_dir")
-                echo "$directory$relative_path $frame_count $video_label" >> "$output_csv"
+                echo "$relative_path $frame_count $video_label" >> "$output_csv"
               elif [ -d "$file" ]; then
                 # If it's a subdirectory, recursively call the function
                 list_files "$file"
