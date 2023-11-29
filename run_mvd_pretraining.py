@@ -491,7 +491,6 @@ def main(args):
         video_teacher_model = get_checkpoint_model(args)
 
         checkpoint = torch.load(args.video_teacher_model_ckpt_path, map_location='cpu')
-        checkpoint = checkpoint['module']
 
         print("Load video teacher ckpt from %s" % args.video_teacher_model_ckpt_path)
         checkpoint_model = None
