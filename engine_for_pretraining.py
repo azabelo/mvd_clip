@@ -172,6 +172,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
 
 def pretraining_accuracy(model, args):
+    # args that are only present in finetuning were copied over
     args_copy = copy.deepcopy(args)
     args_copy.data_set = 'HMDB51'
     args_copy.nb_classes = 51
@@ -180,6 +181,7 @@ def pretraining_accuracy(model, args):
     args_copy.short_side_size = 224
     args_copy.aa = 'rand-m7-n4-mstd0.5-inc1'
     args_copy.remode = 'pixel'
+    args_copy.recount = 1
     args_copy.reprob = 0.25
     args_copy.sampling_rate = 4
     args_copy.test_num_segment = 2
