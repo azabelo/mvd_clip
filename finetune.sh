@@ -14,7 +14,7 @@ OMP_NUM_THREADS=1 python -m torch.distributed.launch --nproc_per_node=${GPUS} \
     --data_set SSV2 --nb_classes 174 \
     --data_path ${DATA_PATH} \
     --data_root ${DATA_ROOT} \
-    --finetune ${MODEL_PATH} \
+    --finetune video_teacher.pth \
     --log_dir ${OUTPUT_DIR} \
     --output_dir ${OUTPUT_DIR} \
     --input_size 224 --short_side_size 224 \
@@ -25,5 +25,4 @@ OMP_NUM_THREADS=1 python -m torch.distributed.launch --nproc_per_node=${GPUS} \
     --lr 5e-4 --epochs 30 \
     --dist_eval --test_num_segment 2 --test_num_crop 3 \
     --use_checkpoint \
-    --enable_deepspeed \
-    --finetune video_teacher.pth
+    --enable_deepspeed
