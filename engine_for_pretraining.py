@@ -124,13 +124,6 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             min_lr = min(min_lr, group["lr"])
             max_lr = max(max_lr, group["lr"])
 
-        # MY CHANGES
-
-        wandb.log({"epoch": epoch, "batch": step, "train_loss": loss_value, " train_img_feat_loss": loss_value_img_feat,
-                   "min_lr": min_lr, "max_lr": max_lr, "train_vid_feat_loss": loss_value_vid_feat,
-                   "grad_norm": grad_norm, "loss_scale": loss_scale_value, "weight_decay": weight_decay_value, "lr_scale": lr_scale,})
-        # END MY CHANGES
-
         metric_logger.update(lr=max_lr)
         metric_logger.update(min_lr=min_lr)
         weight_decay_value = None
@@ -150,6 +143,14 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             log_writer.update(weight_decay=weight_decay_value, head="opt")
             log_writer.update(grad_norm=grad_norm, head="opt")
             log_writer.set_step()
+
+            # MY CHANGES
+            wandb.log(
+                {"epoch": epoch, "batch": step, "train_loss": loss_value, " train_img_feat_loss": loss_value_img_feat,
+                 "min_lr": min_lr, "max_lr": max_lr, "train_vid_feat_loss": loss_value_vid_feat,
+                 "grad_norm": grad_norm, "loss_scale": loss_scale_value, "weight_decay": weight_decay_value,
+                 "lr_scale": lr_scale, })
+            # END MY CHANGES
 
         if lr_scheduler is not None:
             lr_scheduler.step_update(start_steps + step)
