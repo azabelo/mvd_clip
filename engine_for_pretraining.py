@@ -268,6 +268,7 @@ def pretraining_accuracy(model, args):
         print(batch_idx)
         with torch.no_grad():
             input_data = input_data.to(args_copy.device)
+            target = target.to(args_copy.device)
             features = model.module.forward_encoder(input_data, empty_mask)
 
             linear_output = linear_model(features)
@@ -291,6 +292,7 @@ def pretraining_accuracy(model, args):
         print(batch_idx)
         with torch.no_grad():
             input_data = input_data.to(args_copy.device)
+            target = target.to(args_copy.device)
             features = model.module.forward_encoder(input_data, empty_mask)
 
             linear_output = linear_model(features)
