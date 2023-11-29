@@ -282,7 +282,7 @@ def pretraining_accuracy(model, args):
     for batch_idx, (input_data, target, _) in enumerate(data_loader_val):
         print(batch_idx)
         with torch.no_grad():
-            features = model.module.forward_encoder(input_data, empty_mask
+            features = model.module.forward_encoder(input_data, empty_mask)
 
             linear_output = linear_model(features)
             linear_loss = linear_criterion(linear_output, target)
