@@ -25,6 +25,13 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
                     wd_schedule_values=None, update_freq=None, time_stride_loss=True, lr_scale=1.0,
                     image_teacher_model=None, video_teacher_model=None, norm_feature=False):
 
+    # MY CHANGES
+    # not sure if the pretraining accuracy stuff needs normalization
+
+    pretraining_accuracy(model, args)
+
+    # END MY CHANGES
+
     model.train()
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter('lr', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
