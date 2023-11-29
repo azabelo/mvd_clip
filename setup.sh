@@ -65,6 +65,11 @@ if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
     gdown https://drive.google.com/uc?id=1SeLNhVD92qqE0MaQAZOEIyF5uq3a2wKS --output hmdb51_mp4.zip
     sudo apt-get install unzip
     unzip hmdb51_mp4.zip
+    mv hmdb51_mp4/hmdb51_mp4 hmdb51_mp42
+    rm -rf hmdb51_mp4
+    mv hmdb51_mp42 hmdb51_mp4
+    chmod +x create_pretrain_csv.sh
+    ./create_pretrain_csv.sh official_hmdb_splits1/train.csv
 fi
 
 read -p "Kinetics-400 dataset (y/n): " answer
