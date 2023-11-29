@@ -173,10 +173,11 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
 def pretraining_accuracy(model, args):
     args_copy = copy.deepcopy(args)
-    args_copy.data_set = 'Kinetics-400'
+    args_copy.data_set = 'HMDB51'
+    args_copy.nb_classes = 51
 
-    dataset_train, args.nb_classes = build_dataset(is_train=True, test_mode=False, args=args)
-    dataset_val, _ = build_dataset(is_train=False, test_mode=False, args=args)
+    dataset_train, args.nb_classes = build_dataset(is_train=True, test_mode=False, args=args_copy)
+    dataset_val, _ = build_dataset(is_train=False, test_mode=False, args=args_copy)
 
     num_tasks = utils.get_world_size()
     global_rank = utils.get_rank()
@@ -193,18 +194,18 @@ def pretraining_accuracy(model, args):
 
     data_loader_train = torch.utils.data.DataLoader(
         dataset_train, sampler=sampler_train,
-        batch_size=args.batch_size,
-        num_workers=args.num_workers,
-        pin_memory=args.pin_mem,
+        batch_size=args_copy.batch_size,
+        num_workers=args_copy.num_workers,
+        pin_memory=args_copy.pin_mem,
         drop_last=True,
         collate_fn=collate_func,
     )
 
     data_loader_val = torch.utils.data.DataLoader(
         dataset_val, sampler=sampler_val,
-        batch_size=int(args.batch_size),
-        num_workers=args.num_workers,
-        pin_memory=args.pin_mem,
+        batch_size=int(args_copy.batch_size),
+        num_workers=args_copy.num_workers,
+        pin_memory=args_copy.pin_mem,
         drop_last=False
     )
 
