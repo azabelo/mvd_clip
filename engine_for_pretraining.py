@@ -175,6 +175,8 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
 
 def pretraining_accuracy(model, args):
+    # add other finetuning thing here
+
     model.eval()
 
     # args that are only present in finetuning were copied over
@@ -227,7 +229,7 @@ def pretraining_accuracy(model, args):
     # Instantiate the model
     linear_model = LinearClassifier()
     linear_criterion = nn.CrossEntropyLoss()
-    linear_optimizer = optim.SGD(linear_model.parameters(), lr=1e-4)
+    linear_optimizer = optim.SGD(linear_model.parameters(), lr=2e-5)
 
 
     class TwoLayerClassifier(nn.Module):
@@ -247,7 +249,7 @@ def pretraining_accuracy(model, args):
 
     # Define loss function and optimizer
     two_layer_criterion = nn.CrossEntropyLoss()
-    two_layer_optimizer = optim.SGD(two_layer_model.parameters(), lr=1e-4)
+    two_layer_optimizer = optim.SGD(two_layer_model.parameters(), lr=2e-5)
 
     # move everything to the GPU
     linear_model = linear_model.to(args_copy.device)
