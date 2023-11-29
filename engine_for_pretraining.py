@@ -15,6 +15,7 @@ from datasets import build_dataset
 from utils import multiple_samples_collate
 from functools import partial
 import copy
+import torch.optim as optim
 # END MY CHANGES
 
 Loss_func_choice = {'L1': torch.nn.L1Loss, 'L2': torch.nn.MSELoss, 'SmoothL1': torch.nn.SmoothL1Loss}
@@ -28,9 +29,8 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
     # MY CHANGES
     # not sure if the pretraining accuracy stuff needs normalization
-
-    pretraining_accuracy(model, args)
-
+    if epoch % args.knn_freq == 0:
+        pretraining_accuracy(model, args)
     # END MY CHANGES
 
     model.train()
@@ -172,6 +172,8 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
 
 def pretraining_accuracy(model, args):
+    model.eval()
+
     # args that are only present in finetuning were copied over
     args_copy = copy.deepcopy(args)
     args_copy.data_set = 'HMDB51'
@@ -220,10 +222,79 @@ def pretraining_accuracy(model, args):
         drop_last=False
     )
 
+    class LinearClassifier(nn.Module):
+        def __init__(self):
+            super(LinearClassifier, self).__init__()
+            self.fc = nn.Linear(1408 * 768, 51)
+
+        def forward(self, x):
+            x = x.view(x.size(0), -1)  # Flatten the input
+            x = self.fc(x)
+            return x
+
+    # Instantiate the model
+    linear_model = LinearClassifier()
+    linear_criterion = nn.CrossEntropyLoss()
+    linear_optimizer = optim.SGD(linear_model.parameters(), lr=0.01)
+
+    class TwoLayerClassifier(nn.Module):
+        def __init__(self):
+            super(TwoLayerClassifier, self).__init__()
+            self.fc1 = nn.Linear(1408 * 768, 2048)
+            self.fc2 = nn.Linear(2048, 51)
+
+        def forward(self, x):
+            x = x.view(x.size(0), -1)  # Flatten the input
+            x = torch.relu(self.fc1(x))
+            x = self.fc2(x)
+            return x
+
+    # Instantiate the model
+    two_layer_model = TwoLayerClassifier()
+
+    # Define loss function and optimizer
+    two_layer_criterion = nn.CrossEntropyLoss()
+    two_layer_optimizer = optim.SGD(two_layer_model.parameters(), lr=0.01)
+
     for batch_idx, (input_data, target, _, _) in enumerate(data_loader_train):
         print(batch_idx)
+        with torch.no_grad():
+            features = model(input_data)
 
-    for batch_idx, (input_data, target, _, _) in enumerate(data_loader_val):
+            linear_output = linear_model(features)
+            linear_loss = linear_criterion(linear_output, target)
+            linear_optimizer.zero_grad()
+            linear_loss.backward()
+            linear_optimizer.step()
+
+            two_layer_output = two_layer_model(features)
+            two_layer_loss = two_layer_criterion(two_layer_output, target)
+            two_layer_optimizer.zero_grad()
+            two_layer_loss.backward()
+            two_layer_optimizer.step()
+
+    linear_model.eval()
+    two_layer_model.eval()
+    correct_linear = 0
+    correct_two_layer = 0
+    total_samples = 0
+    for batch_idx, (input_data, target, _) in enumerate(data_loader_val):
         print(batch_idx)
+        with torch.no_grad():
+            features = model(input_data)
 
+            linear_output = linear_model(features)
+            linear_loss = linear_criterion(linear_output, target)
+            _, predicted_linear = torch.max(linear_output.data, 1)
+            total_samples += target.size(0)
+            correct_linear += (predicted_linear == target).sum().item()
+
+            two_layer_output = two_layer_model(features)
+            two_layer_loss = two_layer_criterion(two_layer_output, target)
+            _, predicted_two_layer = torch.max(two_layer_output.data, 1)
+            correct_two_layer += (predicted_two_layer == target).sum().item()
+
+    accuracy_linear = correct_linear / total_samples
+    accuracy_two_layer = correct_two_layer / total_samples
+    wandb.log({"linear accuracy": accuracy_linear, "two layer accuracy": accuracy_two_layer})
 
