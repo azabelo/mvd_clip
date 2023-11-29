@@ -15,7 +15,7 @@ GPUS=$1
 PORT=$2
 CHECKPOINT_PATH=$3
 DATA_DIRECTORY=$4
-TRAIN_CSV=$5
+CSV_DIR=$5
 EPOCHS=$6
 BATCH_SIZE=$7
 LEARNING_RATE=$8
@@ -30,12 +30,12 @@ USE_CLS_TOKEN=${16}
 OUTPUT_DIR='OUTPUT/finetune/'
 
 OMP_NUM_THREADS=1 python -m torch.distributed.launch --nproc_per_node=${GPUS} \
-    --master_port ${MASTER_PORT} --nnodes=1 \
+    --master_port ${PORT} --nnodes=1 \
     --node_rank=0 --master_addr=localhost \
     run_class_finetuning.py \
     --model vit_base_patch16_224 \
     --data_set HMDB51 --nb_classes 51 \
-    --data_path ${TRAIN_CSV} \
+    --data_path ${CSV_DIR} \
     --data_root ${DATA_DIRECTORY} \
     --finetune ${CHECKPOINT_PATH} \
     --log_dir ${OUTPUT_DIR} \
