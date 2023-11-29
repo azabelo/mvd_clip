@@ -225,7 +225,7 @@ def pretraining_accuracy(model, args):
     class LinearClassifier(nn.Module):
         def __init__(self):
             super(LinearClassifier, self).__init__()
-            self.fc = nn.Linear(1408 * 768, 51)
+            self.fc = nn.Linear(1569 * 768, 51)
 
         def forward(self, x):
             x = x.view(x.size(0), -1)  # Flatten the input
@@ -240,7 +240,7 @@ def pretraining_accuracy(model, args):
     class TwoLayerClassifier(nn.Module):
         def __init__(self):
             super(TwoLayerClassifier, self).__init__()
-            self.fc1 = nn.Linear(1408 * 768, 2048)
+            self.fc1 = nn.Linear(1569 * 768, 2048)
             self.fc2 = nn.Linear(2048, 51)
 
         def forward(self, x):
