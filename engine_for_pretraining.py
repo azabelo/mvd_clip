@@ -179,6 +179,7 @@ def pretraining_accuracy(model, args):
     args_copy.num_frames = 16
     args_copy.short_side_size = 224
     args_copy.aa = 'rand-m7-n4-mstd0.5-inc1'
+    args_copy.remode = 'pixel'
     args_copy.reprob = 0.25
     args_copy.sampling_rate = 4
     args_copy.test_num_segment = 2
