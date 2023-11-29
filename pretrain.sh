@@ -1,16 +1,14 @@
 #!/bin/bash
 
 GPUS=1
-NODE_COUNT=1
-RANK=0
 MASTER_PORT=41043
 OUTPUT_DIR='OUTPUT/pretraining'
 DATA_PATH='official_pretrain.csv'
 DATA_ROOT='hmdb51_mp4'
 
 OMP_NUM_THREADS=1 python3 -m torch.distributed.launch --nproc_per_node=${GPUS} \
-        --master_port ${MASTER_PORT} --nnodes=${NODE_COUNT} \
-        --node_rank=${RANK} --master_addr=${MASTER_ADDR} \
+        --master_port ${MASTER_PORT} --nnodes=1 \
+        --node_rank=0 --master_addr=localhost \
         run_mvd_pretraining.py \
         --data_path ${DATA_PATH} \
         --data_root ${DATA_ROOT} \
