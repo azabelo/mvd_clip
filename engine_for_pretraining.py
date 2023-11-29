@@ -189,7 +189,7 @@ def pretraining_accuracy(model, args):
     args_copy.test_num_segment = 2
     args_copy.test_num_crop = 3
 
-    dataset_train, args.nb_classes = build_dataset(is_train=True, test_mode=False, args=args_copy)
+    dataset_train, args_copy.nb_classes = build_dataset(is_train=True, test_mode=False, args=args_copy)
     dataset_val, _ = build_dataset(is_train=False, test_mode=False, args=args_copy)
 
     num_tasks = utils.get_world_size()
@@ -200,7 +200,7 @@ def pretraining_accuracy(model, args):
     sampler_val = torch.utils.data.DistributedSampler(
         dataset_val, num_replicas=num_tasks, rank=global_rank, shuffle=False)
 
-    if args.num_sample > 1:
+    if args_copy.num_sample > 1:
         collate_func = partial(multiple_samples_collate, fold=False)
     else:
         collate_func = None
@@ -256,7 +256,7 @@ def pretraining_accuracy(model, args):
     two_layer_criterion = nn.CrossEntropyLoss()
     two_layer_optimizer = optim.SGD(two_layer_model.parameters(), lr=0.01)
 
-    empty_mask = torch.zeros((16, 1568), dtype=torch.bool)
+    empty_mask = torch.zeros((args_copy.batch_size, 1568), dtype=torch.bool)
     for batch_idx, (input_data, target, _, _) in enumerate(data_loader_train):
         print(batch_idx)
         with torch.no_grad():
