@@ -7,7 +7,11 @@ import torchvision
 import utils
 from einops import rearrange
 from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
-from timm.loss import LabelSmoothingCrossEntropy, SoftTargetCrossEntropy
+from timm.loss import LabelSmoothingCrossEntropy,
+
+# MY CHANGES
+import wandb
+# END MY CHANGES
 
 Loss_func_choice = {'L1': torch.nn.L1Loss, 'L2': torch.nn.MSELoss, 'SmoothL1': torch.nn.SmoothL1Loss}
 
@@ -119,6 +123,12 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
         for group in optimizer.param_groups:
             min_lr = min(min_lr, group["lr"])
             max_lr = max(max_lr, group["lr"])
+
+        # MY CHANGES
+        wandb.log({"epoch": epoch, "batch": step, "train_loss": loss_value, " train_img_feat_loss": loss_value_img_feat,
+                   "min_lr": min_lr, "max_lr": max_lr, "train_vid_feat_loss": loss_value_vid_feat,
+                   "grad_norm": grad_norm, "loss_scale": loss_scale_value, "weight_decay": weight_decay_value, "lr_scale": lr_scale,})
+        # END MY CHANGES
 
         metric_logger.update(lr=max_lr)
         metric_logger.update(min_lr=min_lr)
