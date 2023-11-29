@@ -265,23 +265,24 @@ def pretraining_accuracy(model, args):
     empty_mask = torch.zeros((args_copy.batch_size, 1568), dtype=torch.bool)
     empty_mask = empty_mask.to(args_copy.device)
     for batch_idx, (input_data, target, _, _) in enumerate(data_loader_train):
-        print(batch_idx)
+        if batch_idx % 10 == 0:
+            print(batch_idx)
+        input_data = input_data.to(args_copy.device)
+        target = target.to(args_copy.device)
         with torch.no_grad():
-            input_data = input_data.to(args_copy.device)
-            target = target.to(args_copy.device)
             features = model.module.forward_encoder(input_data, empty_mask)
 
-            linear_output = linear_model(features)
-            linear_loss = linear_criterion(linear_output, target)
-            linear_optimizer.zero_grad()
-            linear_loss.backward()
-            linear_optimizer.step()
+        linear_output = linear_model(features)
+        linear_loss = linear_criterion(linear_output, target)
+        linear_optimizer.zero_grad()
+        linear_loss.backward()
+        linear_optimizer.step()
 
-            two_layer_output = two_layer_model(features)
-            two_layer_loss = two_layer_criterion(two_layer_output, target)
-            two_layer_optimizer.zero_grad()
-            two_layer_loss.backward()
-            two_layer_optimizer.step()
+        two_layer_output = two_layer_model(features)
+        two_layer_loss = two_layer_criterion(two_layer_output, target)
+        two_layer_optimizer.zero_grad()
+        two_layer_loss.backward()
+        two_layer_optimizer.step()
 
     linear_model.eval()
     two_layer_model.eval()
@@ -289,22 +290,23 @@ def pretraining_accuracy(model, args):
     correct_two_layer = 0
     total_samples = 0
     for batch_idx, (input_data, target, _) in enumerate(data_loader_val):
-        print(batch_idx)
+        if batch_idx % 10 == 0:
+            print(batch_idx)
+        input_data = input_data.to(args_copy.device)
+        target = target.to(args_copy.device)
         with torch.no_grad():
-            input_data = input_data.to(args_copy.device)
-            target = target.to(args_copy.device)
             features = model.module.forward_encoder(input_data, empty_mask)
 
-            linear_output = linear_model(features)
-            linear_loss = linear_criterion(linear_output, target)
-            _, predicted_linear = torch.max(linear_output.data, 1)
-            total_samples += target.size(0)
-            correct_linear += (predicted_linear == target).sum().item()
+        linear_output = linear_model(features)
+        linear_loss = linear_criterion(linear_output, target)
+        _, predicted_linear = torch.max(linear_output.data, 1)
+        total_samples += target.size(0)
+        correct_linear += (predicted_linear == target).sum().item()
 
-            two_layer_output = two_layer_model(features)
-            two_layer_loss = two_layer_criterion(two_layer_output, target)
-            _, predicted_two_layer = torch.max(two_layer_output.data, 1)
-            correct_two_layer += (predicted_two_layer == target).sum().item()
+        two_layer_output = two_layer_model(features)
+        two_layer_loss = two_layer_criterion(two_layer_output, target)
+        _, predicted_two_layer = torch.max(two_layer_output.data, 1)
+        correct_two_layer += (predicted_two_layer == target).sum().item()
 
     accuracy_linear = correct_linear / total_samples
     accuracy_two_layer = correct_two_layer / total_samples
