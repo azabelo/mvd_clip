@@ -289,7 +289,15 @@ def pretraining_accuracy(model, args):
         two_layer_loss.backward()
         two_layer_optimizer.step()
 
-        wandb.log({'linear_loss': linear_loss.item(), 'two_layer_loss': two_layer_loss.item()})
+        linear_predictions = linear_output.argmax(dim=1)
+        two_layer_predictions = two_layer_output.argmax(dim=1)
+        linear_accuracy = (linear_predictions == target).float().mean().item()
+        two_layer_accuracy = (two_layer_predictions == target).float().mean().item()
+
+        wandb.log({'linear_loss': linear_loss.item(),
+                   'two_layer_loss': two_layer_loss.item(),
+                  'linear_accuracy': linear_accuracy,
+                'two_layer_accuracy': two_layer_accuracy})
 
     knn_classifier19.fit(knn_features_train, knn_labels_train)
     knn_classifier5.fit(knn_features_train, knn_labels_train)
