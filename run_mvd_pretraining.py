@@ -193,7 +193,7 @@ def get_image_teacher_model(args):
     )
     return model
 
-def get_clip(args):
+def get_clip_model(args):
     print("using CLIP image teacher")
     args.image_teacher_model = 'vit_base_patch16_224'
     model, preprocess = clip.load("ViT-B/16", device=args.device)
@@ -201,7 +201,7 @@ def get_clip(args):
     # note: you haven't checked clip for correctness yet (you made changes)
     return model.visual
 
-def get_eva_clip(args):
+def get_eva_clip_model(args):
     print("using EVA CLIP image teacher")
     args.image_teacher_model = 'vit_base_patch16_224'
     pretrained = 'eva_clip_model.pth'
@@ -352,10 +352,10 @@ def main(args):
             utils.load_state_dict(image_teacher_model, checkpoint_model, prefix=args.model_prefix)
     ## CLIP ##
     elif args.image_teacher_model_ckpt_path == 'clip_model.pth':
-        pass
+        image_teacher_model = get_clip_model(args)
     ## EVA-CLIP ##
     elif args.image_teacher_model_ckpt_path == 'eva_clip_model.pth':
-        pass
+        image_teacher_model = get_eva_clip_model(args)
     else:
         print("Invalid image teacher model ckpt path")
         exit(1)
