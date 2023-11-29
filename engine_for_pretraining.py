@@ -190,15 +190,12 @@ def pretraining_accuracy(model, args):
     args_copy.test_num_crop = 3
 
     dataset_train, args_copy.nb_classes = build_dataset(is_train=True, test_mode=False, args=args_copy)
-    dataset_val, _ = build_dataset(is_train=False, test_mode=False, args=args_copy)
 
     num_tasks = utils.get_world_size()
     global_rank = utils.get_rank()
     sampler_train = torch.utils.data.DistributedSampler(
         dataset_train, num_replicas=num_tasks, rank=global_rank, shuffle=True
     )
-    sampler_val = torch.utils.data.DistributedSampler(
-        dataset_val, num_replicas=num_tasks, rank=global_rank, shuffle=False)
 
     if args_copy.num_sample > 1:
         collate_func = partial(multiple_samples_collate, fold=False)
@@ -212,14 +209,6 @@ def pretraining_accuracy(model, args):
         pin_memory=args_copy.pin_mem,
         drop_last=True,
         collate_fn=collate_func,
-    )
-
-    data_loader_val = torch.utils.data.DataLoader(
-        dataset_val, sampler=sampler_val,
-        batch_size=int(args_copy.batch_size),
-        num_workers=args_copy.num_workers,
-        pin_memory=args_copy.pin_mem,
-        drop_last=False
     )
 
     class LinearClassifier(nn.Module):
@@ -283,6 +272,17 @@ def pretraining_accuracy(model, args):
         two_layer_optimizer.zero_grad()
         two_layer_loss.backward()
         two_layer_optimizer.step()
+
+    dataset_val, _ = build_dataset(is_train=False, test_mode=False, args=args_copy)
+    sampler_val = torch.utils.data.DistributedSampler(
+        dataset_val, num_replicas=num_tasks, rank=global_rank, shuffle=False)
+    data_loader_val = torch.utils.data.DataLoader(
+        dataset_val, sampler=sampler_val,
+        batch_size=int(args_copy.batch_size),
+        num_workers=args_copy.num_workers,
+        pin_memory=args_copy.pin_mem,
+        drop_last=False
+    )
 
     linear_model.eval()
     two_layer_model.eval()
