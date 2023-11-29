@@ -2,11 +2,13 @@
 
 chmod +x pretrain.sh
 chmod +x finetune.sh
+chmod +x create_pretrain_csv.sh
 
 ######## GET DEPENDENCIES #########
 
 ## need this to run pretrain.sh (you'll need to click yes)
 sudo apt-get install libgl1-mesa-glx
+sudo apt-get install unzip
 
 requirements_file="requirements.txt"
 
@@ -53,7 +55,7 @@ fi
 read -p "EVA-CLIP (y/n): " answer
 if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
     echo "downloading EVA-CLIP"
-    gdown https://drive.google.com/uc?id=1YQJ21--myZCs9hKwpRsetqW4cjFyjdbT
+    gdown https://drive.google.com/uc?id=1YQJ21--myZCs9hKwpRsetqW4cjFyjdbT --output eva_clip_model.pth
 fi
 
 read -p "VideoMAEv2 (y/n): " answer
@@ -66,12 +68,10 @@ read -p "HMDB-51 dataset (y/n): " answer
 if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
     echo "downloading HMDB-51 dataset"
     gdown https://drive.google.com/uc?id=1SeLNhVD92qqE0MaQAZOEIyF5uq3a2wKS --output hmdb51_mp4.zip
-    sudo apt-get install unzip
     unzip hmdb51_mp4.zip
     mv hmdb51_mp4/hmdb51_mp4 hmdb51_mp42
     rm -rf hmdb51_mp4
     mv hmdb51_mp42 hmdb51_mp4
-    chmod +x create_pretrain_csv.sh
     ./create_pretrain_csv.sh official_hmdb_splits1/train.csv
     rm hmdb51_mp4.zip
     mv hmdb51_mp4 hmdb51_mp42
@@ -82,7 +82,13 @@ fi
 read -p "Kinetics-400 TINY dataset (y/n): " answer
 if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
     echo "downloading Kinetics-400 TINY dataset"
-    # Your specific action for "yes" on the fifth question goes here
+    gdown https://drive.google.com/uc?id=1dn4EJnCxzDIbB51yeAREwmoEm9pIzAAF
+    unzip tiny-Kinetics-400.zip
+    ./create_pretrain_csv.sh official_tiny_splits1/train.csv
+    rm tiny-Kinetics-400.zip
+    mv tiny-Kinetics-400 tiny-Kinetics-4002
+    mkdir tiny-Kinetics-400
+    mv tiny-Kinetics-4002 tiny-Kinetics-400/tiny-Kinetics-400
 fi
 
 read -p "Kinetics-400 dataset (y/n): " answer

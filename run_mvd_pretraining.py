@@ -20,6 +20,12 @@ import modeling_student
 import modeling_teacher
 import modeling_video_teacher
 
+# MY CHANGES
+import wandb
+import clip
+from rei.eva_clip import create_model_and_transforms, get_tokenizer
+# END MY CHANGES
+
 
 def get_args():
     parser = argparse.ArgumentParser('MVD pre-training script', add_help=False)
@@ -162,11 +168,24 @@ def get_args():
     parser.add_argument('--dist_on_itp', action='store_true')
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
 
-    return parser.parse_args()
+
+    # MY_CHANGES
+    parser.add_argument('--knn_freq', default=10, type=int)
+    parser.add_argument('--use_wandb', default=0, type=int)
+    parser.add_argument('--wandb_project_name', default='no_name', type=str)
+    parser.add_argument('--notes_for_wandb_run', default='', type=str)
+    parser.add_argument(' --cls', default=0, type=int)
+
+    args_ret = parser.parse_args()
+    if args_ret.cls == 1:
+        args_ret.use_cls_token = True
+
+    return args_ret
+    # END MY_CHANGES
 
 
 def get_image_teacher_model(args):
-    print(f"Creating teacher model: {args.image_teacher_model}")
+    print("using DEFAULT image teacher")
     model = create_model(
         args.image_teacher_model,
         pretrained=False,
@@ -174,6 +193,23 @@ def get_image_teacher_model(args):
     )
     return model
 
+def get_clip(args):
+    print("using CLIP image teacher")
+    args.image_teacher_model = 'vit_base_patch16_224'
+    model, preprocess = clip.load("ViT-B/16", device=args.device)
+    # Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711))
+    # note: you haven't checked clip for correctness yet (you made changes)
+    return model.visual
+
+def get_eva_clip(args):
+    print("using EVA CLIP image teacher")
+    args.image_teacher_model = 'vit_base_patch16_224'
+    pretrained = 'eva_clip_model.pth'
+    model_name = "EVA02-CLIP-B-16"
+    model, _, preprocess = create_model_and_transforms(model_name, pretrained, force_custom_clip=True)
+    # does this have its own normalization?
+    # note: you haven't checked rei for correctness yet (you made changes)
+    return model.visual
 
 def get_video_teacher_model(args):
     print(f"Creating teacher model: {args.video_teacher_model}")
@@ -185,6 +221,14 @@ def get_video_teacher_model(args):
     )
     return model
 
+def get_videomaev2_teacher_model(args):
+    pass
+
+def get_checkpoint_teacher_model(args):
+    pass
+
+def get_video_clip_teacher_model(args):
+    pass
 
 def get_model(args):
     print(f"Creating model: {args.model}")
@@ -264,46 +308,66 @@ def main(args):
     model_without_ddp = model
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
 
-    image_teacher_model = get_image_teacher_model(args)
-    if args.image_teacher_model_ckpt_path:
-        if args.image_teacher_model_ckpt_path.startswith('https'):
-            checkpoint = torch.hub.load_state_dict_from_url(
-                args.image_teacher_model_ckpt_path, map_location='cpu', check_hash=True)
-        else:
-            checkpoint = torch.load(args.image_teacher_model_ckpt_path, map_location='cpu')
+    ## MY CHANGES
 
-        print("Load teacher ckpt from %s" % args.image_teacher_model_ckpt_path)
-        checkpoint_model = None
-        for model_key in args.model_key.split('|'):
-            if model_key in checkpoint:
-                checkpoint_model = checkpoint[model_key]
-                print("Load state_dict by model_key = %s" % model_key)
-                break
+    image_teacher_model = None
+    ## DEFAULT IMAGE TEACHER ##
+    if args.image_teacher_model_ckpt_path == 'image_teacher.pth':
+        image_teacher_model = get_image_teacher_model(args)
 
-        if checkpoint_model is None:
-            checkpoint_model = checkpoint
-
-        for k in ['head.weight', 'head.bias']:
-            if k in checkpoint_model:
-                print(f"Removing key {k} from pretrained checkpoint")
-                del checkpoint_model[k]
-
-        all_keys = list(checkpoint_model.keys())
-        new_dict = OrderedDict()
-        for key in all_keys:
-            if key.startswith('backbone.'):
-                new_dict[key[9:]] = checkpoint_model[key]
-            elif 'pos_embed' in key:
-                continue
+        if args.image_teacher_model_ckpt_path:
+            if args.image_teacher_model_ckpt_path.startswith('https'):
+                checkpoint = torch.hub.load_state_dict_from_url(
+                    args.image_teacher_model_ckpt_path, map_location='cpu', check_hash=True)
             else:
-                new_dict[key] = checkpoint_model[key]
-        checkpoint_model = new_dict
+                checkpoint = torch.load(args.image_teacher_model_ckpt_path, map_location='cpu')
 
-        utils.load_state_dict(image_teacher_model, checkpoint_model, prefix=args.model_prefix)
+            print("Load teacher ckpt from %s" % args.image_teacher_model_ckpt_path)
+            checkpoint_model = None
+            for model_key in args.model_key.split('|'):
+                if model_key in checkpoint:
+                    checkpoint_model = checkpoint[model_key]
+                    print("Load state_dict by model_key = %s" % model_key)
+                    break
+
+            if checkpoint_model is None:
+                checkpoint_model = checkpoint
+
+            for k in ['head.weight', 'head.bias']:
+                if k in checkpoint_model:
+                    print(f"Removing key {k} from pretrained checkpoint")
+                    del checkpoint_model[k]
+
+            all_keys = list(checkpoint_model.keys())
+            new_dict = OrderedDict()
+            for key in all_keys:
+                if key.startswith('backbone.'):
+                    new_dict[key[9:]] = checkpoint_model[key]
+                elif 'pos_embed' in key:
+                    continue
+                else:
+                    new_dict[key] = checkpoint_model[key]
+            checkpoint_model = new_dict
+
+            utils.load_state_dict(image_teacher_model, checkpoint_model, prefix=args.model_prefix)
+    ## CLIP ##
+    elif args.image_teacher_model_ckpt_path == 'clip_model.pth':
+        pass
+    ## EVA-CLIP ##
+    elif args.image_teacher_model_ckpt_path == 'eva_clip_model.pth':
+        pass
+    else:
+        print("Invalid image teacher model ckpt path")
+        exit(1)
 
     image_teacher_model.to(device)
 
+    ## END MY CHANGES ##
+
+    ## MY CHANGES ##
+
     video_teacher_model = get_video_teacher_model(args)
+
     if args.video_teacher_model_ckpt_path:
         if args.video_teacher_model_ckpt_path.startswith('https'):
             checkpoint = torch.hub.load_state_dict_from_url(
@@ -341,6 +405,8 @@ def main(args):
         utils.load_state_dict(video_teacher_model, checkpoint_model, prefix=args.model_prefix)
 
     video_teacher_model.to(device)
+
+    ## END MY CHANGES ##
 
     print("Model = %s" % str(model_without_ddp))
     print('number of params: {} M'.format(n_parameters / 1e6))
@@ -384,6 +450,16 @@ def main(args):
         args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
         loss_scaler=loss_scaler, model_ema=None
     )
+
+    # MY CHANGES
+    if args.use_wandb != 0:
+        run_name = f"{args.notes_for_wandb_run}  image_teacher: {args.image_teacher_model_ckpt_path}, video_teacher:{args.video_teacher_model_ckpt_path} bs: {args.batch_size}, update: {args.update_freq}, lr: {args.lr}, epochs: {args.epochs}, \
+        warmup: {args.warmup_epochs}, "
+        print(run_name)
+        wandb.init(project=args.wandb_project_name, name=run_name)
+        wandb.config.update(args)
+    # END MY CHANGES
+
     torch.cuda.empty_cache()
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
