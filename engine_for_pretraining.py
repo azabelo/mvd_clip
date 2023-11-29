@@ -257,9 +257,11 @@ def pretraining_accuracy(model, args):
     two_layer_optimizer = optim.SGD(two_layer_model.parameters(), lr=0.01)
 
     empty_mask = torch.zeros((args_copy.batch_size, 1568), dtype=torch.bool)
+    empty_mask = empty_mask.to(args_copy.device)
     for batch_idx, (input_data, target, _, _) in enumerate(data_loader_train):
         print(batch_idx)
         with torch.no_grad():
+            input_data = input_data.to(args_copy.device)
             features = model.module.forward_encoder(input_data, empty_mask)
 
             linear_output = linear_model(features)
@@ -282,6 +284,7 @@ def pretraining_accuracy(model, args):
     for batch_idx, (input_data, target, _) in enumerate(data_loader_val):
         print(batch_idx)
         with torch.no_grad():
+            input_data = input_data.to(args_copy.device)
             features = model.module.forward_encoder(input_data, empty_mask)
 
             linear_output = linear_model(features)
