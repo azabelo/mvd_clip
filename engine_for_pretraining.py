@@ -177,6 +177,7 @@ def pretraining_accuracy(model, args):
     args_copy.nb_classes = 51
     args_copy.data_path = 'official_hmdb_splits1'
     args_copy.num_frames = 16
+    args_copy.short_side_size = 224
     args_copy.sampling_rate = 4
     args_copy.test_num_segment = 2
     args_copy.test_num_crop = 3
