@@ -227,7 +227,7 @@ def pretraining_accuracy(model, args):
     # Instantiate the model
     linear_model = LinearClassifier()
     linear_criterion = nn.CrossEntropyLoss()
-    linear_optimizer = optim.SGD(linear_model.parameters(), lr=0.05)
+    linear_optimizer = optim.SGD(linear_model.parameters(), lr=0.005)
 
 
     class TwoLayerClassifier(nn.Module):
@@ -247,7 +247,7 @@ def pretraining_accuracy(model, args):
 
     # Define loss function and optimizer
     two_layer_criterion = nn.CrossEntropyLoss()
-    two_layer_optimizer = optim.SGD(two_layer_model.parameters(), lr=0.05)
+    two_layer_optimizer = optim.SGD(two_layer_model.parameters(), lr=0.005)
 
     # move everything to the GPU
     linear_model = linear_model.to(args_copy.device)
