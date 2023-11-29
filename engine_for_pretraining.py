@@ -256,10 +256,7 @@ def pretraining_accuracy(model, args):
     two_layer_criterion = two_layer_criterion.to(args_copy.device)
 
     knn_classifier19 = KNeighborsClassifier(n_neighbors=19)
-    knn_classifier19 = knn_classifier19.to(args_copy.device)
-
     knn_classifier5 = KNeighborsClassifier(n_neighbors=5)
-    knn_classifier5 = knn_classifier5.to(args_copy.device)
 
     knn_features_train = np.empty((0, 768))
     knn_labels_train = np.empty(0)
@@ -292,7 +289,8 @@ def pretraining_accuracy(model, args):
 
         wandb.log({'linear_loss': linear_loss.item(), 'two_layer_loss': two_layer_loss.item()})
 
-
+    knn_classifier19.fit(knn_features_train, knn_labels_train)
+    knn_classifier5.fit(knn_features_train, knn_labels_train)
 
     dataset_val, _ = build_dataset(is_train=False, test_mode=False, args=args_copy)
     sampler_val = torch.utils.data.DistributedSampler(
@@ -310,6 +308,9 @@ def pretraining_accuracy(model, args):
     correct_linear = 0
     correct_two_layer = 0
     total_samples = 0
+
+    knn_features_val = np.empty((0, 768))
+    knn_labels_val = np.empty(0)
     for batch_idx, (input_data, target, _) in enumerate(data_loader_val):
         empty_mask = torch.zeros((input_data.shape[0], 1568), dtype=torch.bool)
         empty_mask = empty_mask.to(args_copy.device)
@@ -317,8 +318,13 @@ def pretraining_accuracy(model, args):
             print(batch_idx)
         input_data = input_data.to(args_copy.device)
         target = target.to(args_copy.device)
+
         with torch.no_grad():
             features = model.module.forward_encoder(input_data, empty_mask)
+
+        cls_token = features[:, 0, :]
+        knn_features_val = np.concatenate((knn_features_val, cls_token.cpu().numpy()), axis=0)
+        knn_labels_val = np.concatenate((knn_labels_val, target.cpu().numpy()), axis=0)
 
         linear_output = linear_model(features)
         linear_loss = linear_criterion(linear_output, target)
@@ -331,7 +337,14 @@ def pretraining_accuracy(model, args):
         _, predicted_two_layer = torch.max(two_layer_output.data, 1)
         correct_two_layer += (predicted_two_layer == target).sum().item()
 
+    val_predictions19 = knn_classifier19.predict(knn_features_val)
+    val_predictions5 = knn_classifier5.predict(knn_features_val)
+    correct_knn19 = (val_predictions19 == knn_labels_val).sum()
+    correct_knn5 = (val_predictions5 == knn_labels_val).sum()
+    accuracy_knn19 = correct_knn19 / total_samples
+    accuracy_knn5 = correct_knn5 / total_samples
+
     accuracy_linear = correct_linear / total_samples
     accuracy_two_layer = correct_two_layer / total_samples
-    wandb.log({"linear accuracy": accuracy_linear, "two layer accuracy": accuracy_two_layer})
+    wandb.log({"linear accuracy": accuracy_linear, "two layer accuracy": accuracy_two_layer, "knn accuracy 19": accuracy_knn19, "knn accuracy 5": accuracy_knn5})
 
