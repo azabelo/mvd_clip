@@ -296,8 +296,8 @@ def pretraining_accuracy(model, args):
 
         wandb.log({'linear_loss': linear_loss.item(),
                    'two_layer_loss': two_layer_loss.item(),
-                  'linear_accuracy': linear_accuracy,
-                'two_layer_accuracy': two_layer_accuracy})
+                  'linear_accuracy train': linear_accuracy,
+                'two_layer_accuracy train': two_layer_accuracy})
 
     knn_classifier19.fit(knn_features_train, knn_labels_train)
     knn_classifier5.fit(knn_features_train, knn_labels_train)
@@ -356,5 +356,8 @@ def pretraining_accuracy(model, args):
 
     accuracy_linear = correct_linear / total_samples
     accuracy_two_layer = correct_two_layer / total_samples
-    wandb.log({"linear accuracy": accuracy_linear, "two layer accuracy": accuracy_two_layer, "knn accuracy 19": accuracy_knn19, "knn accuracy 5": accuracy_knn5})
+    wandb.log({"linear accuracy": accuracy_linear,
+               "two layer accuracy": accuracy_two_layer,
+               "knn accuracy 19": accuracy_knn19,
+               "knn accuracy 5": accuracy_knn5})
 

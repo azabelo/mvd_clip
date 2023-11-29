@@ -26,6 +26,8 @@ NOTES_FOR_WANDB_RUN=${16}
 USE_CLS_TOKEN=${17}
 OUTPUT_DIR='OUTPUT/pretrain/'
 
+# dont forget that k400 and smaller dataset like UCF101 use different parameters
+
 OMP_NUM_THREADS=1 python3 -m torch.distributed.launch --nproc_per_node=${GPUS} \
         --master_port ${PORT} --nnodes=1 \
         --node_rank=0 --master_addr=localhost \

@@ -23,6 +23,10 @@ from utils import multiple_samples_collate
 import utils
 import modeling_finetune
 
+# MY CHANGES
+import wandb
+# END MY CHANGES
+
 
 def get_args():
     parser = argparse.ArgumentParser('MVD fine-tuning and evaluation script for video classification', add_help=False)
@@ -214,7 +218,19 @@ def get_args():
     else:
         ds_init = None
 
-    return parser.parse_args(), ds_init
+    # MY CHANGES
+    parser.add_argument('--knn_freq', default=10, type=int)
+    parser.add_argument('--use_wandb', default=0, type=int)
+    parser.add_argument('--wandb_project_name', default='no_name', type=str)
+    parser.add_argument('--notes_for_wandb_run', default='', type=str)
+    parser.add_argument('--cls', default=0, type=int)
+
+    args_ret = parser.parse_args()
+    if args_ret.cls == 1:
+        args_ret.use_cls_token = True
+
+    return args_ret, ds_init
+    # END MY_CHANGES
 
 
 def main(args, ds_init):
@@ -427,6 +443,16 @@ def main(args, ds_init):
     print("Update frequent = %d" % args.update_freq)
     print("Number of training examples = %d" % len(dataset_train))
     print("Number of training training per epoch = %d" % num_training_steps_per_epoch)
+
+    # MY CHANGES
+    if args.use_wandb != 0:
+        run_name = f"finetune {args.notes_for_wandb_run} finetunin: {args.checkpoint}, bs: {args.batch_size}, update: {args.update_freq}, lr: {args.lr}, epochs: {args.epochs}, \
+ warmup: {args.warmup_epochs}, "
+        print(run_name)
+        wandb.init(project=args.wandb_project_name, name=run_name)
+        wandb.config.update(args)
+    # END MY CHANGES
+
 
     num_layers = model_without_ddp.get_num_layers()
     if args.layer_decay < 1.0:

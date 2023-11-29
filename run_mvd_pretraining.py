@@ -578,8 +578,8 @@ def main(args):
 
     # MY CHANGES
     if args.use_wandb != 0:
-        run_name = f"{args.notes_for_wandb_run}  image_teacher: {args.image_teacher_model_ckpt_path}, video_teacher:{args.video_teacher_model_ckpt_path} bs: {args.batch_size}, update: {args.update_freq}, lr: {args.lr}, epochs: {args.epochs}, \
-        warmup: {args.warmup_epochs}, "
+        run_name = f"pretrain {args.notes_for_wandb_run}  image_teacher: {args.image_teacher_model_ckpt_path}, video_teacher:{args.video_teacher_model_ckpt_path} bs: {args.batch_size}, update: {args.update_freq}, lr: {args.lr}, epochs: {args.epochs}, \
+ warmup: {args.warmup_epochs}, "
         print(run_name)
         wandb.init(project=args.wandb_project_name, name=run_name)
         wandb.config.update(args)

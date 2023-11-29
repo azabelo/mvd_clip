@@ -1,28 +1,52 @@
 #!/bin/bash
 
-GPUS=1
-MASTER_PORT=41043
-OUTPUT_DIR='OUTPUT/pretraining'
-DATA_PATH='official_hmdb_splits1'
-DATA_ROOT='hmdb51_mp4'
+# they don't use warmup during finetuning
+
+# Check if the correct number of arguments is provided
+if [ "$#" -ne 16 ]; then
+  echo "Usage: $0 GPUS PORT CHECKPOINT_PATH DATA_DIRECTORY TRAIN_CSV EPOCHS BATCH_SIZE LEARNING_RATE WARMUP UPDATE_FREQ SAVE_FREQ KNN_FREQ USE_WANDB WANDB_PROJECT_NAME NOTES_FOR_WANDB_RUN USE_CLS_TOKEN"
+  exit 1
+fi
+
+# Assign command line arguments to variables
+GPUS=$1
+PORT=$2
+CHECKPOINT_PATH=$3
+DATA_DIRECTORY=$4
+TRAIN_CSV=$5
+EPOCHS=$6
+BATCH_SIZE=$7
+LEARNING_RATE=$8
+WARMUP=${9}
+UPDATE_FREQ=${10}
+SAVE_FREQ=${11}
+KNN_FREQ=${12}
+USE_WANDB=${13}
+WANDB_PROJECT_NAME=${14}
+NOTES_FOR_WANDB_RUN=${15}
+USE_CLS_TOKEN=${16}
+OUTPUT_DIR='OUTPUT/finetune/'
 
 OMP_NUM_THREADS=1 python -m torch.distributed.launch --nproc_per_node=${GPUS} \
     --master_port ${MASTER_PORT} --nnodes=1 \
     --node_rank=0 --master_addr=localhost \
     run_class_finetuning.py \
     --model vit_base_patch16_224 \
-    --data_set SSV2 --nb_classes 174 \
-    --data_path ${DATA_PATH} \
-    --data_root ${DATA_ROOT} \
-    --finetune video_teacher.pth \
+    --data_set HMDB51 --nb_classes 51 \
+    --data_path ${TRAIN_CSV} \
+    --data_root ${DATA_DIRECTORY} \
+    --finetune ${CHECKPOINT_PATH} \
     --log_dir ${OUTPUT_DIR} \
     --output_dir ${OUTPUT_DIR} \
     --input_size 224 --short_side_size 224 \
     --opt adamw --opt_betas 0.9 0.999 --weight_decay 0.05 \
-    --batch_size 24 --update_freq 1 --num_sample 2 \
-    --save_ckpt_freq 5 --no_save_best_ckpt \
+    --batch_size ${BATCH_SIZE} --update_freq ${UPDATE_FREQ} --num_sample 2 \
+    --save_ckpt_freq ${SAVE_FREQ} --no_save_best_ckpt \
     --num_frames 16 \
-    --lr 5e-4 --epochs 30 \
+    --lr ${LEARNING_RATE} --epochs ${EPOCHS} \
     --dist_eval --test_num_segment 2 --test_num_crop 3 \
     --use_checkpoint \
-    --enable_deepspeed --data_set HMDB51 --nb_classes 51
+    --enable_deepspeed \
+    --warmup_epochs ${WARMUP} --knn_freq ${KNN_FREQ} --use_wandb ${USE_WANDB} \
+    --wandb_project_name ${WANDB_PROJECT_NAME} \
+    --notes_for_wandb_run ${NOTES_FOR_WANDB_RUN} --cls ${USE_CLS_TOKEN}
