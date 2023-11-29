@@ -157,48 +157,48 @@ if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
           echo "Conversion complete. .avi files in $input_directory and its subdirectories have been converted to .mp4 files in $output_directory."
 
           ######## MAKE CSV FILE ############
-
-          directory="hmdb51_mp4"  # Replace this with the path to your starting directory
-          output_csv="all.csv"  # Replace this with the desired output CSV file name
-
-          # Function to get the number of frames in a video file
-          get_frame_count() {
-            # Use ffprobe to get the frame count from the video file
-            frame_count=$(ffprobe -v error -select_streams v:0 -count_packets -show_entries stream=nb_read_packets -of csv=p=0 "$1")
-            echo "$frame_count"
-          }
-
-          # Check if the directory exists
-          if [ ! -d "$directory" ]; then
-            echo "Error: Directory '$directory' not found."
-            exit 1
-          fi
-
-          # Create the output CSV file
-          touch "$output_csv"
-
-          # Function to list all files in a directory (recursively)
-          list_files() {
-            local current_dir="$1"
-
-            for file in "$current_dir"/*; do
-              if [ -f "$file" ]; then
-                # Print the relative path, video duration, and video label to the output CSV
-                relative_path="${file#"$directory"}"
-                frame_count=$(get_frame_count "$file")
-                video_label=$(basename "$current_dir")
-                echo "$relative_path $frame_count $video_label" >> "$output_csv"
-              elif [ -d "$file" ]; then
-                # If it's a subdirectory, recursively call the function
-                list_files "$file"
-              fi
-            done
-          }
-
-          # Call the function to list all files in the directory and its subdirectories
-          list_files "$directory"
-
-          echo "CSV file created: $output_csv"
+#
+#          directory="hmdb51_mp4"  # Replace this with the path to your starting directory
+#          output_csv="all.csv"  # Replace this with the desired output CSV file name
+#
+#          # Function to get the number of frames in a video file
+#          get_frame_count() {
+#            # Use ffprobe to get the frame count from the video file
+#            frame_count=$(ffprobe -v error -select_streams v:0 -count_packets -show_entries stream=nb_read_packets -of csv=p=0 "$1")
+#            echo "$frame_count"
+#          }
+#
+#          # Check if the directory exists
+#          if [ ! -d "$directory" ]; then
+#            echo "Error: Directory '$directory' not found."
+#            exit 1
+#          fi
+#
+#          # Create the output CSV file
+#          touch "$output_csv"
+#
+#          # Function to list all files in a directory (recursively)
+#          list_files() {
+#            local current_dir="$1"
+#
+#            for file in "$current_dir"/*; do
+#              if [ -f "$file" ]; then
+#                # Print the relative path, video duration, and video label to the output CSV
+#                relative_path="${file#"$directory"}"
+#                frame_count=$(get_frame_count "$file")
+#                video_label=$(basename "$current_dir")
+#                echo "$relative_path $frame_count $video_label" >> "$output_csv"
+#              elif [ -d "$file" ]; then
+#                # If it's a subdirectory, recursively call the function
+#                list_files "$file"
+#              fi
+#            done
+#          }
+#
+#          # Call the function to list all files in the directory and its subdirectories
+#          list_files "$directory"
+#
+#          echo "CSV file created: $output_csv"
 fi
 
 # Question 5
