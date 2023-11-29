@@ -74,6 +74,9 @@ if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
     chmod +x create_pretrain_csv.sh
     ./create_pretrain_csv.sh official_hmdb_splits1/train.csv
     rm hmdb51_mp4.zip
+    mv hmdb51_mp4 hmdb51_mp42
+    mkdir hmdb51_mp4
+    mv hmdb51_mp42 hmdb51_mp4/hmdb51_mp4
 fi
 
 read -p "Kinetics-400 dataset (y/n): " answer
