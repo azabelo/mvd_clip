@@ -79,6 +79,12 @@ if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
     mv hmdb51_mp42 hmdb51_mp4/hmdb51_mp4
 fi
 
+read -p "Kinetics-400 TINY dataset (y/n): " answer
+if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
+    echo "downloading Kinetics-400 TINY dataset"
+    # Your specific action for "yes" on the fifth question goes here
+fi
+
 read -p "Kinetics-400 dataset (y/n): " answer
 if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
     echo "downloading Kinetics-400 dataset"
