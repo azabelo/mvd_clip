@@ -251,9 +251,10 @@ def pretraining_accuracy(model, args):
     two_layer_model = two_layer_model.to(args_copy.device)
     two_layer_criterion = two_layer_criterion.to(args_copy.device)
 
-    empty_mask = torch.zeros((args_copy.batch_size, 1568), dtype=torch.bool)
-    empty_mask = empty_mask.to(args_copy.device)
+
     for batch_idx, (input_data, target, _, _) in enumerate(data_loader_train):
+        empty_mask = torch.zeros((input_data.shape[0], 1568), dtype=torch.bool)
+        empty_mask = empty_mask.to(args_copy.device)
         if batch_idx % 10 == 0:
             print(batch_idx)
         input_data = input_data.to(args_copy.device)
@@ -290,6 +291,8 @@ def pretraining_accuracy(model, args):
     correct_two_layer = 0
     total_samples = 0
     for batch_idx, (input_data, target, _) in enumerate(data_loader_val):
+        empty_mask = torch.zeros((input_data.shape[0], 1568), dtype=torch.bool)
+        empty_mask = empty_mask.to(args_copy.device)
         if batch_idx % 10 == 0:
             print(batch_idx)
         input_data = input_data.to(args_copy.device)
