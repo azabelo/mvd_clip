@@ -72,6 +72,6 @@ if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
     echo "downloading Kinetics-400 dataset"
     # Your specific action for "yes" on the fifth question goes here
 fi
-read -p "press any key to continue " answer
+read -p "press enter to continue " answer
 
 
