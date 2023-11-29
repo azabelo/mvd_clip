@@ -32,6 +32,10 @@ echo "All modules from '$requirements_file' have been installed."
 
 ##### ASK WHICH TYPE OF ENVIRONMENT #####
 
+# by defualt use pytorch/pytorch:1.10.0-cuda11.3-cudnn8-devel on vast.ai
+# eva_clip requires:
+# videoCLIP requires:
+
 echo "which things to download"
 
 read -p "default image teacher (y/n): " answer
@@ -61,7 +65,13 @@ fi
 read -p "VideoMAEv2 (y/n): " answer
 if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
     echo "downloading VideoMAEv2"
-    gdown https://drive.google.com/uc?id=1ftR-tZgHq4aU6dLKyGh9XtAGpZXCtV_7
+    gdown https://drive.google.com/uc?id=1ftR-tZgHq4aU6dLKyGh9XtAGpZXCtV_7 --output videoMAEv2_model.pth
+fi
+
+read -p "VideoCLIP (y/n): " answer
+if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
+    echo "downloading VideoCLIP"
+##
 fi
 
 read -p "HMDB-51 dataset (y/n): " answer
@@ -96,6 +106,12 @@ if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
     echo "downloading Kinetics-400 dataset"
     # Your specific action for "yes" on the fifth question goes here
 fi
-read -p "press enter to continue " answer
+
+read -p "how_to_100M dataset (y/n): " answer
+if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
+    echo "downloading how_to_100M dataset"
+    # Your specific action for "yes" on the fifth question goes here
+fi
+
 
 

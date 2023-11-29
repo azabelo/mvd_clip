@@ -232,13 +232,18 @@ class VisionTransformer(nn.Module):
         x = self.transformer(x)
         x = x.permute(1, 0, 2)  # LND -> NLD
 
-        #REMOVED THIS BECAUSE WE WANT REPRESENTATION OF EVERY PATCH, NOT JUST 1
+        # MY CHANGES
+
+        # REMOVED THIS BECAUSE WE WANT REPRESENTATION OF EVERY PATCH, NOT JUST 1
         # x = self.ln_post(x[:, 0, :])
         #
         # if self.proj is not None:
         #     x = x @ self.proj
 
+        # I THINK THIS GETS RID OF CLS (IF IT IS THE FIRST)
         x = x[:, 1:]
+
+        # END MY CHANGES
 
         return x
 
