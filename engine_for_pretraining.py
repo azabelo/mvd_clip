@@ -7,7 +7,7 @@ import torchvision
 import utils
 from einops import rearrange
 from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
-from timm.loss import LabelSmoothingCrossEntropy,
+from timm.loss import LabelSmoothingCrossEntropy, SoftTargetCrossEntropy
 
 # MY CHANGES
 import wandb
