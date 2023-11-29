@@ -220,10 +220,10 @@ def pretraining_accuracy(model, args):
         drop_last=False
     )
 
-    for batch_idx, (input_data, target) in enumerate(data_loader_train):
+    for batch_idx, (input_data, target, _, _) in enumerate(data_loader_train):
         print(batch_idx)
 
-    for batch_idx, (input_data, target) in enumerate(data_loader_val):
+    for batch_idx, (input_data, target, _, _) in enumerate(data_loader_val):
         print(batch_idx)
 
 
