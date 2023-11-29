@@ -256,6 +256,12 @@ def pretraining_accuracy(model, args):
     two_layer_criterion = nn.CrossEntropyLoss()
     two_layer_optimizer = optim.SGD(two_layer_model.parameters(), lr=0.01)
 
+    # move everything to the GPU
+    linear_model = linear_model.to(args_copy.device)
+    linear_criterion = linear_criterion.to(args_copy.device)
+    two_layer_model = two_layer_model.to(args_copy.device)
+    two_layer_criterion = two_layer_criterion.to(args_copy.device)
+
     empty_mask = torch.zeros((args_copy.batch_size, 1568), dtype=torch.bool)
     empty_mask = empty_mask.to(args_copy.device)
     for batch_idx, (input_data, target, _, _) in enumerate(data_loader_train):
