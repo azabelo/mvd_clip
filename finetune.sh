@@ -25,4 +25,4 @@ OMP_NUM_THREADS=1 python -m torch.distributed.launch --nproc_per_node=${GPUS} \
     --lr 5e-4 --epochs 30 \
     --dist_eval --test_num_segment 2 --test_num_crop 3 \
     --use_checkpoint \
-    --enable_deepspeed --data_set HMDB51
+    --enable_deepspeed --data_set HMDB51 --nb_classes 51
