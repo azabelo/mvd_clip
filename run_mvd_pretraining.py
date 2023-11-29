@@ -228,10 +228,30 @@ def get_video_teacher_model(args):
 # MY CHANGES
 
 def get_videomaev2_teacher_model(args):
-    pass
+    # for now this is the same as video teacher, but perhaps doing it more directly like you did
+    # with CLIP would solve your problems
+
+    print(f"Creating teacher model: {args.video_teacher_model}")
+    model = create_model(
+        args.video_teacher_model,
+        pretrained=False,
+        img_size=args.video_teacher_input_size,
+        drop_path_rate=args.video_teacher_drop_path,
+    )
+    return model
 
 def get_checkpoint_teacher_model(args):
-    pass
+    # for now this is the same as video teacher, but perhaps doing it more directly like you did
+    # with CLIP would solve your problems
+
+    print(f"Creating teacher model: {args.video_teacher_model}")
+    model = create_model(
+        args.video_teacher_model,
+        pretrained=False,
+        img_size=args.video_teacher_input_size,
+        drop_path_rate=args.video_teacher_drop_path,
+    )
+    return model
 
 def get_video_clip_teacher_model(args):
     pass
