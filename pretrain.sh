@@ -3,7 +3,7 @@
 GPUS=1
 NODE_COUNT=1
 RANK=0
-MASTER_PORT=41043
+MASTER_PORT='localhost'
 OUTPUT_DIR='OUTPUT/pretraining'
 DATA_PATH='official_pretrain.csv'
 DATA_ROOT='hmdb51_mp4'
