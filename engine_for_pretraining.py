@@ -16,6 +16,9 @@ from utils import multiple_samples_collate
 from functools import partial
 import copy
 import torch.optim as optim
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
+import numpy as np
 # END MY CHANGES
 
 Loss_func_choice = {'L1': torch.nn.L1Loss, 'L2': torch.nn.MSELoss, 'SmoothL1': torch.nn.SmoothL1Loss}
@@ -29,7 +32,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
     # MY CHANGES
     # not sure if the pretraining accuracy stuff needs normalization
-    if epoch % args.knn_freq == 0:
+    if args.knn_freq != -1 and epoch % args.knn_freq == 0:
         pretraining_accuracy(model, args)
     # END MY CHANGES
 
@@ -226,6 +229,7 @@ def pretraining_accuracy(model, args):
     linear_criterion = nn.CrossEntropyLoss()
     linear_optimizer = optim.SGD(linear_model.parameters(), lr=0.01)
 
+
     class TwoLayerClassifier(nn.Module):
         def __init__(self):
             super(TwoLayerClassifier, self).__init__()
@@ -251,7 +255,14 @@ def pretraining_accuracy(model, args):
     two_layer_model = two_layer_model.to(args_copy.device)
     two_layer_criterion = two_layer_criterion.to(args_copy.device)
 
+    knn_classifier19 = KNeighborsClassifier(n_neighbors=19)
+    knn_classifier19 = knn_classifier19.to(args_copy.device)
 
+    knn_classifier5 = KNeighborsClassifier(n_neighbors=5)
+    knn_classifier5 = knn_classifier5.to(args_copy.device)
+
+    knn_features_train = np.empty((0, 768))
+    knn_labels_train = np.empty(0)
     for batch_idx, (input_data, target, _, _) in enumerate(data_loader_train):
         empty_mask = torch.zeros((input_data.shape[0], 1568), dtype=torch.bool)
         empty_mask = empty_mask.to(args_copy.device)
@@ -259,8 +270,13 @@ def pretraining_accuracy(model, args):
             print(batch_idx)
         input_data = input_data.to(args_copy.device)
         target = target.to(args_copy.device)
+
         with torch.no_grad():
             features = model.module.forward_encoder(input_data, empty_mask)
+
+        cls_token = features[:, 0, :]
+        knn_features_train = np.concatenate((knn_features_train, cls_token.cpu().numpy()), axis=0)
+        knn_labels_train = np.concatenate((knn_labels_train, target.cpu().numpy()), axis=0)
 
         linear_output = linear_model(features)
         linear_loss = linear_criterion(linear_output, target)
@@ -273,6 +289,10 @@ def pretraining_accuracy(model, args):
         two_layer_optimizer.zero_grad()
         two_layer_loss.backward()
         two_layer_optimizer.step()
+
+        wandb.log({'linear_loss': linear_loss.item(), 'two_layer_loss': two_layer_loss.item()})
+
+
 
     dataset_val, _ = build_dataset(is_train=False, test_mode=False, args=args_copy)
     sampler_val = torch.utils.data.DistributedSampler(
