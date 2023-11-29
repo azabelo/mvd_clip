@@ -1,5 +1,8 @@
 #!/bin/bash
 
+chmod +x pretrain.sh
+chmod +x finetune.sh
+
 ######## GET DEPENDENCIES #########
 
 ## need this to run pretrain.sh (you'll need to click yes)
@@ -70,6 +73,7 @@ if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
     mv hmdb51_mp42 hmdb51_mp4
     chmod +x create_pretrain_csv.sh
     ./create_pretrain_csv.sh official_hmdb_splits1/train.csv
+    rm hmdb51_mp4.zip
 fi
 
 read -p "Kinetics-400 dataset (y/n): " answer
