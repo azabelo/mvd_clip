@@ -3,6 +3,9 @@
 # Check if the correct number of arguments is provided
 if [ "$#" -ne 17 ]; then
   echo "Usage: $0 GPUS PORT IMAGE_TEACHER_PATH VIDEO_TEACHER_PATH DATA_DIRECTORY TRAIN_CSV EPOCHS BATCH_SIZE LEARNING_RATE WARMUP UPDATE_FREQ SAVE_FREQ KNN_FREQ USE_WANDB WANDB_PROJECT_NAME NOTES_FOR_WANDB_RUN USE_CLS_TOKEN"
+  echo " "
+  echo "Example: $0 1 12345 image_teacher.pth video_teacher.pth hmdb51_mp4 official_pretrain.csv 101 8 1.5e-4 5 32 10 10 1 project_name wandb_notes 1"
+
   exit 1
 fi
 

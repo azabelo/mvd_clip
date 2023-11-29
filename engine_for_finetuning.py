@@ -11,6 +11,10 @@ from einops import rearrange
 from torch.utils.data._utils.collate import default_collate
 import torch.nn.functional as F
 
+# MY CHANGES
+import wandb
+# END MY CHANGES
+
 
 def train_class_batch(model, samples, target, criterion):
     outputs = model(samples)
@@ -136,6 +140,12 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
             log_writer.set_step()
 
+        # MY CHANGES
+        wandb.log({"epoch": epoch, "batch": step, "train_loss": loss_value, "max_lr": max_lr, "min_lr": min_lr,
+                   "weight_decay": weight_decay_value, "grad_norm": grad_norm, "loss_scale": loss_scale_value,
+                   "class_acc": class_acc})
+        # END MY CHANGES
+
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger)
@@ -173,6 +183,11 @@ def validation_one_epoch(data_loader, model, device):
     metric_logger.synchronize_between_processes()
     print('* Acc@1 {top1.global_avg:.3f} Acc@5 {top5.global_avg:.3f} loss {losses.global_avg:.3f}'
           .format(top1=metric_logger.acc1, top5=metric_logger.acc5, losses=metric_logger.loss))
+
+    # MY CHANGES
+    wandb.log({"val_acc (top 1)": metric_logger.acc1, "val_acc (top 5)": metric_logger.acc5,
+               "val_loss": metric_logger.loss })
+    # END MY CHANGES
 
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
