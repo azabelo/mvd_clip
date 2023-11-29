@@ -227,7 +227,7 @@ def get_video_teacher_model(args):
 
 # MY CHANGES
 
-def get_videomaev2_teacher_model(args):
+def get_videomaev2_model(args):
     # for now this is the same as video teacher, but perhaps doing it more directly like you did
     # with CLIP would solve your problems
 
@@ -240,7 +240,7 @@ def get_videomaev2_teacher_model(args):
     )
     return model
 
-def get_checkpoint_teacher_model(args):
+def get_checkpoint_model(args):
     # for now this is the same as video teacher, but perhaps doing it more directly like you did
     # with CLIP would solve your problems
 
@@ -440,6 +440,8 @@ def main(args):
             utils.load_state_dict(video_teacher_model, checkpoint_model, prefix=args.model_prefix)
     ## VideoMAEv2
     elif args.video_teacher_model_ckpt_path == 'videoMAEv2_model.pth':
+        video_teacher_model = get_videomaev2_model(args)
+
         checkpoint = torch.load(args.video_teacher_model_ckpt_path, map_location='cpu')
         checkpoint = checkpoint['module']
 
@@ -485,6 +487,9 @@ def main(args):
 
     ## Pretrained Checkpoint (using mvd)
     elif 'checkpoint' in args.video_teacher_model_ckpt_path:
+
+        video_teacher_model = get_checkpoint_model(args)
+
         checkpoint = torch.load(args.video_teacher_model_ckpt_path, map_location='cpu')
         checkpoint = checkpoint['module']
 
