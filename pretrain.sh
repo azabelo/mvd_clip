@@ -35,7 +35,7 @@ OMP_NUM_THREADS=1 python3 -m torch.distributed.launch --nproc_per_node=${GPUS} \
         --model pretrain_masked_video_student_base_patch16_224 \
         --opt adamw --opt_betas 0.9 0.95 \
         --log_dir ${OUTPUT_DIR} \
-        --output_dir ${}OUTPUT_DIR \
+        --output_dir ${OUTPUT_DIR} \
         --image_teacher_model mae_teacher_vit_base_patch16 \
         --distillation_target_dim 768 \
         --distill_loss_func SmoothL1 \
