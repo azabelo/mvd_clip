@@ -251,7 +251,7 @@ def get_videomaev2_model(args):
         img_size=224,
         pretrained=False,
         num_classes=10,
-        all_frames=args.num_frames * args.num_segments,
+        all_frames=args.num_frames,
         tubelet_size=args.tubelet_size,
         drop_rate=args.drop,
         drop_path_rate=args.drop_path,
