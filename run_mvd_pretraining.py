@@ -606,7 +606,7 @@ def main(args):
         print("Invalid video teacher model ckpt path")
         exit(1)
     video_teacher_model.to(device)
-    video_teacher_model.eval()
+
 
     ## END MY CHANGES ##
 
