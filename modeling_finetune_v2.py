@@ -449,8 +449,9 @@ class VisionTransformer(nn.Module):
 
     def forward(self, x):
         x = self.forward_features(x)
-        x = self.head_dropout(x)
-        x = self.head(x)
+        #just want features
+        # x = self.head_dropout(x)
+        # x = self.head(x)
         return x
 
 

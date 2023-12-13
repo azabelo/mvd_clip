@@ -24,7 +24,7 @@ import modeling_video_teacher
 import wandb
 import clip
 from rei.eva_clip import create_model_and_transforms, get_tokenizer
-import modeling_pretrain #videomaev2 teacher
+import modeling_finetune_v2 #videomaev2 teacher
 # END MY CHANGES
 
 
@@ -239,10 +239,28 @@ def get_videomaev2_model(args):
     #     img_size=args.video_teacher_input_size,
     #     drop_path_rate=args.video_teacher_drop_path,
     # )
+    #this works but is pretraining
+    # model = create_model(
+    #     'pretrain_videomae_base_patch16_224',
+    #     pretrained=False,
+    #
+    #     drop_path_rate=args.video_teacher_drop_path,
+    # )
     model = create_model(
-        'pretrain_videomae_base_patch16_224',
+        'vit_base_patch16_224',
+        img_size=224,
         pretrained=False,
-        drop_path_rate=args.video_teacher_drop_path,
+        num_classes=args.nb_classes,
+        all_frames=args.num_frames * args.num_segments,
+        tubelet_size=args.tubelet_size,
+        drop_rate=args.drop,
+        drop_path_rate=args.drop_path,
+        attn_drop_rate=args.attn_drop_rate,
+        head_drop_rate=args.head_drop_rate,
+        drop_block_rate=None,
+        use_mean_pooling=args.use_mean_pooling,
+        init_scale=args.init_scale,
+        with_cp=args.with_checkpoint,
     )
     #took args to be the same as videomaev2 repo
     # model = create_model(
