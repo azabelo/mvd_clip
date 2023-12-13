@@ -470,7 +470,53 @@ def main(args):
             checkpoint_model = new_dict
 
             utils.load_state_dict(video_teacher_model, checkpoint_model, prefix=args.model_prefix)
-    ## VideoMAEv2
+    ## VideoMAEv2 old
+    # elif args.video_teacher_model_ckpt_path == 'videoMAEv2_model.pth':
+    #     video_teacher_model = get_videomaev2_model(args)
+    #
+    #     checkpoint = torch.load(args.video_teacher_model_ckpt_path, map_location='cpu')
+    #     checkpoint = checkpoint['module']
+    #
+    #     print("Load video teacher ckpt from %s" % args.video_teacher_model_ckpt_path)
+    #     checkpoint_model = None
+    #     for model_key in args.model_key.split('|'):
+    #         if model_key in checkpoint:
+    #             checkpoint_model = checkpoint[model_key]
+    #             print("Load video state_dict by model_key = %s" % model_key)
+    #             break
+    #
+    #     if checkpoint_model is None:
+    #         checkpoint_model = checkpoint
+    #
+    #     for k in ['head.weight', 'head.bias']:
+    #         if k in checkpoint_model:
+    #             print(f"Removing key {k} from pretrained checkpoint")
+    #             del checkpoint_model[k]
+    #
+    #     all_keys = list(checkpoint_model.keys())
+    #     new_dict = OrderedDict()
+    #
+    #     for key in all_keys:
+    #         print("v2 teacher: ", key)
+    #         if key == 'fc_norm.weight':
+    #             new_dict["encoder.norm.weight"] = checkpoint_model[key]
+    #             continue
+    #         elif key == 'fc_norm.bias':
+    #             new_dict["encoder.norm.bias"] = checkpoint_model[key]
+    #             continue
+    #
+    #         if key.startswith('backbone.'):
+    #             new_dict[key[9:]] = checkpoint_model[key]
+    #         elif 'pos_embed' in key:
+    #             continue
+    #         else:
+    #             new_dict["encoder." + key] = checkpoint_model[key]
+    #
+    #     checkpoint_model = new_dict
+    #     utils.load_state_dict(video_teacher_model, checkpoint_model, prefix=args.model_prefix)
+    #     for param in video_teacher_model.parameters():
+    #         param.requires_grad_(False)
+    ## VideoMAEv2 new
     elif args.video_teacher_model_ckpt_path == 'videoMAEv2_model.pth':
         video_teacher_model = get_videomaev2_model(args)
 
@@ -505,8 +551,8 @@ def main(args):
                 new_dict["encoder.norm.bias"] = checkpoint_model[key]
                 continue
 
-            if key.startswith('backbone.'):
-                new_dict[key[9:]] = checkpoint_model[key]
+            if key.startswith('encoder.'):
+                new_dict[key[8:]] = checkpoint_model[key]
             elif 'pos_embed' in key:
                 continue
             else:
@@ -516,7 +562,6 @@ def main(args):
         utils.load_state_dict(video_teacher_model, checkpoint_model, prefix=args.model_prefix)
         for param in video_teacher_model.parameters():
             param.requires_grad_(False)
-
     ## Pretrained Checkpoint (using mvd)
     elif 'checkpoint' in args.video_teacher_model_ckpt_path:
 
