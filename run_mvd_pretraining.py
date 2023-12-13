@@ -259,6 +259,7 @@ def get_videomaev2_model(args):
         head_drop_rate=0,
         drop_block_rate=None,
     )
+    model.eval()
     #took args to be the same as videomaev2 repo
     # model = create_model(
     #     'pretrain_videomae_base_patch16_224',
