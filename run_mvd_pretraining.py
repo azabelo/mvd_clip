@@ -543,11 +543,11 @@ def main(args):
 
         for key in all_keys:
             print("v2 teacher: ", key)
-            if key == 'fc_norm.weight':
-                new_dict["encoder.norm.weight"] = checkpoint_model[key]
+            if key == 'encoder.norm.weight':
+                new_dict["fc_norm.weight"] = checkpoint_model[key]
                 continue
-            elif key == 'fc_norm.bias':
-                new_dict["encoder.norm.bias"] = checkpoint_model[key]
+            elif key == 'encoder.norm.bias':
+                new_dict["fc_norm.bias"] = checkpoint_model[key]
                 continue
             #
             # if key.startswith('encoder.'):
