@@ -362,8 +362,8 @@ def pretraining_accuracy(model, args):
 
     accuracy_linear = None
     accuracy_two_layer = None
-    accuracy_linear = correct_linear / total_samples
-    accuracy_two_layer = correct_two_layer / total_samples
+    # accuracy_linear = correct_linear / total_samples
+    # accuracy_two_layer = correct_two_layer / total_samples
     wandb.log({"linear accuracy": accuracy_linear,
                "two layer accuracy": accuracy_two_layer,
                "knn accuracy 19": accuracy_knn19,
