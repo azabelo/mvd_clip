@@ -207,6 +207,7 @@ def pretraining_accuracy(model, args):
     else:
         collate_func = None
 
+    print("before knn data")
     data_loader_train = torch.utils.data.DataLoader(
         dataset_train, sampler=sampler_train,
         batch_size=args_copy.batch_size,
@@ -215,6 +216,7 @@ def pretraining_accuracy(model, args):
         drop_last=True,
         collate_fn=collate_func,
     )
+    print("after knn data")
 
     class LinearClassifier(nn.Module):
         def __init__(self):
@@ -360,4 +362,4 @@ def pretraining_accuracy(model, args):
                "two layer accuracy": accuracy_two_layer,
                "knn accuracy 19": accuracy_knn19,
                "knn accuracy 5": accuracy_knn5})
-
+    model.train()
