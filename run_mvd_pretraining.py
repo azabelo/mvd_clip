@@ -253,14 +253,11 @@ def get_videomaev2_model(args):
         num_classes=10,
         all_frames=args.num_frames,
         tubelet_size=args.tubelet_size,
-        drop_rate=args.drop,
-        drop_path_rate=args.drop_path,
-        attn_drop_rate=args.attn_drop_rate,
-        head_drop_rate=args.head_drop_rate,
+        drop_rate=0,
+        drop_path_rate=0,
+        attn_drop_rate=0,
+        head_drop_rate=0,
         drop_block_rate=None,
-        use_mean_pooling=args.use_mean_pooling,
-        init_scale=args.init_scale,
-        with_cp=args.with_checkpoint,
     )
     #took args to be the same as videomaev2 repo
     # model = create_model(
