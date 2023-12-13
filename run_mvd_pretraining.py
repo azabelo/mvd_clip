@@ -232,12 +232,28 @@ def get_videomaev2_model(args):
     # with CLIP would solve your problems
 
     print(f"Creating teacher model: {args.video_teacher_model}")
+    # model = create_model(
+    #     args.video_teacher_model,
+    #     pretrained=False,
+    #     img_size=args.video_teacher_input_size,
+    #     drop_path_rate=args.video_teacher_drop_path,
+    # )
     model = create_model(
-        args.video_teacher_model,
+        'pretrain_videomae_base_patch16_224',
         pretrained=False,
         img_size=args.video_teacher_input_size,
         drop_path_rate=args.video_teacher_drop_path,
     )
+    #took args to be the same as videomaev2 repo
+    # model = create_model(
+    #     'pretrain_videomae_base_patch16_224',
+    #     pretrained=False,
+    #     drop_path_rate=0,
+    #     drop_block_rate=None,
+    #     all_frames=16,
+    #     tubelet_size=args.tubelet_size,
+    #     decoder_depth=0,
+        with_cp=args.with_checkpoint)
     return model
 
 def get_checkpoint_model(args):

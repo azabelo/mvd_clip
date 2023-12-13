@@ -19,6 +19,7 @@ import torch.optim as optim
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 import numpy as np
+import modeling_pretrain #videomaev2 teacher
 # END MY CHANGES
 
 Loss_func_choice = {'L1': torch.nn.L1Loss, 'L2': torch.nn.MSELoss, 'SmoothL1': torch.nn.SmoothL1Loss}
