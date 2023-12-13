@@ -242,7 +242,6 @@ def get_videomaev2_model(args):
     model = create_model(
         'pretrain_videomae_base_patch16_224',
         pretrained=False,
-        img_size=args.video_teacher_input_size,
         drop_path_rate=args.video_teacher_drop_path,
     )
     #took args to be the same as videomaev2 repo
