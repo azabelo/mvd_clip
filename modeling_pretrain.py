@@ -340,10 +340,12 @@ class PretrainVisionTransformer(nn.Module):
     def no_weight_decay(self):
         return {'pos_embed', 'cls_token', 'mask_token'}
 
-    def forward(self, x, mask, decode_mask=None):
+    def forward(self, x, mask=None, decode_mask=None):
         decode_vis = mask if decode_mask is None else ~decode_mask
 
         x_vis = self.encoder(x, mask)  # [B, N_vis, C_e]
+        return x_vis
+
         x_vis = self.encoder_to_decoder(x_vis)  # [B, N_vis, C_d]
         B, N_vis, C = x_vis.shape
 
