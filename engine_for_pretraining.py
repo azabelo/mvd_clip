@@ -339,13 +339,12 @@ def pretraining_accuracy(model, args):
         cls_token = features[:, 0, :]
         knn_features_val = np.concatenate((knn_features_val, cls_token.cpu().numpy()), axis=0)
         knn_labels_val = np.concatenate((knn_labels_val, target.cpu().numpy()), axis=0)
-
+        total_samples += target.size(0)
         continue
 
         linear_output = linear_model(features)
         linear_loss = linear_criterion(linear_output, target)
         _, predicted_linear = torch.max(linear_output.data, 1)
-        total_samples += target.size(0)
         correct_linear += (predicted_linear == target).sum().item()
 
         two_layer_output = two_layer_model(features)
