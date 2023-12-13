@@ -90,7 +90,9 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
                 videos_for_video_teacher = videos if args.video_teacher_input_size == args.input_size \
                     else videos_for_teacher
 
-                video_teacher_features = video_teacher_model(videos_for_video_teacher)
+                ## this is a temporary fix
+                empty_mask = torch.zeros(videos_for_video_teacher.shape[0], videos_for_video_teacher.shape[2]).to(device)
+                video_teacher_features = video_teacher_model(videos_for_video_teacher, empty_mask)
                 if norm_feature:
                     video_teacher_features = LN_vid(video_teacher_features)
 
