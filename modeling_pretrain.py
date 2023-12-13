@@ -13,7 +13,7 @@ import torch.utils.checkpoint as cp
 from timm.models.layers import trunc_normal_ as __call_trunc_normal_
 from timm.models.registry import register_model
 
-from .modeling_finetune import (
+from modeling_finetune_v2 import (
     Block,
     PatchEmbed,
     _cfg,
