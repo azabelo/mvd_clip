@@ -259,7 +259,6 @@ def get_videomaev2_model(args):
         head_drop_rate=0,
         drop_block_rate=None,
     )
-    model.eval()
     #took args to be the same as videomaev2 repo
     # model = create_model(
     #     'pretrain_videomae_base_patch16_224',
@@ -550,13 +549,13 @@ def main(args):
             elif key == 'fc_norm.bias':
                 new_dict["encoder.norm.bias"] = checkpoint_model[key]
                 continue
-
-            if key.startswith('encoder.'):
-                new_dict[key[8:]] = checkpoint_model[key]
+            #
+            # if key.startswith('encoder.'):
+            #     new_dict[key[8:]] = checkpoint_model[key]
             elif 'pos_embed' in key:
                 continue
             else:
-                new_dict["encoder." + key] = checkpoint_model[key]
+                new_dict[key] = checkpoint_model[key]
 
         checkpoint_model = new_dict
         utils.load_state_dict(video_teacher_model, checkpoint_model, prefix=args.model_prefix)
@@ -607,6 +606,7 @@ def main(args):
         print("Invalid video teacher model ckpt path")
         exit(1)
     video_teacher_model.to(device)
+    video_teacher_model.eval()
 
     ## END MY CHANGES ##
 
