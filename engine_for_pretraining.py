@@ -278,6 +278,8 @@ def pretraining_accuracy(model, args):
         cls_token = features[:, 0, :]
         knn_features_train = np.concatenate((knn_features_train, cls_token.cpu().numpy()), axis=0)
         knn_labels_train = np.concatenate((knn_labels_train, target.cpu().numpy()), axis=0)
+        continue
+
 
         linear_output = linear_model(features)
         linear_loss = linear_criterion(linear_output, target)
@@ -338,6 +340,8 @@ def pretraining_accuracy(model, args):
         knn_features_val = np.concatenate((knn_features_val, cls_token.cpu().numpy()), axis=0)
         knn_labels_val = np.concatenate((knn_labels_val, target.cpu().numpy()), axis=0)
 
+        continue
+
         linear_output = linear_model(features)
         linear_loss = linear_criterion(linear_output, target)
         _, predicted_linear = torch.max(linear_output.data, 1)
@@ -356,6 +360,8 @@ def pretraining_accuracy(model, args):
     accuracy_knn19 = correct_knn19 / total_samples
     accuracy_knn5 = correct_knn5 / total_samples
 
+    accuracy_linear = None
+    accuracy_two_layer = None
     accuracy_linear = correct_linear / total_samples
     accuracy_two_layer = correct_two_layer / total_samples
     wandb.log({"linear accuracy": accuracy_linear,
