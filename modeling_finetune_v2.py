@@ -441,11 +441,12 @@ class VisionTransformer(nn.Module):
                 x = cp.checkpoint(blk, x)
             else:
                 x = blk(x)
-
-        if self.fc_norm is not None:
-            return self.fc_norm(x.mean(1))
-        else:
-            return self.norm(x[:, 0])
+        #just features
+        return x
+        # if self.fc_norm is not None:
+        #     return self.fc_norm(x.mean(1))
+        # else:
+        #     return self.norm(x[:, 0])
 
     def forward(self, x):
         x = self.forward_features(x)
