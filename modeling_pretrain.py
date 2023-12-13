@@ -140,9 +140,10 @@ class PretrainVisionTransformerEncoder(nn.Module):
         x_vis = self.norm(x_vis)
         return x_vis
 
-    def forward(self, x, mask):
+    def forward(self, x, mask=None):
         x = self.forward_features(x, mask)
-        x = self.head(x)
+        # remove head
+        #x = self.head(x)
         return x
 
 
