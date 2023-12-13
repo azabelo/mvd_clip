@@ -339,8 +339,6 @@ def pretraining_accuracy(model, args):
         cls_token = features[:, 0, :]
         knn_features_val = np.concatenate((knn_features_val, cls_token.cpu().numpy()), axis=0)
         knn_labels_val = np.concatenate((knn_labels_val, target.cpu().numpy()), axis=0)
-        print("labels")
-        print(knn_labels_val)
         total_samples += target.size(0)
         continue
 
@@ -356,10 +354,14 @@ def pretraining_accuracy(model, args):
 
     val_predictions19 = knn_classifier19.predict(knn_features_val)
     val_predictions5 = knn_classifier5.predict(knn_features_val)
+    print("preds")
+    print(val_predictions5)
     correct_knn19 = (val_predictions19 == knn_labels_val).sum()
     correct_knn5 = (val_predictions5 == knn_labels_val).sum()
     accuracy_knn19 = correct_knn19 / total_samples
     accuracy_knn5 = correct_knn5 / total_samples
+    print("knn correct 5: ", correct_knn5)
+    print("knn correct 19: ", correct_knn19)
 
     accuracy_linear = None
     accuracy_two_layer = None
