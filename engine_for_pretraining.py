@@ -193,6 +193,7 @@ def pretraining_accuracy(model, args):
     args_copy.sampling_rate = 4
     args_copy.test_num_segment = 2
     args_copy.test_num_crop = 3
+    args_copy.update_freq = 1
 
     dataset_train, args_copy.nb_classes = build_dataset(is_train=True, test_mode=False, args=args_copy)
 
@@ -207,7 +208,7 @@ def pretraining_accuracy(model, args):
     else:
         collate_func = None
 
-    print("before knn data")
+
     data_loader_train = torch.utils.data.DataLoader(
         dataset_train, sampler=sampler_train,
         batch_size=args_copy.batch_size,
@@ -216,7 +217,6 @@ def pretraining_accuracy(model, args):
         drop_last=True,
         collate_fn=collate_func,
     )
-    print("after knn data")
 
     class LinearClassifier(nn.Module):
         def __init__(self):
