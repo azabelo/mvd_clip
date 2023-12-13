@@ -253,7 +253,7 @@ def get_videomaev2_model(args):
     #     all_frames=16,
     #     tubelet_size=args.tubelet_size,
     #     decoder_depth=0,
-        with_cp=args.with_checkpoint)
+    #     with_cp=args.with_checkpoint)
     return model
 
 def get_checkpoint_model(args):
