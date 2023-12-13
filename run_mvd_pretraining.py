@@ -24,6 +24,7 @@ import modeling_video_teacher
 import wandb
 import clip
 from rei.eva_clip import create_model_and_transforms, get_tokenizer
+import modeling_pretrain #videomaev2 teacher
 # END MY CHANGES
 
 
@@ -453,7 +454,7 @@ def main(args):
                     new_dict[key] = checkpoint_model[key]
             checkpoint_model = new_dict
 
-            utils.load_state_dict(video_teacher_model, checkpoint_model, prefix=args.model_prefix)
+            utils.load_state_dict(video_teacher_model, checkpoint_model,gi prefix=args.model_prefix)
     ## VideoMAEv2
     elif args.video_teacher_model_ckpt_path == 'videoMAEv2_model.pth':
         video_teacher_model = get_videomaev2_model(args)
