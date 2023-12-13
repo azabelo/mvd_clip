@@ -250,7 +250,7 @@ def get_videomaev2_model(args):
         'vit_base_patch16_224',
         img_size=224,
         pretrained=False,
-        num_classes=args.nb_classes,
+        num_classes=10,
         all_frames=args.num_frames * args.num_segments,
         tubelet_size=args.tubelet_size,
         drop_rate=args.drop,
