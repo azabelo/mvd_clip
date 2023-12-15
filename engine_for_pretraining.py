@@ -338,8 +338,8 @@ def pretraining_accuracy(model, video_teacher_model, args):
     # two_layer_optimizer = optim.SGD(two_layer_model.parameters(), lr=2e-5)
 
     # move everything to the GPU
-    linear_model = linear_model.to(args_copy.device)
-    linear_criterion = linear_criterion.to(args_copy.device)
+    linear_model = linear_model.to('cuda')
+    linear_criterion = linear_criterion.to('cuda')
     # two_layer_model = two_layer_model.to(args_copy.device)
     # two_layer_criterion = two_layer_criterion.to(args_copy.device)
 
@@ -366,8 +366,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
         # knn_labels_train = np.concatenate((knn_labels_train, target.cpu().numpy()), axis=0)
 
 
-        linear_output = linear_model(cls_token.cpu())
-        print(linear_output)
+        linear_output = linear_model(cls_token)
         linear_loss = linear_criterion(linear_output, target)
         linear_optimizer.zero_grad()
         linear_loss.backward()
@@ -433,7 +432,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
         # knn_labels_val = np.concatenate((knn_labels_val, target.cpu().numpy()), axis=0)
         total_samples += target.size(0)
 
-        linear_output = linear_model(cls_token.cpu())
+        linear_output = linear_model(cls_token)
         linear_loss = linear_criterion(linear_output, target)
         _, predicted_linear = torch.max(linear_output.data, 1)
         correct_linear += (predicted_linear == target).sum().item()
