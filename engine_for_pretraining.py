@@ -352,7 +352,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
         empty_mask = torch.zeros((input_data.shape[0], 1568), dtype=torch.bool)
         empty_mask = empty_mask.to('cuda', non_blocking=True)
         if batch_idx % 10 == 0:
-            print("knn: ", batch_idx)
+            print("knn train: ", batch_idx)
         input_data = input_data.to('cuda', non_blocking=True)
         target = target.to('cuda', non_blocking=True)
 
@@ -417,7 +417,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
         empty_mask = torch.zeros((input_data.shape[0], 1568), dtype=torch.bool)
         empty_mask = empty_mask.to('cuda', non_blocking=True)
         if batch_idx % 10 == 0:
-            print(batch_idx)
+            print("knn val: ", batch_idx)
         input_data = input_data.to('cuda', non_blocking=True)
         target = target.to('cuda', non_blocking=True)
 
@@ -426,8 +426,8 @@ def pretraining_accuracy(model, video_teacher_model, args):
 
         cls_token = features[:, 0, :]
 
-        knn_features_val = np.append(knn_features_val ,cls_token.cpu().numpy())
-        knn_labels_val = np.append(knn_labels_val, target.cpu().numpy())
+        knn_features_val = np.append(knn_features_val ,cls_token.cpu().numpy(), axis=0)
+        knn_labels_val = np.append(knn_labels_val, target.cpu().numpy(), axis=0)
         # knn_features_val = np.concatenate((knn_features_val, cls_token.cpu().numpy()), axis=0)
         # knn_labels_val = np.concatenate((knn_labels_val, target.cpu().numpy()), axis=0)
         total_samples += target.size(0)
