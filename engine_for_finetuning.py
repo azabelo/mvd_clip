@@ -20,7 +20,6 @@ def train_class_batch(model, samples, target, criterion):
 
     outputs = model(samples)
     loss = criterion(outputs, target)
-
     # MY CHANGES
     # print("targets")
     # print(target)
