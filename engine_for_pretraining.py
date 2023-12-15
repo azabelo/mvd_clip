@@ -33,16 +33,16 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
     # MY CHANGES
     # test that the output of the video teacher doesn't change by passing in a ones vector
     # (found that it doesn't change)
-    # ones_video_features = video_teacher_model(torch.ones((1, 3, 16, 224, 224)).cuda())
-    # print("ones video features (epoch start): ", ones_video_features[:, 0, :25])
+    ones_video_features = video_teacher_model(torch.ones((1, 3, 16, 224, 224)).cuda())
+    print("ones video features (epoch start): ", ones_video_features[:, 0, :25])
 
     # not sure if the pretraining accuracy stuff needs normalization
     if args.knn_freq != -1 and epoch % args.knn_freq == 0:
         pretraining_accuracy(model, video_teacher_model, args)
         # test that the output of the video teacher doesn't change by passing in a ones vector
         # (found that it doesn't change)
-        # ones_video_features = video_teacher_model(torch.ones((1, 3, 16, 224, 224)).cuda())
-        # print("ones video features (after knn): ", ones_video_features[:, 0, :25])
+        ones_video_features = video_teacher_model(torch.ones((1, 3, 16, 224, 224)).cuda())
+        print("ones video features (after knn): ", ones_video_features[:, 0, :25])
     # END MY CHANGES
 
     model.train()
@@ -257,7 +257,6 @@ def pretraining_accuracy(model, video_teacher_model, args):
                 target = target.to(args_copy.device, non_blocking=True)
                 # just uses class token
                 features = video_teacher_model(input_data)[:,0,:]
-                print(target.shape)
                 output = test_video_teacher(features)
                 loss = criterion(output, target)
 
