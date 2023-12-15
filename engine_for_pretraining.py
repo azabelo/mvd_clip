@@ -240,7 +240,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
                 x = self.linear_layer(x)
                 return x
 
-        test_video_teacher = VideoLinearTrainer(args_copy.nb_classes)
+        test_video_teacher = VideoLinearTrainer(51)
         test_video_teacher.cuda()
         criterion = nn.MSELoss()
         optimizer = optim.Adam(test_video_teacher.parameters(), lr=1e-3)
@@ -257,6 +257,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
                 target = target.to(args_copy.device, non_blocking=True)
                 # just uses class token
                 features = video_teacher_model(input_data)[:,0,:]
+                print(features.shape)
                 output = test_video_teacher(features)
                 loss = criterion(output, target)
 
