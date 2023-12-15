@@ -193,8 +193,7 @@ def validation_one_epoch(data_loader, model, device):
           .format(top1=metric_logger.acc1, top5=metric_logger.acc5, losses=metric_logger.loss))
 
     # MY CHANGES
-    wandb.log({"val_acc (top 1)": metric_logger.acc1, "val_acc (top 5)": metric_logger.acc5, })
-    # "val_loss": metric_logger.loss gives an error
+    wandb.log({"val_acc (top 1)": metric_logger.acc1.global_avg, "val_acc (top 5)": metric_logger.acc5.global_avg, "val_loss": metric_logger.loss.global_avg})
     # END MY CHANGES
 
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
