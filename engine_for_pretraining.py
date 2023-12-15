@@ -227,6 +227,9 @@ def pretraining_accuracy(model, video_teacher_model, args):
     args_copy.batch_size = 8
     args_copy.device = 'cpu'
 
+    model.to(args_copy.device)
+    video_teacher_model.to(args_copy.device)
+
     dataset_train, args_copy.nb_classes = build_dataset(is_train=True, test_mode=False, args=args_copy)
 
     num_tasks = utils.get_world_size()
