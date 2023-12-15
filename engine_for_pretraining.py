@@ -228,7 +228,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
         collate_fn=collate_func,
     )
 
-    linear_probe_video_teacher = True
+    linear_probe_video_teacher = False
     if linear_probe_video_teacher:
         class VideoLinearTrainer(nn.Module):
             def __init__(self, classes):
