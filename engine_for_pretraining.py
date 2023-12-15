@@ -227,9 +227,6 @@ def pretraining_accuracy(model, video_teacher_model, args):
     args_copy.batch_size = 8
     args_copy.device = 'cpu'
 
-    model.to(args_copy.device)
-    video_teacher_model.to(args_copy.device)
-
     dataset_train, args_copy.nb_classes = build_dataset(is_train=True, test_mode=False, args=args_copy)
 
     num_tasks = utils.get_world_size()
@@ -279,8 +276,8 @@ def pretraining_accuracy(model, video_teacher_model, args):
             for batch_idx, (input_data, target, _, _) in enumerate(data_loader_train):
                 if batch_idx % 10 == 0:
                     print("vid teacher test: ", batch_idx)
-                input_data = input_data.to(args_copy.device, non_blocking=True)
-                target = target.to(args_copy.device, non_blocking=True)
+                input_data = input_data.to('cuda', non_blocking=True)
+                target = target.to('cuda', non_blocking=True)
                 # just uses class token
                 features = video_teacher_model(input_data)[:,0,:]
                 output = test_video_teacher(features)
@@ -346,8 +343,8 @@ def pretraining_accuracy(model, video_teacher_model, args):
     # two_layer_model = two_layer_model.to(args_copy.device)
     # two_layer_criterion = two_layer_criterion.to(args_copy.device)
 
-    knn_classifier19 = KNeighborsClassifier(n_neighbors=19)
-    knn_classifier5 = KNeighborsClassifier(n_neighbors=5)
+    knn_classifier19 = KNeighborsClassifier(n_neighbors=19, algorithm='brute', metric='cosine')
+    knn_classifier5 = KNeighborsClassifier(n_neighbors=5, algorithm='brute', metric='cosine')
 
     knn_features_train = np.empty((0, 768))
     knn_labels_train = np.empty(0)
