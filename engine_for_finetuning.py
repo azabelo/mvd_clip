@@ -22,10 +22,10 @@ def train_class_batch(model, samples, target, criterion):
     loss = criterion(outputs, target)
 
     # MY CHANGES
-    print("targets")
-    print(target)
-    print("outputs")
-    print(outputs)
+    # print("targets")
+    # print(target)
+    # print("outputs")
+    # print(outputs)
     # END MY CHANGES
 
     return loss, outputs
@@ -194,8 +194,8 @@ def validation_one_epoch(data_loader, model, device):
           .format(top1=metric_logger.acc1, top5=metric_logger.acc5, losses=metric_logger.loss))
 
     # MY CHANGES
-    wandb.log({"val_acc (top 1)": metric_logger.acc1, "val_acc (top 5)": metric_logger.acc5,
-               "val_loss": metric_logger.loss })
+    wandb.log({"val_acc (top 1)": metric_logger.acc1, "val_acc (top 5)": metric_logger.acc5, })
+    # "val_loss": metric_logger.loss gives an error
     # END MY CHANGES
 
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
