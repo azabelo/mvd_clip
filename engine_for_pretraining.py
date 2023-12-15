@@ -31,9 +31,16 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
                     image_teacher_model=None, video_teacher_model=None, norm_feature=False):
 
     # MY CHANGES
+    # test that the output of the video teacher doesn't change by passing in a ones vector
+    ones_video_features = video_teacher_model(torch.ones((1, 3, 16, 224, 224)).cuda())
+    print("ones video features (epoch start): ", ones_video_features[:, 0, :25])
+
     # not sure if the pretraining accuracy stuff needs normalization
     if args.knn_freq != -1 and epoch % args.knn_freq == 0:
         pretraining_accuracy(model, args)
+        # test that the output of the video teacher doesn't change by passing in a ones vector
+        ones_video_features = video_teacher_model(torch.ones((1, 3, 16, 224, 224)).cuda())
+        print("ones video features (after knn): ", ones_video_features[:, 0, :25])
     # END MY CHANGES
 
     model.train()
