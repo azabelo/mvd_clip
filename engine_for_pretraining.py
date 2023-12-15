@@ -207,13 +207,10 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
 def pretraining_accuracy(model, video_teacher_model, args):
     # add other finetuning thing here
-
-    model.eval()
-    model.module.encoder.eval()
-    model.module.decoder.eval()
-    model.module.encoder_to_decoder.eval()
-    model.module.pos_embed.eval()
-    model.module.mask_token.eval()
+    def deactivate_gradients(model):
+        for param in model.parameters():
+            param.requires_grad = False
+    deactivate_gradients(model.module)
 
     # args that are only present in finetuning were copied over
     args_copy = copy.deepcopy(args)
@@ -482,4 +479,8 @@ def pretraining_accuracy(model, video_teacher_model, args):
     # del two_layer_criterion
     torch.cuda.empty_cache()
 
-    model.train()
+    def activate_gradients(model):
+        for param in model.parameters():
+            param.requires_grad = True
+
+    activate_gradients(model.module)
