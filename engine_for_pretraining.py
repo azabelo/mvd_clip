@@ -231,6 +231,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
     if linear_probe_video_teacher:
         class VideoLinearTrainer(nn.Module):
             def __init__(self, classes):
+                super(VideoLinearTrainer, self).__init__()
                 #just uses class token
                 self.linear_layer = nn.Linear(768, classes)
 
