@@ -209,6 +209,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
     # add other finetuning thing here
 
     model.eval()
+    model.encoder.eval()
 
     # args that are only present in finetuning were copied over
     args_copy = copy.deepcopy(args)
