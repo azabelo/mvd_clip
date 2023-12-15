@@ -203,6 +203,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
     args_copy.test_num_segment = 2
     args_copy.test_num_crop = 3
     args_copy.update_freq = 1
+    args_copy.batch_size = 8
 
     dataset_train, args_copy.nb_classes = build_dataset(is_train=True, test_mode=False, args=args_copy)
 
