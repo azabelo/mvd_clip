@@ -303,17 +303,17 @@ def pretraining_accuracy(model, video_teacher_model, args):
     class LinearClassifier(nn.Module):
         def __init__(self):
             super(LinearClassifier, self).__init__()
-            self.fc = nn.Linear(1569 * 768, 51)
+            self.fc = nn.Linear(768, 51)
 
         def forward(self, x):
-            x = x.view(x.size(0), -1)  # Flatten the input
+            #x = x.view(x.size(0), -1)  # Flatten the input
             x = self.fc(x)
             return x
 
     # Instantiate the model
     linear_model = LinearClassifier()
     linear_criterion = nn.CrossEntropyLoss()
-    linear_optimizer = optim.SGD(linear_model.parameters(), lr=2e-5)
+    linear_optimizer = optim.SGD(linear_model.parameters(), lr=1e-3)
 
 
 
@@ -350,21 +350,24 @@ def pretraining_accuracy(model, video_teacher_model, args):
     knn_labels_train = np.empty(0)
     for batch_idx, (input_data, target, _, _) in enumerate(data_loader_train):
         empty_mask = torch.zeros((input_data.shape[0], 1568), dtype=torch.bool)
-        empty_mask = empty_mask.to(args_copy.device)
+        empty_mask = empty_mask.to('cuda', non_blocking=True)
         if batch_idx % 10 == 0:
             print("knn: ", batch_idx)
-        input_data = input_data.to(args_copy.device, non_blocking=True)
-        target = target.to(args_copy.device, non_blocking=True)
+        input_data = input_data.to('cuda', non_blocking=True)
+        target = target.to('cuda', non_blocking=True)
 
         with torch.no_grad():
             features = model.module.forward_encoder(input_data, empty_mask)
 
         cls_token = features[:, 0, :]
-        knn_features_train = np.concatenate((knn_features_train, cls_token.cpu().numpy()), axis=0)
-        knn_labels_train = np.concatenate((knn_labels_train, target.cpu().numpy()), axis=0)
+        knn_features_train.append(cls_token.cpu().numpy())
+        knn_labels_train.append(target.cpu().numpy())
+        # knn_features_train = np.concatenate((knn_features_train, cls_token.cpu().numpy()), axis=0)
+        # knn_labels_train = np.concatenate((knn_labels_train, target.cpu().numpy()), axis=0)
 
 
-        linear_output = linear_model(features)
+        linear_output = linear_model(cls_token.cpu())
+        print(linear_output)
         linear_loss = linear_criterion(linear_output, target)
         linear_optimizer.zero_grad()
         linear_loss.backward()
@@ -413,22 +416,23 @@ def pretraining_accuracy(model, video_teacher_model, args):
     knn_labels_val = np.empty(0)
     for batch_idx, (input_data, target, _) in enumerate(data_loader_val):
         empty_mask = torch.zeros((input_data.shape[0], 1568), dtype=torch.bool)
-        empty_mask = empty_mask.to(args_copy.device)
+        empty_mask = empty_mask.to('cuda', non_blocking=True)
         if batch_idx % 10 == 0:
             print(batch_idx)
-        input_data = input_data.to(args_copy.device)
-        target = target.to(args_copy.device)
+        input_data = input_data.to('cuda', non_blocking=True)
+        target = target.to('cuda', non_blocking=True)
 
         with torch.no_grad():
             features = model.module.forward_encoder(input_data, empty_mask)
 
         cls_token = features[:, 0, :]
-        knn_features_val = np.concatenate((knn_features_val, cls_token.cpu().numpy()), axis=0)
-        knn_labels_val = np.concatenate((knn_labels_val, target.cpu().numpy()), axis=0)
+        knn_features_val.append(cls_token.cpu().numpy())
+        knn_labels_val.append(target.cpu().numpy())
+        # knn_features_val = np.concatenate((knn_features_val, cls_token.cpu().numpy()), axis=0)
+        # knn_labels_val = np.concatenate((knn_labels_val, target.cpu().numpy()), axis=0)
         total_samples += target.size(0)
-        continue
 
-        linear_output = linear_model(features)
+        linear_output = linear_model(cls_token.cpu())
         linear_loss = linear_criterion(linear_output, target)
         _, predicted_linear = torch.max(linear_output.data, 1)
         correct_linear += (predicted_linear == target).sum().item()
