@@ -225,6 +225,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
     args_copy.test_num_crop = 3
     args_copy.update_freq = 1
     args_copy.batch_size = 8
+    args_copy.device = 'cpu'
 
     dataset_train, args_copy.nb_classes = build_dataset(is_train=True, test_mode=False, args=args_copy)
 
@@ -263,7 +264,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
                 return x
 
         test_video_teacher = VideoLinearTrainer(51)
-        test_video_teacher.cuda()
+        test_video_teacher.to(args_copy.device, non_blocking=True)
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(test_video_teacher.parameters(), lr=1e-3)
 
@@ -317,30 +318,30 @@ def pretraining_accuracy(model, video_teacher_model, args):
 
 
 
-    class TwoLayerClassifier(nn.Module):
-        def __init__(self):
-            super(TwoLayerClassifier, self).__init__()
-            self.fc1 = nn.Linear(1569 * 768, 2048)
-            self.fc2 = nn.Linear(2048, 51)
-
-        def forward(self, x):
-            x = x.view(x.size(0), -1)  # Flatten the input
-            x = torch.relu(self.fc1(x))
-            x = self.fc2(x)
-            return x
-
-    # Instantiate the model
-    two_layer_model = TwoLayerClassifier()
-
-    # Define loss function and optimizer
-    two_layer_criterion = nn.CrossEntropyLoss()
-    two_layer_optimizer = optim.SGD(two_layer_model.parameters(), lr=2e-5)
+    # class TwoLayerClassifier(nn.Module):
+    #     def __init__(self):
+    #         super(TwoLayerClassifier, self).__init__()
+    #         self.fc1 = nn.Linear(1569 * 768, 2048)
+    #         self.fc2 = nn.Linear(2048, 51)
+    #
+    #     def forward(self, x):
+    #         x = x.view(x.size(0), -1)  # Flatten the input
+    #         x = torch.relu(self.fc1(x))
+    #         x = self.fc2(x)
+    #         return x
+    #
+    # # Instantiate the model
+    # two_layer_model = TwoLayerClassifier()
+    #
+    # # Define loss function and optimizer
+    # two_layer_criterion = nn.CrossEntropyLoss()
+    # two_layer_optimizer = optim.SGD(two_layer_model.parameters(), lr=2e-5)
 
     # move everything to the GPU
     linear_model = linear_model.to(args_copy.device)
     linear_criterion = linear_criterion.to(args_copy.device)
-    two_layer_model = two_layer_model.to(args_copy.device)
-    two_layer_criterion = two_layer_criterion.to(args_copy.device)
+    # two_layer_model = two_layer_model.to(args_copy.device)
+    # two_layer_criterion = two_layer_criterion.to(args_copy.device)
 
     knn_classifier19 = KNeighborsClassifier(n_neighbors=19)
     knn_classifier5 = KNeighborsClassifier(n_neighbors=5)
@@ -361,7 +362,6 @@ def pretraining_accuracy(model, video_teacher_model, args):
         cls_token = features[:, 0, :]
         knn_features_train = np.concatenate((knn_features_train, cls_token.cpu().numpy()), axis=0)
         knn_labels_train = np.concatenate((knn_labels_train, target.cpu().numpy()), axis=0)
-        continue
 
 
         linear_output = linear_model(features)
@@ -370,21 +370,24 @@ def pretraining_accuracy(model, video_teacher_model, args):
         linear_loss.backward()
         linear_optimizer.step()
 
-        two_layer_output = two_layer_model(features)
-        two_layer_loss = two_layer_criterion(two_layer_output, target)
-        two_layer_optimizer.zero_grad()
-        two_layer_loss.backward()
-        two_layer_optimizer.step()
+        # two_layer_output = two_layer_model(features)
+        # two_layer_loss = two_layer_criterion(two_layer_output, target)
+        # two_layer_optimizer.zero_grad()
+        # two_layer_loss.backward()
+        # two_layer_optimizer.step()
 
         linear_predictions = linear_output.argmax(dim=1)
-        two_layer_predictions = two_layer_output.argmax(dim=1)
+        # two_layer_predictions = two_layer_output.argmax(dim=1)
         linear_accuracy = (linear_predictions == target).float().mean().item()
-        two_layer_accuracy = (two_layer_predictions == target).float().mean().item()
+        # two_layer_accuracy = (two_layer_predictions == target).float().mean().item()
 
         wandb.log({'linear_loss': linear_loss.item(),
-                   'two_layer_loss': two_layer_loss.item(),
-                  'linear_accuracy train': linear_accuracy,
-                'two_layer_accuracy train': two_layer_accuracy})
+                   'linear_accuracy train': linear_accuracy})
+
+        # wandb.log({'linear_loss': linear_loss.item(),
+        #            'two_layer_loss': two_layer_loss.item(),
+        #           'linear_accuracy train': linear_accuracy,
+        #         'two_layer_accuracy train': two_layer_accuracy})
 
     knn_classifier19.fit(knn_features_train, knn_labels_train)
     knn_classifier5.fit(knn_features_train, knn_labels_train)
@@ -401,7 +404,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
     )
 
     linear_model.eval()
-    two_layer_model.eval()
+    # two_layer_model.eval()
     correct_linear = 0
     correct_two_layer = 0
     total_samples = 0
@@ -430,10 +433,10 @@ def pretraining_accuracy(model, video_teacher_model, args):
         _, predicted_linear = torch.max(linear_output.data, 1)
         correct_linear += (predicted_linear == target).sum().item()
 
-        two_layer_output = two_layer_model(features)
-        two_layer_loss = two_layer_criterion(two_layer_output, target)
-        _, predicted_two_layer = torch.max(two_layer_output.data, 1)
-        correct_two_layer += (predicted_two_layer == target).sum().item()
+        # two_layer_output = two_layer_model(features)
+        # two_layer_loss = two_layer_criterion(two_layer_output, target)
+        # _, predicted_two_layer = torch.max(two_layer_output.data, 1)
+        # correct_two_layer += (predicted_two_layer == target).sum().item()
 
     val_predictions19 = knn_classifier19.predict(knn_features_val)
     val_predictions5 = knn_classifier5.predict(knn_features_val)
@@ -448,7 +451,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
 
     accuracy_linear = None
     accuracy_two_layer = None
-    # accuracy_linear = correct_linear / total_samples
+    accuracy_linear = correct_linear / total_samples
     # accuracy_two_layer = correct_two_layer / total_samples
     wandb.log({"linear accuracy": accuracy_linear,
                "two layer accuracy": accuracy_two_layer,
