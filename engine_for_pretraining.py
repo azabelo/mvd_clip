@@ -222,7 +222,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
     data_loader_train = torch.utils.data.DataLoader(
         dataset_train, sampler=sampler_train,
         batch_size=args_copy.batch_size,
-        num_workers=4,
+        num_workers=args_copy.num_workers,
         pin_memory=args_copy.pin_mem,
         drop_last=True,
         collate_fn=collate_func,
@@ -252,6 +252,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
             total_correct = 0
             total_samples = 0
             for batch_idx, (input_data, target, _, _) in enumerate(data_loader_train):
+                torch.cuda.empty_cache()
                 if batch_idx % 10 == 0:
                     print("vid teacher test: ", batch_idx)
                 input_data = input_data.to(args_copy.device, non_blocking=True)
