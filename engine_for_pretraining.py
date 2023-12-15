@@ -31,6 +31,13 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
                     image_teacher_model=None, video_teacher_model=None, norm_feature=False):
 
     # MY CHANGES
+    # test that the student is the same prior to the start of training
+    if epoch == 0:
+        empty_mask = torch.zeros((1, 1568), dtype=torch.bool)
+        empty_mask = empty_mask.to(args.device)
+        ones_student_features = model(torch.ones((1, 3, 16, 224, 224)).cuda(), empty_mask)
+        print("ones student features (prior to training): ", ones_student_features[:, 0, :25])
+
     # test that the output of the video teacher doesn't change by passing in a ones vector
     # (found that it doesn't change)
     ones_video_features = video_teacher_model(torch.ones((1, 3, 16, 224, 224)).cuda())
