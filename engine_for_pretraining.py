@@ -257,7 +257,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
                 target = target.to(args_copy.device, non_blocking=True)
                 # just uses class token
                 features = video_teacher_model(input_data)[:,0,:]
-                print(features.shape)
+                print(target.shape)
                 output = test_video_teacher(features)
                 loss = criterion(output, target)
 
