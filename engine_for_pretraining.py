@@ -360,8 +360,8 @@ def pretraining_accuracy(model, video_teacher_model, args):
             features = model.module.forward_encoder(input_data, empty_mask)
 
         cls_token = features[:, 0, :]
-        knn_features_train.append(cls_token.cpu().numpy())
-        knn_labels_train.append(target.cpu().numpy())
+        knn_features_train = np.append(knn_features_train, cls_token.cpu().numpy(), axis=0)
+        knn_labels_train = np.append(knn_labels_train, target.cpu().numpy(), axis=0)
         # knn_features_train = np.concatenate((knn_features_train, cls_token.cpu().numpy()), axis=0)
         # knn_labels_train = np.concatenate((knn_labels_train, target.cpu().numpy()), axis=0)
 
@@ -426,8 +426,9 @@ def pretraining_accuracy(model, video_teacher_model, args):
             features = model.module.forward_encoder(input_data, empty_mask)
 
         cls_token = features[:, 0, :]
-        knn_features_val.append(cls_token.cpu().numpy())
-        knn_labels_val.append(target.cpu().numpy())
+
+        knn_features_val = np.append(knn_features_val ,cls_token.cpu().numpy())
+        knn_labels_val = np.append(knn_labels_val, target.cpu().numpy())
         # knn_features_val = np.concatenate((knn_features_val, cls_token.cpu().numpy()), axis=0)
         # knn_labels_val = np.concatenate((knn_labels_val, target.cpu().numpy()), axis=0)
         total_samples += target.size(0)
