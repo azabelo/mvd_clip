@@ -209,6 +209,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
     # add other finetuning thing here
     def deactivate_gradients(model):
         for param in model.parameters():
+            print(param)
             param.requires_grad = False
     deactivate_gradients(model.module)
 
