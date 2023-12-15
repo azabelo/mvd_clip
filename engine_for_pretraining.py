@@ -242,7 +242,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
 
         test_video_teacher = VideoLinearTrainer(51)
         test_video_teacher.cuda()
-        criterion = nn.MSELoss()
+        criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(test_video_teacher.parameters(), lr=1e-3)
 
         num_epochs = 3
