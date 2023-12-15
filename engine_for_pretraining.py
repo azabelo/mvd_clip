@@ -32,15 +32,17 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
     # MY CHANGES
     # test that the output of the video teacher doesn't change by passing in a ones vector
-    ones_video_features = video_teacher_model(torch.ones((1, 3, 16, 224, 224)).cuda())
-    print("ones video features (epoch start): ", ones_video_features[:, 0, :25])
+    # (found that it doesn't change)
+    # ones_video_features = video_teacher_model(torch.ones((1, 3, 16, 224, 224)).cuda())
+    # print("ones video features (epoch start): ", ones_video_features[:, 0, :25])
 
     # not sure if the pretraining accuracy stuff needs normalization
     if args.knn_freq != -1 and epoch % args.knn_freq == 0:
-        pretraining_accuracy(model, args)
+        pretraining_accuracy(model, video_teacher_model, args)
         # test that the output of the video teacher doesn't change by passing in a ones vector
-        ones_video_features = video_teacher_model(torch.ones((1, 3, 16, 224, 224)).cuda())
-        print("ones video features (after knn): ", ones_video_features[:, 0, :25])
+        # (found that it doesn't change)
+        # ones_video_features = video_teacher_model(torch.ones((1, 3, 16, 224, 224)).cuda())
+        # print("ones video features (after knn): ", ones_video_features[:, 0, :25])
     # END MY CHANGES
 
     model.train()
@@ -181,7 +183,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
 
-def pretraining_accuracy(model, args):
+def pretraining_accuracy(model, video_teacher_model, args):
     # add other finetuning thing here
 
     model.eval()
@@ -225,6 +227,55 @@ def pretraining_accuracy(model, args):
         collate_fn=collate_func,
     )
 
+    linear_probe_video_teacher = True
+    if linear_probe_video_teacher:
+        class VideoLinearTrainer(nn.Module):
+            def __init__(self, classes):
+                #just uses class token
+                self.linear_layer = nn.Linear(768, classes)
+
+            def forward(self, x):
+                # just uses class token
+                x = self.linear_layer(x)
+                return x
+
+        test_video_teacher = VideoLinearTrainer(args_copy.nb_classes)
+        test_video_teacher.cuda()
+        criterion = nn.MSELoss()
+        optimizer = optim.Adam(test_video_teacher.parameters(), lr=1e-3)
+
+        num_epochs = 3
+
+        for epoch in range(num_epochs):
+            total_correct = 0
+            total_samples = 0
+            for batch_idx, (input_data, target, _, _) in enumerate(data_loader_train):
+                if batch_idx % 10 == 0:
+                    print("vid teacher test: ", batch_idx)
+                input_data = input_data.to(args_copy.device, non_blocking=True)
+                target = target.to(args_copy.device, non_blocking=True)
+                # just uses class token
+                features = video_teacher_model(input_data)[:,0,:]
+                output = test_video_teacher(features)
+                loss = criterion(output, target)
+
+                # Compute accuracy
+                predicted_labels = torch.argmax(output, dim=1)
+                correct = (predicted_labels == target).sum().item()
+                total_correct += correct
+                total_samples += target.size(0)
+
+                # Backward and optimize
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+
+            # Calculate and print accuracy
+            accuracy = total_correct / total_samples
+            print(f"Accuracy: {accuracy * 100:.2f}%")
+
+
+
     class LinearClassifier(nn.Module):
         def __init__(self):
             super(LinearClassifier, self).__init__()
@@ -239,6 +290,8 @@ def pretraining_accuracy(model, args):
     linear_model = LinearClassifier()
     linear_criterion = nn.CrossEntropyLoss()
     linear_optimizer = optim.SGD(linear_model.parameters(), lr=2e-5)
+
+
 
 
     class TwoLayerClassifier(nn.Module):
@@ -275,9 +328,9 @@ def pretraining_accuracy(model, args):
         empty_mask = torch.zeros((input_data.shape[0], 1568), dtype=torch.bool)
         empty_mask = empty_mask.to(args_copy.device)
         if batch_idx % 10 == 0:
-            print(batch_idx)
-        input_data = input_data.to(args_copy.device)
-        target = target.to(args_copy.device)
+            print("knn: ", batch_idx)
+        input_data = input_data.to(args_copy.device, non_blocking=True)
+        target = target.to(args_copy.device, non_blocking=True)
 
         with torch.no_grad():
             features = model.module.forward_encoder(input_data, empty_mask)
