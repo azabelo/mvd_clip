@@ -49,10 +49,6 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
     # not sure if the pretraining accuracy stuff needs normalization
     if args.knn_freq != -1 and epoch % args.knn_freq == 0:
         pretraining_accuracy(model, video_teacher_model, args)
-        # test that the output of the video teacher doesn't change by passing in a ones vector
-        # (found that it doesn't change)
-        ones_video_features = video_teacher_model(torch.ones((1, 3, 16, 224, 224)).cuda())
-        print("ones video features (after knn): ", ones_video_features[:, 0, :25])
 
         # test that the student is the same prior to the start of training
         if epoch == 0:
@@ -63,6 +59,11 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             print("ones video teacher features (prior to training): ", ones_vid_feats[:, 0, :25])
             student_feats = model.module.forward_encoder(torch.ones((1, 3, 16, 224, 224)).cuda(), empty_mask)
             print("ones student features (prior to training): ", student_feats[:, 0, :25])
+        # test that the output of the video teacher doesn't change by passing in a ones vector
+        # (found that it doesn't change)
+        ones_video_features = video_teacher_model(torch.ones((1, 3, 16, 224, 224)).cuda())
+        print("ones video features (after knn): ", ones_video_features[:, 0, :25])
+
 
     # END MY CHANGES
 
@@ -379,12 +380,12 @@ def pretraining_accuracy(model, video_teacher_model, args):
         # two_layer_optimizer.step()
 
         linear_predictions = linear_output.argmax(dim=1)
-        # two_layer_predictions = two_layer_output.argmax(dim=1)
         linear_accuracy = (linear_predictions == target).float().mean().item()
+        # two_layer_predictions = two_layer_output.argmax(dim=1)
         # two_layer_accuracy = (two_layer_predictions == target).float().mean().item()
 
-        wandb.log({'linear_loss': linear_loss.item(),
-                   'linear_accuracy train': linear_accuracy})
+        # wandb.log({'linear_loss': linear_loss.item(),
+        #            'linear_accuracy train': linear_accuracy})
 
         # wandb.log({'linear_loss': linear_loss.item(),
         #            'two_layer_loss': two_layer_loss.item(),
@@ -461,4 +462,19 @@ def pretraining_accuracy(model, video_teacher_model, args):
                "two layer accuracy": accuracy_two_layer,
                "knn accuracy 19": accuracy_knn19,
                "knn accuracy 5": accuracy_knn5})
+    del knn_features_train
+    del knn_labels_train
+    del knn_features_val
+    del knn_labels_val
+    del dataset_val
+    del sampler_val
+    del data_loader_val
+    del linear_model
+    # del two_layer_model
+    del linear_optimizer
+    # del two_layer_optimizer
+    del linear_criterion
+    # del two_layer_criterion
+    torch.cuda.empty_cache()
+
     model.train()
