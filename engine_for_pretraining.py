@@ -33,7 +33,9 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
     # MY CHANGES
     # test that the student is the same prior to the start of training
     if epoch == 0:
+        model.eval()
         with torch.no_grad():
+            model.eval()
             empty_mask = torch.zeros((1, 1568), dtype=torch.bool)
             empty_mask = empty_mask.to(args.device)
             ones_features, ones_vid_feats = model(torch.ones((1, 3, 16, 224, 224)).cuda(), empty_mask)
