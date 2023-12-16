@@ -41,6 +41,14 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
         student_feats = model.module.forward_encoder(torch.ones((1, 3, 16, 224, 224)).cuda(), empty_mask)
         print("ones student features (prior to training): ", student_feats[:, 0, :25])
 
+        empty_mask = torch.zeros((1, 1568), dtype=torch.bool)
+        empty_mask = empty_mask.to(args.device)
+        ones_features, ones_vid_feats = model(torch.ones((1, 3, 16, 224, 224)).cuda(), empty_mask)
+        print("ones image teacher features (prior to training): ", ones_features[:, 0, :25])
+        print("ones video teacher features (prior to training): ", ones_vid_feats[:, 0, :25])
+        student_feats = model.module.forward_encoder(torch.ones((1, 3, 16, 224, 224)).cuda(), empty_mask)
+        print("ones student features (prior to training): ", student_feats[:, 0, :25])
+
     # test that the output of the video teacher doesn't change by passing in a ones vector
     # (found that it doesn't change)
     ones_video_features = video_teacher_model(torch.ones((1, 3, 16, 224, 224)).cuda())
