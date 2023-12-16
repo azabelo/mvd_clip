@@ -365,7 +365,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
         with torch.no_grad():
             model.eval()
             features = model.module.forward_encoder(input_data, empty_mask)
-            features = features.detach()
+            # features = features.detach()
             cls_token = features[:, 0, :]
             knn_features_train = np.append(knn_features_train, cls_token.cpu().numpy(), axis=0)
             knn_labels_train = np.append(knn_labels_train, target.cpu().numpy(), axis=0)
@@ -412,44 +412,45 @@ def pretraining_accuracy(model, video_teacher_model, args):
         drop_last=False
     )
 
+    model.eval()
     linear_model.eval()
-    # two_layer_model.eval()
-    correct_linear = 0
-    correct_two_layer = 0
-    total_samples = 0
-
-    knn_features_val = np.empty((0, 768))
-    knn_labels_val = np.empty(0)
-    for batch_idx, (input_data, target, _) in enumerate(data_loader_val):
-        empty_mask = torch.zeros((input_data.shape[0], 1568), dtype=torch.bool)
-        empty_mask = empty_mask.to('cuda', non_blocking=True)
-        if batch_idx % 10 == 0:
-            print("knn val: ", batch_idx)
-        input_data = input_data.to('cuda', non_blocking=True)
-        target = target.to('cuda', non_blocking=True)
-
+    with torch.no_grad():
         model.eval()
-        with torch.no_grad():
-            model.eval()
+        linear_model.eval()
+        # two_layer_model.eval()
+        correct_linear = 0
+        correct_two_layer = 0
+        total_samples = 0
+
+        knn_features_val = np.empty((0, 768))
+        knn_labels_val = np.empty(0)
+        for batch_idx, (input_data, target, _) in enumerate(data_loader_val):
+            empty_mask = torch.zeros((input_data.shape[0], 1568), dtype=torch.bool)
+            empty_mask = empty_mask.to('cuda', non_blocking=True)
+            if batch_idx % 10 == 0:
+                print("knn val: ", batch_idx)
+            input_data = input_data.to('cuda', non_blocking=True)
+            target = target.to('cuda', non_blocking=True)
+
             features = model.module.forward_encoder(input_data, empty_mask)
-            features = features.detach()
+            # features = features.detach()
             cls_token = features[:, 0, :]
             knn_features_val = np.append(knn_features_val ,cls_token.cpu().numpy(), axis=0)
             knn_labels_val = np.append(knn_labels_val, target.cpu().numpy(), axis=0)
             # knn_features_val = np.concatenate((knn_features_val, cls_token.cpu().numpy()), axis=0)
             # knn_labels_val = np.concatenate((knn_labels_val, target.cpu().numpy()), axis=0)
 
-        total_samples += target.size(0)
+            total_samples += target.size(0)
 
-        linear_output = linear_model(cls_token)
-        linear_loss = linear_criterion(linear_output, target)
-        _, predicted_linear = torch.max(linear_output.data, 1)
-        correct_linear += (predicted_linear == target).sum().item()
+            linear_output = linear_model(cls_token)
+            linear_loss = linear_criterion(linear_output, target)
+            _, predicted_linear = torch.max(linear_output.data, 1)
+            correct_linear += (predicted_linear == target).sum().item()
 
-        # two_layer_output = two_layer_model(features)
-        # two_layer_loss = two_layer_criterion(two_layer_output, target)
-        # _, predicted_two_layer = torch.max(two_layer_output.data, 1)
-        # correct_two_layer += (predicted_two_layer == target).sum().item()
+            # two_layer_output = two_layer_model(features)
+            # two_layer_loss = two_layer_criterion(two_layer_output, target)
+            # _, predicted_two_layer = torch.max(two_layer_output.data, 1)
+            # correct_two_layer += (predicted_two_layer == target).sum().item()
 
     val_predictions19 = knn_classifier19.predict(knn_features_val)
     val_predictions5 = knn_classifier5.predict(knn_features_val)
