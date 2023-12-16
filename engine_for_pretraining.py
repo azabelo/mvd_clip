@@ -207,11 +207,6 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
 def pretraining_accuracy(model, video_teacher_model, args):
     # add other finetuning thing here
-    def deactivate_gradients(model):
-        for param in model.parameters():
-            print(param)
-            param.requires_grad = False
-    deactivate_gradients(model.module)
 
     # args that are only present in finetuning were copied over
     args_copy = copy.deepcopy(args)
@@ -360,14 +355,15 @@ def pretraining_accuracy(model, video_teacher_model, args):
         input_data = input_data.to('cuda', non_blocking=True)
         target = target.to('cuda', non_blocking=True)
 
+        model.eval()
         with torch.no_grad():
             features = model.module.forward_encoder(input_data, empty_mask)
-
-        cls_token = features[:, 0, :]
-        knn_features_train = np.append(knn_features_train, cls_token.cpu().numpy(), axis=0)
-        knn_labels_train = np.append(knn_labels_train, target.cpu().numpy(), axis=0)
-        # knn_features_train = np.concatenate((knn_features_train, cls_token.cpu().numpy()), axis=0)
-        # knn_labels_train = np.concatenate((knn_labels_train, target.cpu().numpy()), axis=0)
+            features = features.detach()
+            cls_token = features[:, 0, :]
+            knn_features_train = np.append(knn_features_train, cls_token.cpu().numpy(), axis=0)
+            knn_labels_train = np.append(knn_labels_train, target.cpu().numpy(), axis=0)
+            # knn_features_train = np.concatenate((knn_features_train, cls_token.cpu().numpy()), axis=0)
+            # knn_labels_train = np.concatenate((knn_labels_train, target.cpu().numpy()), axis=0)
 
 
         linear_output = linear_model(cls_token)
@@ -425,15 +421,16 @@ def pretraining_accuracy(model, video_teacher_model, args):
         input_data = input_data.to('cuda', non_blocking=True)
         target = target.to('cuda', non_blocking=True)
 
+        model.eval()
         with torch.no_grad():
             features = model.module.forward_encoder(input_data, empty_mask)
+            features = features.detach()
+            cls_token = features[:, 0, :]
+            knn_features_val = np.append(knn_features_val ,cls_token.cpu().numpy(), axis=0)
+            knn_labels_val = np.append(knn_labels_val, target.cpu().numpy(), axis=0)
+            # knn_features_val = np.concatenate((knn_features_val, cls_token.cpu().numpy()), axis=0)
+            # knn_labels_val = np.concatenate((knn_labels_val, target.cpu().numpy()), axis=0)
 
-        cls_token = features[:, 0, :]
-
-        knn_features_val = np.append(knn_features_val ,cls_token.cpu().numpy(), axis=0)
-        knn_labels_val = np.append(knn_labels_val, target.cpu().numpy(), axis=0)
-        # knn_features_val = np.concatenate((knn_features_val, cls_token.cpu().numpy()), axis=0)
-        # knn_labels_val = np.concatenate((knn_labels_val, target.cpu().numpy()), axis=0)
         total_samples += target.size(0)
 
         linear_output = linear_model(cls_token)
