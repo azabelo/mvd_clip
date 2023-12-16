@@ -176,10 +176,13 @@ def get_args():
     parser.add_argument('--wandb_project_name', default='no_name', type=str)
     parser.add_argument('--notes_for_wandb_run', default='', type=str)
     parser.add_argument('--cls', default=0, type=int)
+    parser.add_argument('--resume_checkpoint', default='none')
 
     args_ret = parser.parse_args()
     if args_ret.cls == 1:
         args_ret.use_cls_token = True
+    if args_ret.resume_checkpoint != 'none':
+        args_ret.resume = args_ret.resume_checkpoint
 
     return args_ret
     # END MY_CHANGES

@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Check if the correct number of arguments is provided
-if [ "$#" -ne 17 ]; then
-  echo "Usage: $0 GPUS PORT IMAGE_TEACHER_PATH VIDEO_TEACHER_PATH DATA_DIRECTORY TRAIN_CSV EPOCHS BATCH_SIZE LEARNING_RATE WARMUP UPDATE_FREQ SAVE_FREQ KNN_FREQ USE_WANDB WANDB_PROJECT_NAME NOTES_FOR_WANDB_RUN USE_CLS_TOKEN"
+if [ "$#" -ne 18 ]; then
+  echo "Usage: $0 GPUS PORT IMAGE_TEACHER_PATH VIDEO_TEACHER_PATH DATA_DIRECTORY TRAIN_CSV EPOCHS BATCH_SIZE LEARNING_RATE WARMUP UPDATE_FREQ SAVE_FREQ KNN_FREQ USE_WANDB WANDB_PROJECT_NAME NOTES_FOR_WANDB_RUN USE_CLS_TOKEN RESUME_CHECKPOINT"
   echo " "
-  echo "Example: $0 1 12345 image_teacher.pth video_teacher.pth hmdb51_mp4 official_pretrain.csv 101 8 1.5e-4 5 32 10 10 1 project_name wandb_notes 1"
+  echo "Example: $0 1 12345 image_teacher.pth video_teacher.pth hmdb51_mp4 official_pretrain.csv 101 8 1.5e-4 5 32 10 10 1 project_name wandb_notes 1 none"
 
   exit 1
 fi
@@ -27,6 +27,7 @@ USE_WANDB=${14}
 WANDB_PROJECT_NAME=${15}
 NOTES_FOR_WANDB_RUN=${16}
 USE_CLS_TOKEN=${17}
+RESUME_CHECKPOINT=${18}
 OUTPUT_DIR='OUTPUT/pretrain/'
 
 # dont forget that k400 and smaller dataset like UCF101 use different parameters
@@ -55,4 +56,5 @@ OMP_NUM_THREADS=1 python3 -m torch.distributed.launch --nproc_per_node=${GPUS} \
         --lr ${LEARNING_RATE} --min_lr 1e-4 --drop_path 0.1 --warmup_epochs ${WARMUP} --epochs ${EPOCHS} \
         --auto_resume --norm_feature \
         --knn_freq ${KNN_FREQ} --use_wandb ${USE_WANDB} --wandb_project_name ${WANDB_PROJECT_NAME} \
-        --notes_for_wandb_run ${NOTES_FOR_WANDB_RUN} --cls ${USE_CLS_TOKEN}
+        --notes_for_wandb_run ${NOTES_FOR_WANDB_RUN} --cls ${USE_CLS_TOKEN} \
+        --resume_checkpoint ${RESUME_CHECKPOINT}
