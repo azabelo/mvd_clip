@@ -345,6 +345,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
     # move everything to the GPU
     linear_model = linear_model.to('cuda')
     linear_criterion = linear_criterion.to('cuda')
+    linear_model.train()
     # two_layer_model = two_layer_model.to(args_copy.device)
     # two_layer_criterion = two_layer_criterion.to(args_copy.device)
 
