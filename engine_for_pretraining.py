@@ -376,8 +376,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
 
 
         linear_output = linear_model(features)
-        print(linear_output)
-        print(target)
+        target = torch.nn.functional.one_hot(target, num_classes=51)
         linear_loss = linear_criterion(linear_output, target)
         linear_optimizer.zero_grad()
         linear_loss.backward()
