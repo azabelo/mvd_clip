@@ -355,6 +355,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
     knn_features_train = np.empty((0, 768))
     knn_labels_train = np.empty(0)
     for batch_idx, (input_data, target, _, _) in enumerate(data_loader_train):
+        linear_optimizer.zero_grad()
         empty_mask = torch.zeros((input_data.shape[0], 1568), dtype=torch.bool)
         empty_mask = empty_mask.to('cuda', non_blocking=True)
         if batch_idx % 10 == 0:
@@ -376,9 +377,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
 
 
         linear_output = linear_model(features)
-        target = torch.nn.functional.one_hot(target, num_classes=51)
         linear_loss = linear_criterion(linear_output, target)
-        linear_optimizer.zero_grad()
         linear_loss.backward()
         linear_optimizer.step()
 
