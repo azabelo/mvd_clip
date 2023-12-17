@@ -32,7 +32,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
     # MY CHANGES
     # test that the student is the same prior to the start of training
-    if epoch == 0:
+    if epoch % args.knn_freq == 0:
         model.eval()
         with torch.no_grad():
             model.eval()
