@@ -362,19 +362,22 @@ def pretraining_accuracy(model, video_teacher_model, args):
         input_data = input_data.to('cuda', non_blocking=True)
         target = target.to('cuda', non_blocking=True)
 
+        features = None
         model.eval()
         with torch.no_grad():
             model.eval()
-            features = model.module.forward_encoder(input_data, empty_mask)
+            features = model.module.forward_encoder(input_data, empty_mask)[:, 0, :]
             # features = features.detach()
-            cls_token = features[:, 0, :]
+            cls_token = features
             knn_features_train = np.append(knn_features_train, cls_token.cpu().numpy(), axis=0)
             knn_labels_train = np.append(knn_labels_train, target.cpu().numpy(), axis=0)
             # knn_features_train = np.concatenate((knn_features_train, cls_token.cpu().numpy()), axis=0)
             # knn_labels_train = np.concatenate((knn_labels_train, target.cpu().numpy()), axis=0)
 
 
-        linear_output = linear_model(cls_token)
+        linear_output = linear_model(features)
+        print(linear_output)
+        print(target)
         linear_loss = linear_criterion(linear_output, target)
         linear_optimizer.zero_grad()
         linear_loss.backward()
