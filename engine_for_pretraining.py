@@ -212,6 +212,9 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
 
 def pretraining_accuracy(model, video_teacher_model, args):
+
+    model = video_teacher_model
+
     # add other finetuning thing here
 
     # args that are only present in finetuning were copied over
