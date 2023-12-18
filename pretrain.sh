@@ -54,7 +54,8 @@ OMP_NUM_THREADS=1 python3 -m torch.distributed.launch --nproc_per_node=${GPUS} \
         --batch_size ${BATCH_SIZE} --update_freq ${UPDATE_FREQ} --save_ckpt_freq ${SAVE_FREQ} \
         --num_frames 16 --sampling_rate 4 \
         --lr ${LEARNING_RATE} --min_lr 1e-4 --drop_path 0.1 --warmup_epochs ${WARMUP} --epochs ${EPOCHS} \
-        --auto_resume --norm_feature \
+        --auto_resume  \
         --knn_freq ${KNN_FREQ} --use_wandb ${USE_WANDB} --wandb_project_name ${WANDB_PROJECT_NAME} \
         --notes_for_wandb_run ${NOTES_FOR_WANDB_RUN} --cls ${USE_CLS_TOKEN} \
         --resume_checkpoint ${RESUME_CHECKPOINT}
+        #--norm_feature
