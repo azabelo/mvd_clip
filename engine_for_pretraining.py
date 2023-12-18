@@ -373,8 +373,8 @@ def pretraining_accuracy(model, video_teacher_model, args):
         with torch.no_grad():
             model.eval()
             # if you want to test video teacher:
-            print(input_data.shape)
             features = model.forward_features(input_data)
+            print(features.shape)
 
             #features = model.module.forward_encoder(input_data, empty_mask)
 
