@@ -393,6 +393,14 @@ def pretraining_accuracy(model, video_teacher_model, args):
         # two_layer_predictions = two_layer_output.argmax(dim=1)
         # two_layer_accuracy = (two_layer_predictions == target).float().mean().item()
 
+        # send a tensor of ones through the linear model
+        # to make sure the model is not broken
+        ones = torch.ones((input_data.shape[0], 768))
+        ones = ones.to('cuda', non_blocking=True)
+        ones_output = linear_model(ones)
+        print("ones output: ", ones_output)
+
+
         print("linear loss: ", linear_loss.item())
         print("linear accuracy: ", linear_accuracy)
         wandb.log({'linear_loss': linear_loss.item(),
