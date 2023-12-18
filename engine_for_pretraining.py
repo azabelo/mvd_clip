@@ -311,7 +311,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
     class LinearClassifier(nn.Module):
         def __init__(self):
             super(LinearClassifier, self).__init__()
-            self.fc = nn.Linear(768*1569, 51)
+            self.fc = nn.Linear(768*1568, 51)
 
         def forward(self, x):
             x = x.view(x.size(0), -1)  # Flatten the input
