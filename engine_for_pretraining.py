@@ -381,7 +381,10 @@ def pretraining_accuracy(model, video_teacher_model, args):
             model.eval()
             # if you want to test video teacher:
             if test_teacher:
-                features = model.forward_features(input_data)
+                # video mae v2
+                # features = model.forward_features(input_data)
+                # video teacher
+                features = model.forward(input_data)
             else:
                 features = model.module.forward_encoder(input_data, empty_mask)
 
@@ -463,7 +466,10 @@ def pretraining_accuracy(model, video_teacher_model, args):
 
             # if you want to test video teacher:
             if test_teacher:
-                features = model.forward_features(input_data)
+                # video mae v2
+                #features = model.forward_features(input_data)
+                # video teacher
+                features = model.forward(input_data)
             else:
                 features = model.module.forward_encoder(input_data, empty_mask)
 
