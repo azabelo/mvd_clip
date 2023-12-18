@@ -356,6 +356,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
     knn_labels_train = np.empty(0)
     for batch_idx, (input_data, target, _, _) in enumerate(data_loader_train):
         linear_optimizer.zero_grad()
+
         empty_mask = torch.zeros((input_data.shape[0], 1568), dtype=torch.bool)
         empty_mask = empty_mask.to('cuda', non_blocking=True)
         if batch_idx % 10 == 0:
@@ -392,8 +393,8 @@ def pretraining_accuracy(model, video_teacher_model, args):
         # two_layer_predictions = two_layer_output.argmax(dim=1)
         # two_layer_accuracy = (two_layer_predictions == target).float().mean().item()
 
-        # wandb.log({'linear_loss': linear_loss.item(),
-        #            'linear_accuracy train': linear_accuracy})
+        wandb.log({'linear_loss': linear_loss.item(),
+                   'linear_accuracy train': linear_accuracy})
 
         # wandb.log({'linear_loss': linear_loss.item(),
         #            'two_layer_loss': two_layer_loss.item(),
