@@ -212,8 +212,9 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
 
 def pretraining_accuracy(model, video_teacher_model, args):
-
-    model = video_teacher_model
+    test_teacher = True
+    if test_teacher:
+        model = video_teacher_model
 
     # add other finetuning thing here
 
@@ -312,7 +313,10 @@ def pretraining_accuracy(model, video_teacher_model, args):
         def __init__(self):
             super(LinearClassifier, self).__init__()
             # 1568 if its after a teacher, 1569 if its after the student with cls token
-            self.fc = nn.Linear(768*1568, 51)
+            if test_teacher:
+                self.fc = nn.Linear(768 * 1569, 51)
+            else:
+                self.fc = nn.Linear(768*1568, 51)
 
         def forward(self, x):
             # when for video teacher:
@@ -372,14 +376,14 @@ def pretraining_accuracy(model, video_teacher_model, args):
         input_data = input_data.to('cuda', non_blocking=True)
         target = target.to('cuda', non_blocking=True)
 
-        features = None
         model.eval()
         with torch.no_grad():
             model.eval()
             # if you want to test video teacher:
-            features = model.forward_features(input_data)
-
-            #features = model.module.forward_encoder(input_data, empty_mask)
+            if test_teacher:
+                features = model.forward_features(input_data)
+            else:
+                features = model.module.forward_encoder(input_data, empty_mask)
 
             # features = features.detach()
             cls_token = features[:, 0, :]
@@ -458,9 +462,10 @@ def pretraining_accuracy(model, video_teacher_model, args):
             target = target.to('cuda', non_blocking=True)
 
             # if you want to test video teacher:
-            features = model.forward_features(input_data)
-
-            #features = model.module.forward_encoder(input_data, empty_mask)
+            if test_teacher:
+                features = model.forward_features(input_data)
+            else:
+                features = model.module.forward_encoder(input_data, empty_mask)
 
             # features = features.detach()
             cls_token = features[:, 0, :]
@@ -519,4 +524,5 @@ def pretraining_accuracy(model, video_teacher_model, args):
         for param in model.parameters():
             param.requires_grad = True
 
-    activate_gradients(model.module)
+    if not test_teacher:
+        activate_gradients(model.module)
