@@ -311,6 +311,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
     class LinearClassifier(nn.Module):
         def __init__(self):
             super(LinearClassifier, self).__init__()
+            # 1568 if its after a teacher, 1569 if its after the student with cls token
             self.fc = nn.Linear(768*1568, 51)
 
         def forward(self, x):
