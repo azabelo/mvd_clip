@@ -393,6 +393,8 @@ def pretraining_accuracy(model, video_teacher_model, args):
         # two_layer_predictions = two_layer_output.argmax(dim=1)
         # two_layer_accuracy = (two_layer_predictions == target).float().mean().item()
 
+        print("linear loss: ", linear_loss.item())
+        print("linear accuracy: ", linear_accuracy)
         wandb.log({'linear_loss': linear_loss.item(),
                    'linear_accuracy train': linear_accuracy})
 
