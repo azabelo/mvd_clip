@@ -308,10 +308,10 @@ def pretraining_accuracy(model, video_teacher_model, args):
     class LinearClassifier(nn.Module):
         def __init__(self):
             super(LinearClassifier, self).__init__()
-            self.fc = nn.Linear(768, 51)
+            self.fc = nn.Linear(768*1569, 51)
 
         def forward(self, x):
-            #x = x.view(x.size(0), -1)  # Flatten the input
+            x = x.view(x.size(0), -1)  # Flatten the input
             x = self.fc(x)
             return x
 
@@ -368,9 +368,9 @@ def pretraining_accuracy(model, video_teacher_model, args):
         model.eval()
         with torch.no_grad():
             model.eval()
-            features = model.module.forward_encoder(input_data, empty_mask)[:, 0, :]
+            features = model.module.forward_encoder(input_data, empty_mask)
             # features = features.detach()
-            cls_token = features
+            cls_token = features[:, 0, :]
             knn_features_train = np.append(knn_features_train, cls_token.cpu().numpy(), axis=0)
             knn_labels_train = np.append(knn_labels_train, target.cpu().numpy(), axis=0)
             # knn_features_train = np.concatenate((knn_features_train, cls_token.cpu().numpy()), axis=0)
@@ -395,10 +395,10 @@ def pretraining_accuracy(model, video_teacher_model, args):
 
         # send a tensor of ones through the linear model
         # to make sure the model is not broken
-        ones = torch.ones((input_data.shape[0], 768))
-        ones = ones.to('cuda', non_blocking=True)
-        ones_output = linear_model(ones)
-        print("ones output: ", ones_output)
+        # ones = torch.ones((input_data.shape[0], 768))
+        # ones = ones.to('cuda', non_blocking=True)
+        # ones_output = linear_model(ones)
+        # print("ones output: ", ones_output)
 
 
         print("linear loss: ", linear_loss.item())
