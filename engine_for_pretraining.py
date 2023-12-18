@@ -318,7 +318,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
     # Instantiate the model
     linear_model = LinearClassifier()
     linear_criterion = nn.CrossEntropyLoss()
-    linear_optimizer = optim.SGD(linear_model.parameters(), lr=1e-3)
+    linear_optimizer = optim.SGD(linear_model.parameters(), lr=1e-2)
 
 
 
