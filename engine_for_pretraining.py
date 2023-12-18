@@ -318,7 +318,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
     # Instantiate the model
     linear_model = LinearClassifier()
     linear_criterion = nn.CrossEntropyLoss()
-    linear_optimizer = optim.SGD(linear_model.parameters(), lr=1e-2)
+    linear_optimizer = optim.SGD(linear_model.parameters(), lr=1e-3)
 
 
 
@@ -455,7 +455,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
 
             total_samples += target.size(0)
 
-            linear_output = linear_model(cls_token)
+            linear_output = linear_model(features)
             linear_loss = linear_criterion(linear_output, target)
             _, predicted_linear = torch.max(linear_output.data, 1)
             correct_linear += (predicted_linear == target).sum().item()
