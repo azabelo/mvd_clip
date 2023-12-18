@@ -418,7 +418,7 @@ def main(args):
     ## CLIP ##
     elif args.image_teacher_model_ckpt_path == 'clip_model.pth':
         image_teacher_model = get_clip_model(args)
-    ## EVA-CLIP ##
+    ## EVA-CLIP ## untested
     elif args.image_teacher_model_ckpt_path == 'eva_clip_model.pth':
         image_teacher_model = get_eva_clip_model(args)
     ## INVALID ##
