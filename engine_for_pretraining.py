@@ -372,9 +372,11 @@ def pretraining_accuracy(model, video_teacher_model, args):
         with torch.no_grad():
             model.eval()
             # if you want to test video teacher:
+            print(input_data.shape)
             features = model.forward_features(input_data)
 
             #features = model.module.forward_encoder(input_data, empty_mask)
+
             # features = features.detach()
             cls_token = features[:, 0, :]
             knn_features_train = np.append(knn_features_train, cls_token.cpu().numpy(), axis=0)
