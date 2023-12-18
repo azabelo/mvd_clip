@@ -279,11 +279,29 @@ def get_checkpoint_model(args):
     # with CLIP would solve your problems
 
     print(f"Creating teacher model: {args.video_teacher_model}")
+    # model = create_model(
+    #     args.video_teacher_model,
+    #     pretrained=False,
+    #     img_size=args.video_teacher_input_size,
+    #     drop_path_rate=args.video_teacher_drop_path,
+    # )
+    # return model
+
+    # same as get model but this will use the video_teacher_checkpoint path
     model = create_model(
-        args.video_teacher_model,
+        args.model,
         pretrained=False,
-        img_size=args.video_teacher_input_size,
-        drop_path_rate=args.video_teacher_drop_path,
+        drop_path_rate=args.drop_path,
+        drop_block_rate=None,
+        decoder_depth=args.decoder_depth,
+        use_cls_token=args.use_cls_token,
+        num_frames=args.num_frames,
+        target_feature_dim=args.distillation_target_dim,
+        target_video_feature_dim=args.video_distillation_target_dim,
+        feat_decoder_embed_dim=args.feat_decoder_embed_dim,
+        feat_decoder_num_heads=args.feat_decoder_num_heads,
+        use_checkpoint=args.use_checkpoint,
+        tubelet_size=args.tubelet_size,
     )
     return model
 
@@ -566,8 +584,9 @@ def main(args):
             param.requires_grad_(False)
     ## Pretrained Checkpoint (using mvd)
     elif 'checkpoint' in args.video_teacher_model_ckpt_path:
-
-        video_teacher_model = get_checkpoint_model(args)
+        # get checkpoint model is unnecessary
+        #video_teacher_model = get_checkpoint_model(args)
+        video_teacher_model = get_model(args)
 
         checkpoint = torch.load(args.video_teacher_model_ckpt_path, map_location='cpu')
 
@@ -599,10 +618,9 @@ def main(args):
                 new_dict["encoder." + key] = checkpoint_model[key]
 
         checkpoint_model = new_dict
-
         utils.load_state_dict(video_teacher_model, checkpoint_model, prefix=args.model_prefix)
-        for param in video_teacher_model.parameters():
-            param.requires_grad_(False)
+
+        video_teacher_model = video_teacher_model.encoder
 
     ## INVALID
     else:
