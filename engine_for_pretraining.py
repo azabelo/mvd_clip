@@ -401,8 +401,8 @@ def pretraining_accuracy(model, video_teacher_model, args):
         # print("ones output: ", ones_output)
 
 
-        print("linear loss: ", linear_loss.item())
-        print("linear accuracy: ", linear_accuracy)
+        # print("linear loss: ", linear_loss.item())
+        # print("linear accuracy: ", linear_accuracy)
         wandb.log({'linear_loss': linear_loss.item(),
                    'linear_accuracy train': linear_accuracy})
 
