@@ -316,7 +316,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
 
         def forward(self, x):
             # when for video teacher:
-            x = x.reshape(8, -1)
+            x = x.reshape(x.size(0), -1)
 
             #x = x.view(x.size(0), -1)  # Flatten the input
 
