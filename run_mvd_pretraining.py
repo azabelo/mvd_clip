@@ -236,43 +236,45 @@ def get_videomaev2_model(args):
     # with CLIP would solve your problems
 
     print(f"Creating teacher model: {args.video_teacher_model}")
-    # model = create_model(
-    #     args.video_teacher_model,
-    #     pretrained=False,
-    #     img_size=args.video_teacher_input_size,
-    #     drop_path_rate=args.video_teacher_drop_path,
-    # )
+    model = create_model(
+        args.video_teacher_model,
+        pretrained=False,
+        img_size=args.video_teacher_input_size,
+        drop_path_rate=args.video_teacher_drop_path,
+    )
+    return model
+
     #this works but is pretraining
     # model = create_model(
     #     'pretrain_videomae_base_patch16_224',
     #     pretrained=False,
     #
     #     drop_path_rate=args.video_teacher_drop_path,
-    # )
-    model = create_model(
-        'vit_base_patch16_224',
-        img_size=224,
-        pretrained=False,
-        num_classes=10,
-        all_frames=args.num_frames,
-        tubelet_size=args.tubelet_size,
-        drop_rate=0,
-        drop_path_rate=0,
-        attn_drop_rate=0,
-        head_drop_rate=0,
-        drop_block_rate=None,
-    )
-    #took args to be the same as videomaev2 repo
+    # # )
     # model = create_model(
-    #     'pretrain_videomae_base_patch16_224',
+    #     'vit_base_patch16_224',
+    #     img_size=224,
     #     pretrained=False,
-    #     drop_path_rate=0,
-    #     drop_block_rate=None,
-    #     all_frames=16,
+    #     num_classes=10,
+    #     all_frames=args.num_frames,
     #     tubelet_size=args.tubelet_size,
-    #     decoder_depth=0,
-    #     with_cp=args.with_checkpoint)
-    return model
+    #     drop_rate=0,
+    #     drop_path_rate=0,
+    #     attn_drop_rate=0,
+    #     head_drop_rate=0,
+    #     drop_block_rate=None,
+    # )
+    # #took args to be the same as videomaev2 repo
+    # # model = create_model(
+    # #     'pretrain_videomae_base_patch16_224',
+    # #     pretrained=False,
+    # #     drop_path_rate=0,
+    # #     drop_block_rate=None,
+    # #     all_frames=16,
+    # #     tubelet_size=args.tubelet_size,
+    # #     decoder_depth=0,
+    # #     with_cp=args.with_checkpoint)
+    # return model
 
 def get_checkpoint_model(args):
     # for now this is the same as video teacher, but perhaps doing it more directly like you did

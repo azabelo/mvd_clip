@@ -487,13 +487,6 @@ def auto_load_model(args, model, model_without_ddp, optimizer, loss_scaler, mode
                     args.resume, map_location='cpu', check_hash=True)
             else:
                 checkpoint = torch.load(args.resume, map_location='cpu')
-            ## my changes
-            print("Removing cls_token from checkpoint")
-            if not args.use_cls_token:
-                checkpoint['model'] = remove_key_in_checkpoint(checkpoint['model'], ['cls_token'])
-                # remove from optimizer as well
-                checkpoint['optimizer'] = remove_key_in_checkpoint(checkpoint['optimizer'], ['cls_token'])
-            ## end my changes
             model_without_ddp.load_state_dict(checkpoint['model'])
             print("Resume checkpoint %s" % args.resume)
             if 'optimizer' in checkpoint and 'epoch' in checkpoint and type(checkpoint['epoch']) is int:
