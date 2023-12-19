@@ -557,9 +557,9 @@ def main(args):
             elif key == 'encoder.norm.bias':
                 new_dict["fc_norm.bias"] = checkpoint_model[key]
                 continue
-            #
-            # if key.startswith('encoder.'):
-            #     new_dict[key[8:]] = checkpoint_model[key]
+
+            if key.startswith('encoder.'):
+                new_dict[key[8:]] = checkpoint_model[key]
             elif 'pos_embed' in key:
                 continue
             else:
