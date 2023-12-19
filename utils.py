@@ -491,6 +491,8 @@ def auto_load_model(args, model, model_without_ddp, optimizer, loss_scaler, mode
             print("Removing cls_token from checkpoint")
             if not args.use_cls_token:
                 checkpoint['model'] = remove_key_in_checkpoint(checkpoint['model'], ['cls_token'])
+                # remove from optimizer as well
+                checkpoint['optimizer']['state'] = remove_key_in_checkpoint(checkpoint['optimizer']['state'], ['cls_token'])
             ## end my changes
             model_without_ddp.load_state_dict(checkpoint['model'])
             print("Resume checkpoint %s" % args.resume)
