@@ -279,29 +279,11 @@ def get_checkpoint_model(args):
     # with CLIP would solve your problems
 
     print(f"Creating teacher model: {args.video_teacher_model}")
-    # model = create_model(
-    #     args.video_teacher_model,
-    #     pretrained=False,
-    #     img_size=args.video_teacher_input_size,
-    #     drop_path_rate=args.video_teacher_drop_path,
-    # )
-    # return model
-
-    # same as get model but this will use the video_teacher_checkpoint path
     model = create_model(
         'vit_base_patch16_224',
         pretrained=False,
-        drop_path_rate=args.drop_path,
-        drop_block_rate=None,
-        decoder_depth=args.decoder_depth,
-        use_cls_token=args.use_cls_token,
-        num_frames=args.num_frames,
-        target_feature_dim=args.distillation_target_dim,
-        target_video_feature_dim=args.video_distillation_target_dim,
-        feat_decoder_embed_dim=args.feat_decoder_embed_dim,
-        feat_decoder_num_heads=args.feat_decoder_num_heads,
-        use_checkpoint=args.use_checkpoint,
-        tubelet_size=args.tubelet_size,
+        img_size=args.video_teacher_input_size,
+        drop_path_rate=args.video_teacher_drop_path,
     )
     return model
 
@@ -585,8 +567,7 @@ def main(args):
     ## Pretrained Checkpoint (using mvd)
     elif 'checkpoint' in args.video_teacher_model_ckpt_path:
         # get checkpoint model is unnecessary
-        #video_teacher_model = get_checkpoint_model(args)
-        video_teacher_model = get_model(args)
+        video_teacher_model = get_checkpoint_model(args)
 
         checkpoint = torch.load(args.video_teacher_model_ckpt_path, map_location='cpu')
 
