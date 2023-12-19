@@ -280,7 +280,7 @@ def get_checkpoint_model(args):
 
     print(f"Creating teacher model: {args.video_teacher_model}")
     model = create_model(
-        'vit_base_patch16_224',
+        args.video_teacher_model,
         pretrained=False,
         img_size=args.video_teacher_input_size,
         drop_path_rate=args.video_teacher_drop_path,
