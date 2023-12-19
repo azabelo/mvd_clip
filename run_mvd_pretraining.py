@@ -25,6 +25,8 @@ import wandb
 import clip
 from rei.eva_clip import create_model_and_transforms, get_tokenizer
 import modeling_finetune_v2 #videomaev2 teacher
+import torch.nn as nn
+import copy
 # END MY CHANGES
 
 
@@ -570,41 +572,81 @@ def main(args):
             param.requires_grad_(False)
     ## Pretrained Checkpoint (using mvd)
     elif 'checkpoint' in args.video_teacher_model_ckpt_path:
-        video_teacher_model = get_checkpoint_model(args)
+        # this way is bad because the entire model seems messed up when no cls token
+        # video_teacher_model = get_checkpoint_model(args)
+        #
+        # checkpoint = torch.load(args.video_teacher_model_ckpt_path, map_location='cpu')
+        #
+        # print("Load video teacher ckpt from %s" % args.video_teacher_model_ckpt_path)
+        # checkpoint_model = None
+        # for model_key in args.model_key.split('|'):
+        #     if model_key in checkpoint:
+        #         checkpoint_model = checkpoint[model_key]
+        #         print("Load video state_dict by model_key = %s" % model_key)
+        #         break
+        #
+        # if checkpoint_model is None:
+        #     checkpoint_model = checkpoint
+        #
+        # for k in ['head.weight', 'head.bias']:
+        #     if k in checkpoint_model:
+        #         print(f"Removing key {k} from pretrained checkpoint")
+        #         del checkpoint_model[k]
+        #
+        # all_keys = list(checkpoint_model.keys())
+        # new_dict = OrderedDict()
+        #
+        # for key in all_keys:
+        #     if key.startswith('backbone.'):
+        #         new_dict[key[9:]] = checkpoint_model[key]
+        #     elif 'pos_embed' in key:
+        #         continue
+        #     else:
+        #         new_dict["encoder."+key] = checkpoint_model[key]
+        #
+        # checkpoint_model = new_dict
+        # utils.load_state_dict(video_teacher_model, checkpoint_model, prefix=args.model_prefix)
+        #
+        # video_teacher_model = video_teacher_model
 
-        checkpoint = torch.load(args.video_teacher_model_ckpt_path, map_location='cpu')
+        temp_model = create_model(
+            args.model,
+            pretrained=False,
+            drop_path_rate=args.drop_path,
+            drop_block_rate=None,
+            decoder_depth=args.decoder_depth,
+            use_cls_token=True,# true for 4799 models
+            num_frames=args.num_frames,
+            target_feature_dim=args.distillation_target_dim,
+            target_video_feature_dim=args.video_distillation_target_dim,
+            feat_decoder_embed_dim=args.feat_decoder_embed_dim,
+            feat_decoder_num_heads=args.feat_decoder_num_heads,
+            use_checkpoint=args.use_checkpoint,
+            tubelet_size=args.tubelet_size,
+        )
+        args_copy = copy.deepcopy(args)
+        args.resume_checkpoint = args.video_teacher_model_ckpt_path
+        optimizer_temp = create_optimizer(
+            args, model_without_ddp)
+        loss_scaler_temp = NativeScaler()
+        utils.auto_load_model(
+            args=args, model=model, model_without_ddp=None, optimizer=optimizer_temp,
+            loss_scaler=loss_scaler_temp, model_ema=None
+        )
+        class Teacher_from_Student(nn.Module):
+            def __init__(self):
+                super(Teacher_from_Student, self).__init__()
 
-        print("Load video teacher ckpt from %s" % args.video_teacher_model_ckpt_path)
-        checkpoint_model = None
-        for model_key in args.model_key.split('|'):
-            if model_key in checkpoint:
-                checkpoint_model = checkpoint[model_key]
-                print("Load video state_dict by model_key = %s" % model_key)
-                break
+            def forward(self, x):
+                # Calls forward encoder of the student model
+                empty_mask = torch.zeros(x.shape).to(x.device)
+                encoded_output = temp_model.forward_encoder(x, empty_mask)
+                return encoded_output
 
-        if checkpoint_model is None:
-            checkpoint_model = checkpoint
-
-        for k in ['head.weight', 'head.bias']:
-            if k in checkpoint_model:
-                print(f"Removing key {k} from pretrained checkpoint")
-                del checkpoint_model[k]
-
-        all_keys = list(checkpoint_model.keys())
-        new_dict = OrderedDict()
-
-        for key in all_keys:
-            if key.startswith('backbone.'):
-                new_dict[key[9:]] = checkpoint_model[key]
-            elif 'pos_embed' in key:
-                continue
-            else:
-                new_dict["encoder."+key] = checkpoint_model[key]
-
-        checkpoint_model = new_dict
-        utils.load_state_dict(video_teacher_model, checkpoint_model, prefix=args.model_prefix)
-
-        video_teacher_model = video_teacher_model
+        video_teacher_model = Teacher_from_Student()
+        del loss_scaler_temp
+        del optimizer_temp
+        del args_copy
 
     ## INVALID
     else:

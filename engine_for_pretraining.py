@@ -528,9 +528,3 @@ def pretraining_accuracy(model, video_teacher_model, args):
     # del two_layer_criterion
     torch.cuda.empty_cache()
 
-    def activate_gradients(model):
-        for param in model.parameters():
-            param.requires_grad = True
-
-    if not test_teacher:
-        activate_gradients(model.module)

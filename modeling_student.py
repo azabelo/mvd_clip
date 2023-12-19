@@ -248,6 +248,7 @@ class PretrainMaskedVideoStudent(nn.Module):
         if self.use_cls_token:
             nn.init.normal_(self.cls_token, std=1e-6)
 
+
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
             nn.init.xavier_uniform_(m.weight)
