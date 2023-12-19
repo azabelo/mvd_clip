@@ -566,7 +566,6 @@ def main(args):
             param.requires_grad_(False)
     ## Pretrained Checkpoint (using mvd)
     elif 'checkpoint' in args.video_teacher_model_ckpt_path:
-        # get checkpoint model is unnecessary
         video_teacher_model = get_checkpoint_model(args)
 
         checkpoint = torch.load(args.video_teacher_model_ckpt_path, map_location='cpu')
@@ -596,7 +595,7 @@ def main(args):
             elif 'pos_embed' in key:
                 continue
             else:
-                new_dict[key] = checkpoint_model[key]
+                new_dict["encoder."+key] = checkpoint_model[key]
 
         checkpoint_model = new_dict
         utils.load_state_dict(video_teacher_model, checkpoint_model, prefix=args.model_prefix)
