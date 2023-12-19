@@ -625,12 +625,12 @@ def main(args):
             tubelet_size=args.tubelet_size,
         )
         args_copy = copy.deepcopy(args)
-        args.resume_checkpoint = args.video_teacher_model_ckpt_path
+        args_copy.resume_checkpoint = args.video_teacher_model_ckpt_path
         optimizer_temp = create_optimizer(
-            args, model_without_ddp)
+            args_copy, model_without_ddp)
         loss_scaler_temp = NativeScaler()
         utils.auto_load_model(
-            args=args, model=temp_model, model_without_ddp=None, optimizer=optimizer_temp,
+            args=args_copy, model=temp_model, model_without_ddp=None, optimizer=optimizer_temp,
             loss_scaler=loss_scaler_temp, model_ema=None
         )
         temp_model.to(device)
