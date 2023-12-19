@@ -50,6 +50,9 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             # (found that it doesn't change)
             ones_video_features = video_teacher_model(torch.ones((1, 3, 16, 224, 224)).cuda())
             print("video teacher feats (epoch start): ", ones_video_features[:, 0, :25])
+            #only need to do this for one slice (one image)
+            ones_image_features = image_teacher_model(torch.ones((1, 3, 224, 224)).cuda())
+            print("image teacher feats (epoch start): ", ones_image_features[:, 0, :25])
 
     # not sure if the pretraining accuracy stuff needs normalization
     if args.knn_freq != -1 and epoch % args.knn_freq == 0:
@@ -74,7 +77,9 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
                 # (found that it doesn't change)
                 ones_video_features = video_teacher_model(torch.ones((1, 3, 16, 224, 224)).cuda())
                 print("video teacher feats (epoch start): ", ones_video_features[:, 0, :25])
-
+                # only need to do this for one slice (one image)
+                ones_image_features = image_teacher_model(torch.ones((1, 3, 224, 224)).cuda())
+                print("image teacher feats (epoch start): ", ones_image_features[:, 0, :25])
 
     # END MY CHANGES
 
