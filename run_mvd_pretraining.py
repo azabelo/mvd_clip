@@ -540,11 +540,10 @@ def main(args):
 
         # not sure why the default doesnt have it and therefore doesn't need to remove,
         # but i think its better to keep it for v2
-
-        # for k in ['head.weight', 'head.bias']:
-        #     if k in checkpoint_model:
-        #         print(f"Removing key {k} from pretrained checkpoint")
-        #         del checkpoint_model[k]
+        for k in ['head.weight', 'head.bias']:
+            if k in checkpoint_model:
+                print(f"Removing key {k} from pretrained checkpoint")
+                del checkpoint_model[k]
 
         all_keys = list(checkpoint_model.keys())
         new_dict = OrderedDict()
