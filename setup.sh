@@ -68,6 +68,12 @@ if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
     gdown https://drive.google.com/uc?id=1ftR-tZgHq4aU6dLKyGh9XtAGpZXCtV_7 --output videoMAEv2_model.pth
 fi
 
+read -p "clip4799 checkpoint (y/n): " answer
+if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
+    echo "downloading clip4799 checkpoint"
+    gdown https://drive.google.com/uc?id=1m6ioRxQiB0OmfmiBmHxebuwy6KY22SFn --output checkpoint-4799.pth
+fi
+
 read -p "VideoCLIP (y/n): " answer
 if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
     echo "downloading VideoCLIP"

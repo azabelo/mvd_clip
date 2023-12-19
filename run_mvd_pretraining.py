@@ -614,6 +614,8 @@ def main(args):
                 new_dict[key[9:]] = checkpoint_model[key]
             elif 'pos_embed' in key:
                 continue
+            elif key.startswith('encoder.'):
+                new_dict[key[8:]] = checkpoint_model[key]
             else:
                 new_dict["encoder." + key] = checkpoint_model[key]
 
