@@ -614,10 +614,8 @@ def main(args):
                 new_dict[key[9:]] = checkpoint_model[key]
             elif 'pos_embed' in key:
                 continue
-            elif key.startswith('encoder.'):
-                new_dict[key[8:]] = checkpoint_model[key]
             else:
-                new_dict["encoder." + key] = checkpoint_model[key]
+                new_dict[key] = checkpoint_model[key]
 
         checkpoint_model = new_dict
         utils.load_state_dict(video_teacher_model, checkpoint_model, prefix=args.model_prefix)
