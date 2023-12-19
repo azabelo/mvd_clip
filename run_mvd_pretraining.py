@@ -640,7 +640,7 @@ def main(args):
 
             def forward(self, x):
                 # Calls forward encoder of the student model
-                empty_mask = torch.zeros((x.shape[0], 1568), dtype=torch.bool).to(x.device)
+                empty_mask = torch.zeros((x.shape[0], 1569), dtype=torch.bool).to(x.device)
                 encoded_output = temp_model.forward_encoder(x, empty_mask)
                 return encoded_output
 
