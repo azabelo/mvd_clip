@@ -213,7 +213,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
 
 def pretraining_accuracy(model, video_teacher_model, args):
-    test_teacher = False
+    test_teacher = True
     if test_teacher:
         model = video_teacher_model
 
