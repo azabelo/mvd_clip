@@ -634,15 +634,19 @@ def main(args):
             loss_scaler=loss_scaler_temp, model_ema=None
         )
         temp_model.to(device)
+        temp_model.eval()
         class Teacher_from_Student(nn.Module):
             def __init__(self):
                 super(Teacher_from_Student, self).__init__()
 
             def forward(self, x):
                 # Calls forward encoder of the student model
-                empty_mask = torch.zeros((x.shape[0], 1568), dtype=torch.bool).to(x.device)
-                encoded_output = temp_model.forward_encoder(x, empty_mask)
-                encoded_output = encoded_output[:, 1:, :] # remove cls token
+                temp_model.eval()
+                with torch.no_grad():
+                    temp_model.eval()
+                    empty_mask = torch.zeros((x.shape[0], 1568), dtype=torch.bool).to(x.device)
+                    encoded_output = temp_model.forward_encoder(x, empty_mask)
+                    encoded_output = encoded_output[:, 1:, :] # remove cls token
                 return encoded_output
 
         video_teacher_model = Teacher_from_Student()
