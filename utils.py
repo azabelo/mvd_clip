@@ -488,6 +488,7 @@ def auto_load_model(args, model, model_without_ddp, optimizer, loss_scaler, mode
             else:
                 checkpoint = torch.load(args.resume, map_location='cpu')
             ## my changes
+            print("Removing cls_token from checkpoint")
             if not args.use_cls_token:
                 checkpoint['model'] = remove_key_in_checkpoint(checkpoint['model'], ['cls_token'])
             ## end my changes
