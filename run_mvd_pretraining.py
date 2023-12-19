@@ -434,6 +434,49 @@ def main(args):
 
     ## END MY CHANGES ##
 
+    print("Model = %s" % str(model_without_ddp))
+    print('number of params: {} M'.format(n_parameters / 1e6))
+
+    total_batch_size = args.batch_size * args.num_sample * args.update_freq * utils.get_world_size()
+    num_training_steps_per_epoch = len(dataset_train) // int(total_batch_size / args.num_sample)
+    args.lr = args.lr * total_batch_size / 256
+    args.min_lr = args.min_lr * total_batch_size / 256
+    args.warmup_lr = args.warmup_lr * total_batch_size / 256
+    print("LR = %.8f" % args.lr)
+    print("Batch size = %d" % total_batch_size)
+    print("Update frequent = %d" % args.update_freq)
+    print("Number of training steps = %d" % num_training_steps_per_epoch)
+    print("Number of training examples per epoch = %d" % (total_batch_size * num_training_steps_per_epoch))
+
+    if args.distributed:
+        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=False)
+        model_without_ddp = model.module
+
+    optimizer = create_optimizer(
+        args, model_without_ddp)
+    loss_scaler = NativeScaler()
+
+    print("Use step level LR & WD scheduler!")
+    lr_schedule_values = utils.cosine_scheduler(
+        args.lr, args.min_lr, args.epochs, num_training_steps_per_epoch,
+        warmup_epochs=args.warmup_epochs, warmup_steps=args.warmup_steps,
+    )
+    if args.weight_decay_end is None:
+        args.weight_decay_end = args.weight_decay
+    wd_schedule_values = utils.cosine_scheduler(
+        args.weight_decay, args.weight_decay_end, args.epochs, num_training_steps_per_epoch)
+    print("Max WD = %.7f, Min WD = %.7f" % (max(wd_schedule_values), min(wd_schedule_values)))
+
+    if args.output_dir and utils.is_main_process():
+        with open(os.path.join(args.output_dir, "config.txt"), mode="a", encoding="utf-8") as f:
+            for arg in vars(args):
+                f.write(format(arg, '<20') + " " + format(str(getattr(args, arg)), '<') + "\n")
+
+    utils.auto_load_model(
+        args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
+        loss_scaler=loss_scaler, model_ema=None
+    )
+
     ## MY CHANGES ##
 
     video_teacher_model = None
@@ -609,39 +652,42 @@ def main(args):
         #
         # video_teacher_model = video_teacher_model
 
-        temp_model = create_model(
-            args.model,
-            pretrained=False,
-            drop_path_rate=args.drop_path,
-            drop_block_rate=None,
-            decoder_depth=args.decoder_depth,
-            use_cls_token=True,# true for 4799 models
-            num_frames=args.num_frames,
-            target_feature_dim=args.distillation_target_dim,
-            target_video_feature_dim=args.video_distillation_target_dim,
-            feat_decoder_embed_dim=args.feat_decoder_embed_dim,
-            feat_decoder_num_heads=args.feat_decoder_num_heads,
-            use_checkpoint=args.use_checkpoint,
-            tubelet_size=args.tubelet_size,
-        )
-        args_copy = copy.deepcopy(args)
-        args_copy.resume_checkpoint = args.video_teacher_model_ckpt_path
-        temp_model.to(device)
+        #kinda works but still different for some reason
+        # temp_model = create_model(
+        #     args.model,
+        #     pretrained=False,
+        #     drop_path_rate=args.drop_path,
+        #     drop_block_rate=None,
+        #     decoder_depth=args.decoder_depth,
+        #     use_cls_token=True,# true for 4799 models
+        #     num_frames=args.num_frames,
+        #     target_feature_dim=args.distillation_target_dim,
+        #     target_video_feature_dim=args.video_distillation_target_dim,
+        #     feat_decoder_embed_dim=args.feat_decoder_embed_dim,
+        #     feat_decoder_num_heads=args.feat_decoder_num_heads,
+        #     use_checkpoint=args.use_checkpoint,
+        #     tubelet_size=args.tubelet_size,
+        # )
+        # args_copy = copy.deepcopy(args)
+        # args_copy.resume_checkpoint = args.video_teacher_model_ckpt_path
+        # temp_model.to(device)
+        #
+        # if args_copy.distributed:
+        #     temp_model = torch.nn.parallel.DistributedDataParallel(temp_model, device_ids=[args_copy.gpu],
+        #                                                       find_unused_parameters=False)
+        #     temp_model_without_ddp = temp_model.module
+        #
+        # optimizer_temp = create_optimizer(
+        #     args_copy, model_without_ddp)
+        # loss_scaler_temp = NativeScaler()
+        # utils.auto_load_model(
+        #     args=args_copy, model=temp_model, model_without_ddp=temp_model_without_ddp, optimizer=optimizer_temp,
+        #     loss_scaler=loss_scaler_temp, model_ema=None
+        # )
+        #
+        # temp_model.eval()
 
-        if args_copy.distributed:
-            temp_model = torch.nn.parallel.DistributedDataParallel(temp_model, device_ids=[args_copy.gpu],
-                                                              find_unused_parameters=False)
-            temp_model_without_ddp = temp_model.module
-
-        optimizer_temp = create_optimizer(
-            args_copy, model_without_ddp)
-        loss_scaler_temp = NativeScaler()
-        utils.auto_load_model(
-            args=args_copy, model=temp_model, model_without_ddp=temp_model_without_ddp, optimizer=optimizer_temp,
-            loss_scaler=loss_scaler_temp, model_ema=None
-        )
-
-        temp_model.eval()
+        temp_model = copy.deepcopy(model.module)
         class Teacher_from_Student(nn.Module):
             def __init__(self):
                 super(Teacher_from_Student, self).__init__()
@@ -652,7 +698,7 @@ def main(args):
                 with torch.no_grad():
                     temp_model.eval()
                     empty_mask = torch.zeros((x.shape[0], 1568), dtype=torch.bool).to(x.device)
-                    encoded_output = temp_model.module.forward_encoder(x, empty_mask)
+                    encoded_output = temp_model.forward_encoder(x, empty_mask)
                     encoded_output = encoded_output[:, 1:, :] # remove cls token
                 return encoded_output
 
@@ -668,48 +714,7 @@ def main(args):
 
     ## END MY CHANGES ##
 
-    print("Model = %s" % str(model_without_ddp))
-    print('number of params: {} M'.format(n_parameters / 1e6))
 
-    total_batch_size = args.batch_size * args.num_sample * args.update_freq * utils.get_world_size()
-    num_training_steps_per_epoch = len(dataset_train) // int(total_batch_size / args.num_sample)
-    args.lr = args.lr * total_batch_size / 256
-    args.min_lr = args.min_lr * total_batch_size / 256
-    args.warmup_lr = args.warmup_lr * total_batch_size / 256
-    print("LR = %.8f" % args.lr)
-    print("Batch size = %d" % total_batch_size)
-    print("Update frequent = %d" % args.update_freq)
-    print("Number of training steps = %d" % num_training_steps_per_epoch)
-    print("Number of training examples per epoch = %d" % (total_batch_size * num_training_steps_per_epoch))
-
-    if args.distributed:
-        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=False)
-        model_without_ddp = model.module
-
-    optimizer = create_optimizer(
-        args, model_without_ddp)
-    loss_scaler = NativeScaler()
-
-    print("Use step level LR & WD scheduler!")
-    lr_schedule_values = utils.cosine_scheduler(
-        args.lr, args.min_lr, args.epochs, num_training_steps_per_epoch,
-        warmup_epochs=args.warmup_epochs, warmup_steps=args.warmup_steps,
-    )
-    if args.weight_decay_end is None:
-        args.weight_decay_end = args.weight_decay
-    wd_schedule_values = utils.cosine_scheduler(
-        args.weight_decay, args.weight_decay_end, args.epochs, num_training_steps_per_epoch)
-    print("Max WD = %.7f, Min WD = %.7f" % (max(wd_schedule_values), min(wd_schedule_values)))
-
-    if args.output_dir and utils.is_main_process():
-        with open(os.path.join(args.output_dir, "config.txt"), mode="a", encoding="utf-8") as f:
-            for arg in vars(args):
-                f.write(format(arg, '<20') + " " + format(str(getattr(args, arg)), '<') + "\n")
-
-    utils.auto_load_model(
-        args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
-        loss_scaler=loss_scaler, model_ema=None
-    )
 
     # MY CHANGES
     if args.use_wandb != 0:
