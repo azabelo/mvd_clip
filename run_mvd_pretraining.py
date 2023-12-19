@@ -289,7 +289,7 @@ def get_checkpoint_model(args):
 
     # same as get model but this will use the video_teacher_checkpoint path
     model = create_model(
-        args.model,
+        'vit_base_patch16_224',
         pretrained=False,
         drop_path_rate=args.drop_path,
         drop_block_rate=None,
@@ -620,7 +620,7 @@ def main(args):
         checkpoint_model = new_dict
         utils.load_state_dict(video_teacher_model, checkpoint_model, prefix=args.model_prefix)
 
-        video_teacher_model = video_teacher_model.encoder
+        video_teacher_model = video_teacher_model
 
     ## INVALID
     else:
