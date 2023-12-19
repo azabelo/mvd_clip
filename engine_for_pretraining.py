@@ -213,7 +213,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
 
 def pretraining_accuracy(model, video_teacher_model, args):
-    test_teacher = True
+    test_teacher = False
     if test_teacher:
         model = video_teacher_model
 
@@ -260,6 +260,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
         collate_fn=collate_func,
     )
 
+    # unnecessary
     linear_probe_video_teacher = False
     if linear_probe_video_teacher:
         class VideoLinearTrainer(nn.Module):
@@ -307,7 +308,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
             # Calculate and print accuracy
             accuracy = total_correct / total_samples
             print(f"Accuracy: {accuracy * 100:.2f}%")
-
+    # end unnecessary
 
 
     class LinearClassifier(nn.Module):

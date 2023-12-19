@@ -265,6 +265,8 @@ class PretrainMaskedVideoStudent(nn.Module):
         return {'pos_embed', 'cls_token', 'mask_token'}
 
     def forward_encoder(self, x, mask):
+        self.use_cls_token = False
+
         # embed patches
         # x: B, C, T, H, W
         x = self.patch_embed(x)
@@ -295,6 +297,8 @@ class PretrainMaskedVideoStudent(nn.Module):
         return x
 
     def forward(self, x, mask):
+        self.use_cls_token = False
+
         x = self.forward_encoder(x, mask)
         s = 1 if self.use_cls_token else 0
 
