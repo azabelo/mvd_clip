@@ -630,9 +630,10 @@ def main(args):
             args, model_without_ddp)
         loss_scaler_temp = NativeScaler()
         utils.auto_load_model(
-            args=args, model=model, model_without_ddp=None, optimizer=optimizer_temp,
+            args=args, model=temp_model, model_without_ddp=None, optimizer=optimizer_temp,
             loss_scaler=loss_scaler_temp, model_ema=None
         )
+        temp_model.to(device)
         class Teacher_from_Student(nn.Module):
             def __init__(self):
                 super(Teacher_from_Student, self).__init__()
