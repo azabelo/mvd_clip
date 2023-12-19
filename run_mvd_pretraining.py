@@ -626,6 +626,7 @@ def main(args):
         )
         args_copy = copy.deepcopy(args)
         args_copy.resume_checkpoint = args.video_teacher_model_ckpt_path
+        temp_model.to(device)
 
         if args_copy.distributed:
             temp_model = torch.nn.parallel.DistributedDataParallel(temp_model, device_ids=[args_copy.gpu],
@@ -639,7 +640,7 @@ def main(args):
             args=args_copy, model=temp_model, model_without_ddp=temp_model_without_ddp, optimizer=optimizer_temp,
             loss_scaler=loss_scaler_temp, model_ema=None
         )
-        temp_model.to(device)
+
         temp_model.eval()
         class Teacher_from_Student(nn.Module):
             def __init__(self):
@@ -656,9 +657,6 @@ def main(args):
                 return encoded_output
 
         video_teacher_model = Teacher_from_Student()
-        del loss_scaler_temp
-        del optimizer_temp
-        del args_copy
 
 
     ## INVALID
