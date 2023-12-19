@@ -222,7 +222,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
 
 def pretraining_accuracy(model, video_teacher_model, args):
-    test_teacher = True
+    test_teacher = False
     if test_teacher:
         model = video_teacher_model
 
@@ -325,7 +325,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
             super(LinearClassifier, self).__init__()
 
             if test_teacher:
-                self.fc = nn.Linear(768 * 1569, 51)
+                self.fc = nn.Linear(768 * 1568, 51)
             else:
                 self.fc = nn.Linear(768*1569, 51)
 

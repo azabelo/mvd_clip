@@ -699,7 +699,7 @@ def main(args):
                     temp_model.eval()
                     empty_mask = torch.zeros((x.shape[0], 1568), dtype=torch.bool).to(x.device)
                     encoded_output = temp_model.forward_encoder(x, empty_mask)
-                    # encoded_output = encoded_output[:, 1:, :] # remove cls token
+                    encoded_output = encoded_output[:, 1:, :] # remove cls token
                 return encoded_output
 
         video_teacher_model = Teacher_from_Student()
