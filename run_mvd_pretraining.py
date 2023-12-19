@@ -626,11 +626,17 @@ def main(args):
         )
         args_copy = copy.deepcopy(args)
         args_copy.resume_checkpoint = args.video_teacher_model_ckpt_path
+
+        if args_copy.distributed:
+            temp_model = torch.nn.parallel.DistributedDataParallel(temp_model, device_ids=[args_copy.gpu],
+                                                              find_unused_parameters=False)
+            temp_model_without_ddp = temp_model.module
+
         optimizer_temp = create_optimizer(
             args_copy, model_without_ddp)
         loss_scaler_temp = NativeScaler()
         utils.auto_load_model(
-            args=args_copy, model=temp_model, model_without_ddp=None, optimizer=optimizer_temp,
+            args=args_copy, model=temp_model, model_without_ddp=temp_model_without_ddp, optimizer=optimizer_temp,
             loss_scaler=loss_scaler_temp, model_ema=None
         )
         temp_model.to(device)
@@ -645,7 +651,7 @@ def main(args):
                 with torch.no_grad():
                     temp_model.eval()
                     empty_mask = torch.zeros((x.shape[0], 1568), dtype=torch.bool).to(x.device)
-                    encoded_output = temp_model.forward_encoder(x, empty_mask)
+                    encoded_output = temp_model.module.forward_encoder(x, empty_mask)
                     encoded_output = encoded_output[:, 1:, :] # remove cls token
                 return encoded_output
 
@@ -653,6 +659,7 @@ def main(args):
         del loss_scaler_temp
         del optimizer_temp
         del args_copy
+
 
     ## INVALID
     else:
