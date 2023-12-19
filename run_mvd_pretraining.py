@@ -233,7 +233,7 @@ def get_video_teacher_model(args):
 
 def get_videomaev2_model(args):
     # for now this is the same as video teacher, but perhaps doing it more directly like you did
-    # with CLIP would solve your problems
+    # with CLIP would solve your problems - no not rly, its complicated
 
     print(f"Creating teacher model: {args.video_teacher_model}")
     model = create_model(
@@ -538,10 +538,13 @@ def main(args):
         if checkpoint_model is None:
             checkpoint_model = checkpoint
 
-        for k in ['head.weight', 'head.bias']:
-            if k in checkpoint_model:
-                print(f"Removing key {k} from pretrained checkpoint")
-                del checkpoint_model[k]
+        # not sure why the default doesnt have it and therefore doesn't need to remove,
+        # but i think its better to keep it for v2
+
+        # for k in ['head.weight', 'head.bias']:
+        #     if k in checkpoint_model:
+        #         print(f"Removing key {k} from pretrained checkpoint")
+        #         del checkpoint_model[k]
 
         all_keys = list(checkpoint_model.keys())
         new_dict = OrderedDict()
