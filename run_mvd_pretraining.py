@@ -551,19 +551,19 @@ def main(args):
 
         for key in all_keys:
             print("v2 teacher: ", key)
-            if key == 'encoder.norm.weight':
-                new_dict["fc_norm.weight"] = checkpoint_model[key]
+            if key == 'fc_norm.weight':
+                new_dict["encoder.norm.weight"] = checkpoint_model[key]
                 continue
-            elif key == 'encoder.norm.bias':
-                new_dict["fc_norm.bias"] = checkpoint_model[key]
+            elif key == 'fc_norm.bias':
+                new_dict["encoder.norm.bias"] = checkpoint_model[key]
                 continue
-
-            if key.startswith('encoder.'):
-                new_dict[key[8:]] = checkpoint_model[key]
+            elif key == 'head.weight' or key == 'head.bias':
+                new_dict[key] = checkpoint_model[key]
+                continue
             elif 'pos_embed' in key:
                 continue
             else:
-                new_dict[key] = checkpoint_model[key]
+                new_dict["encoder."+key] = checkpoint_model[key]
 
         checkpoint_model = new_dict
         utils.load_state_dict(video_teacher_model, checkpoint_model, prefix=args.model_prefix)
