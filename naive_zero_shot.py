@@ -100,6 +100,7 @@ with torch.no_grad():
     torch.save(text_encodings, save_path)
     print(f"Text encodings saved to {save_path}")
 
+print(model.transformer)
 
 
 
