@@ -414,7 +414,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
             # naive zero shot testing
 
             # multiply the features by the model.visual.proj matrix (not to be done when model is the teacher)
-            text_features = torch.matmul(features, model.visual.proj)
+            text_features = torch.matmul(features, model.module.visual.proj)
             # for each of the features, find the cosine similarity with each of the text features
             zero_shot_correct = 0
             total = 0
