@@ -103,6 +103,11 @@ with torch.no_grad():
 print(model.transformer)
 print(model.visual)
 
+# create random image to pass to model.visual
+image = torch.randn(1, 3, 224, 224).cuda()
+image_encoding = model.encode_image(image)
+print(image_encoding.shape)
+
 
 
 
