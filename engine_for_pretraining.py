@@ -269,6 +269,10 @@ def pretraining_accuracy(model, video_teacher_model, args):
         collate_fn=collate_func,
     )
 
+    # get the array of text encodings from the text_encodings.pth file
+    text_encodings = torch.load('text_encodings.pth')
+    print(text_encodings.shape)
+
     # unnecessary
     linear_probe_video_teacher = False
     if linear_probe_video_teacher:
