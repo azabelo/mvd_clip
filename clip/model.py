@@ -264,7 +264,7 @@ class CLIP(nn.Module):
                  transformer_layers: int
                  ):
         super().__init__()
-
+        print(embed_dim)
         self.context_length = context_length
 
         if isinstance(vision_layers, (tuple, list)):
