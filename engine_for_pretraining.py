@@ -411,6 +411,33 @@ def pretraining_accuracy(model, video_teacher_model, args):
             # knn_labels_train = np.concatenate((knn_labels_train, target.cpu().numpy()), axis=0)
 
 
+            # naive zero shot testing
+
+            # multiply the features by the model.visual.proj matrix (not to be done when model is the teacher)
+            text_features = torch.matmul(features, model.visual.proj)
+            # for each of the features, find the cosine similarity with each of the text features
+            zero_shot_correct = 0
+            total = 0
+            for feature in text_features:
+                feature = feature.unsqueeze(0)
+                feature = feature.to('cuda', non_blocking=True)
+                # multiply the features by the model.visual.proj matrix (not to be done when model is the teacher)
+                similarities = torch.nn.functional.cosine_similarity(text_features, text_encodings)
+                # find the index of the maximum similarity
+                max_index = torch.argmax(similarities)
+                # find the label of the text feature with the maximum similarity
+                predicted_label = max_index // 51
+                # compare the predicted label with the target label
+                # the target should correspond to the index of the text feature
+                if predicted_label == target:
+                    zero_shot_correct += 1
+                total += 1
+            zero_shot_accuracy = zero_shot_correct / total
+            print("zero shot accuracy: ", zero_shot_accuracy)
+
+
+
+
         linear_output = linear_model(features)
         linear_loss = linear_criterion(linear_output, target)
         linear_loss.backward()
