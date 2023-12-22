@@ -91,6 +91,7 @@ with torch.no_grad():
         count += 1
         text_batch = clip.tokenize(prompt_batch).to(device)
         text_encoding = model.encode_text(text_batch)
+        print(text_encoding.shape)
         text_encodings.append(text_encoding)
 
     text_encodings = torch.cat(text_encodings)
