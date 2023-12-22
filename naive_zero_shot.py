@@ -80,18 +80,6 @@ for name in class_names:
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model, preprocess = clip.load("ViT-B/16", device=device)
 
-def encode_batch(prompts, model, device):
-    text_encodings = []
-    for prompt_batch in [prompts[i:i + 10] for i in range(0, len(prompts), 10)]:
-        # Encode the batch using model.text_encoder
-        text_batch = clip.tokenize(prompt_batch).to(device)
-        text_encoding = model.encode_text(text_batch)
-        text_encodings.append(text_encoding)
-    return torch.cat(text_encodings)
-
-# Encode the prompts
-encodings = encode_batch(prompts, model, device)
-
 text_encodings = []
 model.eval()
 with torch.no_grad():
