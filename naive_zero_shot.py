@@ -96,7 +96,7 @@ with torch.no_grad():
     text_encodings = torch.cat(text_encodings)
 
     save_path = "text_encodings.pth"
-    torch.save(encodings, save_path)
+    torch.save(text_encodings, save_path)
     print(f"Text encodings saved to {save_path}")
 
 
