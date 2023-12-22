@@ -92,8 +92,6 @@ with torch.no_grad():
         text_batch = clip.tokenize(prompt_batch).to(device)
         text_encoding = model.encode_text(text_batch)
         print(text_encoding.shape)
-        # multiply text encoding by the inverse of the model.visual.proj matrix
-        text_encoding = torch.matmul(text_encoding, torch.inverse(model.visual.proj))
         text_encodings.append(text_encoding)
 
     text_encodings = torch.cat(text_encodings)
