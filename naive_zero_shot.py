@@ -98,7 +98,7 @@ with torch.no_grad():
     model.eval()
 
     count = 0
-    for prompt_batch in [prompts[i:i + 10] for i in range(0, len(prompts), 10)]:
+    for prompt_batch in [prompts[i:i + 1] for i in range(0, len(prompts), 1)]:
         print(count)
         count += 1
         text_batch = clip.tokenize(prompt_batch).to(device)
