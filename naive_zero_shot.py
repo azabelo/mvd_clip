@@ -101,6 +101,7 @@ with torch.no_grad():
     print(f"Text encodings saved to {save_path}")
 
 print(model.transformer)
+print(model.visual)
 
 
 
