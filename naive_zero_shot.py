@@ -2,7 +2,7 @@ import torch
 import clip
 import os
 
-# CLIP
+# CLIP using just first frame
 # MAE student
 # MAE decoded
 # CLIP student
@@ -98,6 +98,7 @@ with torch.no_grad():
     model.eval()
 
     for prompt_batch in [prompts[i:i + 10] for i in range(0, len(prompts), 10)]:
+        print(i)
         text_batch = clip.tokenize(prompt_batch).to(device)
         text_encoding = model.encode_text(text_batch)
         text_encodings.append(text_encoding)
