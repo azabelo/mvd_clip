@@ -426,6 +426,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
             tensor2 = text_encodings.unsqueeze(0)
             cosine_sim = torch.nn.functional.cosine_similarity(tensor1, tensor2, dim=2)
             total_zero_shot += cosine_sim.shape[0]
+            print("cosine sim: ", cosine_sim)
             # find the index of the highest cosine similarity for each of the features
             max_index = torch.argmax(cosine_sim, dim=1)
             print("max index: ", max_index)
