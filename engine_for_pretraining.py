@@ -421,7 +421,9 @@ def pretraining_accuracy(model, video_teacher_model, args):
             # multiply the features by the model.visual.proj matrix (not to be done when model is the teacher)
             clip_space_features = torch.matmul(cls_token, clip_model.visual.proj.float())
             # for each of the features, find the cosine similarity with each of the text features
-            print("text encodings:", text_encodings)
+            print("text encodings 1831:", text_encodings[1831])
+            print("text encodings 1832:", text_encodings[1832])
+            print("text encodings 1833:", text_encodings[1833])
             tensor1 = clip_space_features.unsqueeze(1)
             tensor2 = text_encodings.unsqueeze(0)
             cosine_sim = torch.nn.functional.cosine_similarity(tensor1, tensor2, dim=2)
