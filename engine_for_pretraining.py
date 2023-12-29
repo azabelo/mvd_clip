@@ -381,6 +381,10 @@ def pretraining_accuracy(model, video_teacher_model, args):
 
     knn_features_train = np.empty((0, 768))
     knn_labels_train = np.empty(0)
+
+    zero_shot_correct = 0
+    total_zero_shot = 0
+
     for batch_idx, (input_data, target, _, _) in enumerate(data_loader_train):
         linear_optimizer.zero_grad()
 
@@ -414,32 +418,20 @@ def pretraining_accuracy(model, video_teacher_model, args):
             # naive zero shot testing
             import clip
             clip_model, preprocess = clip.load("ViT-B/16", device=args.device)
-
-
             # multiply the features by the model.visual.proj matrix (not to be done when model is the teacher)
-            print("features shape: ", features.shape)
-            print("cls_token shape: ", cls_token.shape)
-            print("clip_model.visual.proj shape: ", clip_model.visual.proj.shape)
-            text_features = torch.matmul(cls_token, clip_model.visual.proj.float())
+            clip_space_features = torch.matmul(cls_token, clip_model.visual.proj.float())
             # for each of the features, find the cosine similarity with each of the text features
-            zero_shot_correct = 0
-            total = 0
-            for feature in text_features:
-                feature = feature.unsqueeze(0)
-                feature = feature.to('cuda', non_blocking=True)
-                # multiply the features by the model.visual.proj matrix (not to be done when model is the teacher)
-                similarities = torch.nn.functional.cosine_similarity(text_features, text_encodings)
-                # find the index of the maximum similarity
-                max_index = torch.argmax(similarities)
-                # find the label of the text feature with the maximum similarity
-                predicted_label = max_index // 51
-                # compare the predicted label with the target label
-                # the target should correspond to the index of the text feature
-                if predicted_label == target:
-                    zero_shot_correct += 1
-                total += 1
-            zero_shot_accuracy = zero_shot_correct / total
-            print("zero shot accuracy: ", zero_shot_accuracy)
+            tensor1 = clip_space_features.unsqueeze(1)
+            tensor2 = text_encodings.unsqueeze(0)
+            cosine_sim = torch.nn.functional.cosine_similarity(tensor1, tensor2, dim=2)
+            total_zero_shot += cosine_sim.shape[0]
+            # find the index of the highest cosine similarity for each of the features
+            max_index = torch.argmax(cosine_sim, dim=1)
+            print("max index: ", max_index)
+
+
+            # zero_shot_accuracy = zero_shot_correct / total
+            # print("zero shot accuracy: ", zero_shot_accuracy)
 
 
 
