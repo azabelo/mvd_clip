@@ -428,10 +428,13 @@ def pretraining_accuracy(model, video_teacher_model, args):
             # find the index of the highest cosine similarity for each of the features
             max_index = torch.argmax(cosine_sim, dim=1)
             print("max index: ", max_index)
-
-
-            # zero_shot_accuracy = zero_shot_correct / total
-            # print("zero shot accuracy: ", zero_shot_accuracy)
+            max_index = max_index // 48
+            print("max index: ", max_index)
+            print("target: ", target)
+            # find how many of these match the target
+            zero_shot_correct += torch.sum(max_index == target).item()
+            zero_shot_accuracy = zero_shot_correct / total
+            print("zero shot accuracy: ", zero_shot_accuracy)
 
 
 
