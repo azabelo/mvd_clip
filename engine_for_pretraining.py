@@ -433,7 +433,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
             print("target: ", target)
             # find how many of these match the target
             zero_shot_correct += torch.sum(max_index == target).item()
-            zero_shot_accuracy = zero_shot_correct / total
+            zero_shot_accuracy = zero_shot_correct / total_zero_shot
             print("zero shot accuracy: ", zero_shot_accuracy)
 
 
