@@ -447,28 +447,10 @@ def pretraining_accuracy(model, video_teacher_model, args):
             # find the sum of every 48 elements in the cosine sim
             cosine_sim = cosine_sim.view(8, 51, 48)
             cosine_sim = torch.sum(cosine_sim, dim=2)
-            print("cosine sim: ", cosine_sim)
             # find the index of the highest cosine similarity for each of the features
             max_index = torch.argmax(cosine_sim, dim=1)
             print("max index: ", max_index)
 
-        image_encodings = torch.cat(image_encodings)
-        cosine_similarities = torch.nn.functional.cosine_similarity(text_encodings.unsqueeze(0),
-                                                                    text_encodings.unsqueeze(1), dim=-1)
-        print(cosine_similarities.shape)
-        # Set the figure size and create the heatmap
-        fig, ax = plt.subplots(figsize=(3570 / 100, 3570 / 100))
-        sns.heatmap(cosine_similarities.cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False, cbar=True,
-                    ax=ax)
-
-        # Set the DPI to control the image size
-        dpi = 100
-        fig.set_dpi(dpi)
-        # Save the heatmap image with the desired resolution
-        heatmap_path = "image_cosine_similarity_heatmap.png"
-        plt.savefig(heatmap_path, dpi=dpi)
-        plt.close()
-        print(f"Heatmap saved to {heatmap_path}")
 
 
         linear_output = linear_model(features)
@@ -504,6 +486,28 @@ def pretraining_accuracy(model, video_teacher_model, args):
         #            'two_layer_loss': two_layer_loss.item(),
         #           'linear_accuracy train': linear_accuracy,
         #         'two_layer_accuracy train': two_layer_accuracy})
+
+
+    ## this is for generating the heatmap of the cosine similarities of the videos
+    image_encodings = torch.cat(image_encodings)
+    cosine_similarities = torch.nn.functional.cosine_similarity(text_encodings.unsqueeze(0),
+                                                                text_encodings.unsqueeze(1), dim=-1)
+    print(cosine_similarities.shape)
+    # Set the figure size and create the heatmap
+    fig, ax = plt.subplots(figsize=(3570 / 100, 3570 / 100))
+    sns.heatmap(cosine_similarities.cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False, cbar=True,
+                ax=ax)
+
+    # Set the DPI to control the image size
+    dpi = 100
+    fig.set_dpi(dpi)
+    # Save the heatmap image with the desired resolution
+    heatmap_path = "image_cosine_similarity_heatmap.png"
+    plt.savefig(heatmap_path, dpi=dpi)
+    plt.close()
+    print(f"Heatmap saved to {heatmap_path}")
+
+
 
     knn_classifier19.fit(knn_features_train, knn_labels_train)
     knn_classifier5.fit(knn_features_train, knn_labels_train)
