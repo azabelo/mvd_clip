@@ -107,19 +107,32 @@ cosine_similarities = torch.nn.functional.cosine_similarity(text_encodings.unsqu
 
 print(cosine_similarities.shape)
 
-# Visualize cosine similarities with a heatmap
-plt.figure(figsize=(45, 50))
-sns.heatmap(cosine_similarities.cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False, cbar=True)
+# # Visualize cosine similarities with a heatmap
+# plt.figure(figsize=(45, 50))
+# sns.heatmap(cosine_similarities.cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False, cbar=True)
+#
+# # Save the heatmap image
+# heatmap_path = "cosine_similarity_heatmap.png"
+# plt.savefig(heatmap_path)
+# plt.close()
+#
+# print(f"Heatmap saved to {heatmap_path}")
 
-# Save the heatmap image
+
+# Set the figure size and create the heatmap
+fig, ax = plt.subplots(figsize=(2448/100, 2448/100))
+sns.heatmap(cosine_similarities.cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False, cbar=True, ax=ax)
+
+# Set the DPI to control the image size
+dpi = 100
+fig.set_dpi(dpi)
+
+# Save the heatmap image with the desired resolution
 heatmap_path = "cosine_similarity_heatmap.png"
-plt.savefig(heatmap_path)
+plt.savefig(heatmap_path, dpi=dpi)
 plt.close()
 
 print(f"Heatmap saved to {heatmap_path}")
-
-
-
 
 
 
