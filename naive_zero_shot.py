@@ -93,7 +93,6 @@ with torch.no_grad():
         count += 1
         text_batch = clip.tokenize(prompt_batch).to(device)
         text_encoding = model.encode_text(text_batch)
-        print(text_encoding.shape)
         text_encodings.append(text_encoding)
 
     text_encodings = torch.cat(text_encodings)
@@ -109,7 +108,7 @@ cosine_similarities = torch.nn.functional.cosine_similarity(text_encodings.unsqu
 print(cosine_similarities.shape)
 
 # Visualize cosine similarities with a heatmap
-plt.figure(figsize=(20, 20))
+plt.figure(figsize=(45, 50))
 sns.heatmap(cosine_similarities.cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False, cbar=True)
 
 # Save the heatmap image
