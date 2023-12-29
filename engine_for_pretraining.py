@@ -415,8 +415,9 @@ def pretraining_accuracy(model, video_teacher_model, args):
             import clip
             clip_model, preprocess = clip.load("ViT-B/16", device=args.device)
 
+
             # multiply the features by the model.visual.proj matrix (not to be done when model is the teacher)
-            text_features = torch.matmul(features, clip_model.visual.proj)
+            text_features = torch.matmul(features, clip_model.visual.proj.float())
             # for each of the features, find the cosine similarity with each of the text features
             zero_shot_correct = 0
             total = 0
