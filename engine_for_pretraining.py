@@ -438,8 +438,8 @@ def pretraining_accuracy(model, video_teacher_model, args):
             print("zero shot accuracy: ", zero_shot_accuracy)
 
             # find the sum of every 48 elements in the cosine sim
-            cosine_sim = cosine_sim.view(-1, 48)
-            cosine_sim = torch.sum(cosine_sim, dim=1)
+            cosine_sim = cosine_sim.view(8, 51, 48)
+            cosine_sim = torch.sum(cosine_sim, dim=2)
             print("cosine sim: ", cosine_sim)
             # find the index of the highest cosine similarity for each of the features
             max_index = torch.argmax(cosine_sim, dim=0)
