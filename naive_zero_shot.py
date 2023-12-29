@@ -95,6 +95,8 @@ with torch.no_grad():
         text_encodings.append(text_encoding)
 
     text_encodings = torch.cat(text_encodings)
+    #normalize to unit vectors
+    text_encodings /= text_encodings.norm(dim=-1, keepdim=True)
 
     save_path = "text_encodings.pth"
     torch.save(text_encodings, save_path)
