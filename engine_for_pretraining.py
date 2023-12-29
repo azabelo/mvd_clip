@@ -420,7 +420,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
             import clip
             clip_model, preprocess = clip.load("ViT-B/16", device=args.device)
 
-            cls_token = image_features[:, 0, :]
+            cls_token = image_features[:, 1000, :]
 
             # multiply the features by the model.visual.proj matrix (not to be done when model is the teacher)
             clip_space_features = torch.matmul(cls_token, clip_model.visual.proj.float())
