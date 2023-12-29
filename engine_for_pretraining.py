@@ -406,6 +406,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
                 features = model.forward(input_data)
             else:
                 features = model.module.forward_encoder(input_data, empty_mask)
+                image_features, _ = model.module(input_data, empty_mask)
 
             # features = features.detach()
             cls_token = features[:, 0, :]
@@ -418,6 +419,9 @@ def pretraining_accuracy(model, video_teacher_model, args):
             # naive zero shot testing
             import clip
             clip_model, preprocess = clip.load("ViT-B/16", device=args.device)
+
+            cls_token = image_features[:, 0, :]
+
             # multiply the features by the model.visual.proj matrix (not to be done when model is the teacher)
             clip_space_features = torch.matmul(cls_token, clip_model.visual.proj.float())
             clip_space_features /= clip_space_features.norm(dim=-1, keepdim=True)
