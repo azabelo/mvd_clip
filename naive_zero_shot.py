@@ -106,8 +106,10 @@ with torch.no_grad():
 
 cosine_similarities = torch.nn.functional.cosine_similarity(text_encodings.unsqueeze(0), text_encodings.unsqueeze(1), dim=-1)
 
+print(cosine_similarities.shape)
+
 # Visualize cosine similarities with a heatmap
-plt.figure(figsize=(12, 12))
+plt.figure(figsize=(20, 20))
 sns.heatmap(cosine_similarities.cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False, cbar=True)
 
 # Save the heatmap image
