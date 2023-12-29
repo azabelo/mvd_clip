@@ -1,6 +1,8 @@
 import torch
 import clip
 import os
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # CLIP using just first frame
 # MAE student
@@ -102,14 +104,18 @@ with torch.no_grad():
     torch.save(text_encodings, save_path)
     print(f"Text encodings saved to {save_path}")
 
-print(model.transformer)
-print(model.visual)
-print(model.visual.proj.shape)
+cosine_similarities = torch.nn.functional.cosine_similarity(text_encodings.unsqueeze(0), text_encodings.unsqueeze(1), dim=-1)
 
-# create random image to pass to model.visual
-image = torch.randn(1, 3, 224, 224).cuda()
-image_encoding = model.encode_image(image)
-print(image_encoding.shape)
+# Visualize cosine similarities with a heatmap
+plt.figure(figsize=(12, 12))
+sns.heatmap(cosine_similarities.cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False, cbar=True)
+
+# Save the heatmap image
+heatmap_path = "cosine_similarity_heatmap.png"
+plt.savefig(heatmap_path)
+plt.close()
+
+print(f"Heatmap saved to {heatmap_path}")
 
 
 
