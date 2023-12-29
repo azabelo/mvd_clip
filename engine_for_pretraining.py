@@ -442,7 +442,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
             cosine_sim = torch.sum(cosine_sim, dim=2)
             print("cosine sim: ", cosine_sim)
             # find the index of the highest cosine similarity for each of the features
-            max_index = torch.argmax(cosine_sim, dim=0)
+            max_index = torch.argmax(cosine_sim, dim=1)
             print("max index: ", max_index)
 
 
