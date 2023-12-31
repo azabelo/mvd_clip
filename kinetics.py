@@ -524,13 +524,16 @@ class VideoDistillation(torch.utils.data.Dataset):
             for line in data:
                 line_info = line.split(' ')
                 # line format: video_path, video_duration, video_label
-                if len(line_info) < 2:
+
+                # I MADE CHANGES HERE TO TRY TO ADD ANOTHER COLUMN TO THE DATASET
+                if len(line_info) < 3:
                     raise(RuntimeError('Video input format is not correct, missing one or more element. %s' % line))
                 clip_path = os.path.join(line_info[0])
                 target = int(line_info[1])
+                cls = int(line_info[2])
                 if directory is not None:
                     clip_path = os.path.join(directory, clip_path)
-                item = (clip_path, target)
+                item = (clip_path, target, cls)
                 clips.append(item)
         return clips
 
