@@ -94,14 +94,14 @@ with torch.no_grad():
     count = 0
     for name in action_names:
         for prompt in prompts[name]:
-            if prompt not in text_encodings:
-                text_encodings[prompt] = []
+            if name not in text_encodings:
+                text_encodings[name] = []
             print(count)
             count += 1
             tokenized = clip.tokenize(prompt).to(device)
             text_encoding = model.encode_text(tokenized)
-            text_encodings[prompt].append(text_encoding)
-            text_encodings[prompt] = torch.cat(text_encodings[prompt], dim=0)
+            text_encodings[name].append(text_encoding)
+            text_encodings[name] = torch.cat(text_encodings[name], dim=0)
 
 # #normalize to unit vectors
 # text_encodings /= text_encodings.norm(dim=-1, keepdim=True)
