@@ -9,6 +9,7 @@ file_path = "vid_encodings.pth"
 #file_path = "text_encodings.pth"
 
 video_encodings = torch.load(file_path)
+video_encodings = video_encodings[:video_encodings.shape[0], ...]
 
 vid_cosine_similarities = torch.nn.functional.cosine_similarity(video_encodings.unsqueeze(0),
                                                                 video_encodings.unsqueeze(1), dim=-1)
