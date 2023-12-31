@@ -495,6 +495,14 @@ def pretraining_accuracy(model, video_teacher_model, args):
 
     ## this is for generating the heatmap of the cosine similarities of the videos
     video_encodings = torch.cat(video_encodings)
+    vid_path = "vid_encodings.pth"
+    torch.save(video_encodings, vid_path)
+    print(f"Text encodings saved to {vid_path}")
+    image_encodings = torch.cat(image_encodings)
+    img_path = "img_encodings.pth"
+    torch.save(image_encodings, img_path)
+    print(f"Text encodings saved to {img_path}")
+
     vid_cosine_similarities = torch.nn.functional.cosine_similarity(video_encodings.unsqueeze(0),
                                                                 video_encodings.unsqueeze(1), dim=-1)
     print(vid_cosine_similarities.shape)
@@ -513,7 +521,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
     print(f"Heatmap saved to {heatmap_path}")
 
     ## this is for generating the heatmap of the cosine similarities of the image space
-    image_encodings = torch.cat(image_encodings)
+
     img_cosine_similarities = torch.nn.functional.cosine_similarity(image_encodings.unsqueeze(0),
                                                                 image_encodings.unsqueeze(1), dim=-1)
     print(img_cosine_similarities.shape)
