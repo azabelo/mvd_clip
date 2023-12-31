@@ -253,7 +253,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
     num_tasks = utils.get_world_size()
     global_rank = utils.get_rank()
     sampler_train = torch.utils.data.DistributedSampler(
-        dataset_train, num_replicas=num_tasks, rank=global_rank, shuffle=True
+        dataset_train, num_replicas=num_tasks, rank=global_rank, shuffle=False
     )
 
     if args_copy.num_sample > 1:
@@ -265,7 +265,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
     data_loader_train = torch.utils.data.DataLoader(
         dataset_train, sampler=sampler_train,
         batch_size=args_copy.batch_size,
-        num_workers=args_copy.num_workers,
+        num_workers=1,
         pin_memory=args_copy.pin_mem,
         drop_last=True,
         collate_fn=collate_func,
