@@ -468,7 +468,7 @@ class VideoDistillation(torch.utils.data.Dataset):
         self.lazy_init = lazy_init
         self.num_sample = num_sample
 
-        self.action_embeddings = torch.load("action_encodings.pth")
+        self.action_embeddings = torch.load("action_encodings.pth").cuda()
 
         if not self.lazy_init:
             self.clips = self._make_dataset(root, setting)
@@ -509,6 +509,7 @@ class VideoDistillation(torch.utils.data.Dataset):
             # class_names = class_names_str.split()
             # action_name = action_names[class_names.index(class_name)]
             # embeddings = self.action_embeddings[action_name]
+            embeddings = None
 
 
             decord_vr = decord.VideoReader(video_name, num_threads=1)
