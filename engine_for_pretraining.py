@@ -426,11 +426,15 @@ def pretraining_accuracy(model, video_teacher_model, args):
             import clip
             clip_model, preprocess = clip.load("ViT-B/16", device=args.device)
             # multiply the features by the model.visual.proj matrix (not to be done when model is the teacher)
-            vid_space_features = torch.matmul(cls_token, clip_model.visual.proj.float())
+            #vid_space_features = torch.matmul(cls_token, clip_model.visual.proj.float())
+            vid_space_features = cls_token
+
             vid_space_features /= vid_space_features.norm(dim=-1, keepdim=True)
             video_encodings.append(vid_space_features)
 
-            img_space_features = torch.matmul(first_token, clip_model.visual.proj.float())
+            #img_space_features = torch.matmul(first_token, clip_model.visual.proj.float())
+            img_space_features = first_token
+
             img_space_features /= img_space_features.norm(dim=-1, keepdim=True)
             image_encodings.append(img_space_features)
 
@@ -495,52 +499,13 @@ def pretraining_accuracy(model, video_teacher_model, args):
 
     ## this is for generating the heatmap of the cosine similarities of the videos
     video_encodings = torch.cat(video_encodings)
-    vid_path = "vid_encodings.pth"
+    vid_path = "vid_encodings_no_matrix.pth"
     torch.save(video_encodings, vid_path)
     print(f"Text encodings saved to {vid_path}")
     image_encodings = torch.cat(image_encodings)
-    img_path = "img_encodings.pth"
+    img_path = "img_encodings_no_matrix.pth"
     torch.save(image_encodings, img_path)
     print(f"Text encodings saved to {img_path}")
-
-    vid_cosine_similarities = torch.nn.functional.cosine_similarity(video_encodings.unsqueeze(0),
-                                                                video_encodings.unsqueeze(1), dim=-1)
-    print(vid_cosine_similarities.shape)
-    # Set the figure size and create the heatmap
-    fig, ax = plt.subplots(figsize=(3570 / 100, 3570 / 100))
-    sns.heatmap(vid_cosine_similarities.cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False, cbar=True,
-                ax=ax)
-
-    # Set the DPI to control the image size
-    dpi = 100
-    fig.set_dpi(dpi)
-    # Save the heatmap image with the desired resolution
-    heatmap_path = "video_cosine_similarity_heatmap.png"
-    plt.savefig(heatmap_path, dpi=dpi)
-    plt.close()
-    print(f"Heatmap saved to {heatmap_path}")
-
-    ## this is for generating the heatmap of the cosine similarities of the image space
-
-    img_cosine_similarities = torch.nn.functional.cosine_similarity(image_encodings.unsqueeze(0),
-                                                                image_encodings.unsqueeze(1), dim=-1)
-    print(img_cosine_similarities.shape)
-    # Set the figure size and create the heatmap
-    fig, ax = plt.subplots(figsize=(3570 / 100, 3570 / 100))
-    sns.heatmap(img_cosine_similarities.cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False, cbar=True,
-                ax=ax)
-
-    # Set the DPI to control the image size
-    dpi = 100
-    fig.set_dpi(dpi)
-    # Save the heatmap image with the desired resolution
-    heatmap_path = "image_cosine_similarity_heatmap.png"
-    plt.savefig(heatmap_path, dpi=dpi)
-    plt.close()
-    print(f"Heatmap saved to {heatmap_path}")
-
-
-
 
 
     knn_classifier19.fit(knn_features_train, knn_labels_train)
