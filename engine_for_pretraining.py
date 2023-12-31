@@ -410,11 +410,11 @@ def pretraining_accuracy(model, video_teacher_model, args):
                 features = model.forward(input_data)
             else:
                 features = model.module.forward_encoder(input_data, empty_mask)
-                image_features, _ = model.module.forward(input_data, empty_mask)
+                # image_features, _ = model.module.forward(input_data, empty_mask)
 
             # features = features.detach()
             cls_token = features[:, 0, :]
-            first_token = image_features[:, 0, :]
+            # first_token = image_features[:, 0, :]
 
             knn_features_train = np.append(knn_features_train, cls_token.cpu().numpy(), axis=0)
             knn_labels_train = np.append(knn_labels_train, target.cpu().numpy(), axis=0)
@@ -433,10 +433,10 @@ def pretraining_accuracy(model, video_teacher_model, args):
             video_encodings.append(vid_space_features)
 
             #img_space_features = torch.matmul(first_token, clip_model.visual.proj.float())
-            img_space_features = first_token
-
-            img_space_features /= img_space_features.norm(dim=-1, keepdim=True)
-            image_encodings.append(img_space_features)
+            # img_space_features = first_token
+            #
+            # img_space_features /= img_space_features.norm(dim=-1, keepdim=True)
+            # image_encodings.append(img_space_features)
 
             # for each of the features, find the cosine similarity with each of the text features
             # tensor1 = vid_space_features.unsqueeze(1)
@@ -502,10 +502,11 @@ def pretraining_accuracy(model, video_teacher_model, args):
     vid_path = "vid_encodings_no_matrix.pth"
     torch.save(video_encodings, vid_path)
     print(f"Text encodings saved to {vid_path}")
-    image_encodings = torch.cat(image_encodings)
-    img_path = "img_encodings_no_matrix.pth"
-    torch.save(image_encodings, img_path)
-    print(f"Text encodings saved to {img_path}")
+
+    # image_encodings = torch.cat(image_encodings)
+    # img_path = "img_encodings_no_matrix.pth"
+    # torch.save(image_encodings, img_path)
+    # print(f"Text encodings saved to {img_path}")
 
 
     knn_classifier19.fit(knn_features_train, knn_labels_train)
