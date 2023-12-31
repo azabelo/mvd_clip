@@ -102,9 +102,6 @@ with torch.no_grad():
             text_encoding = model.encode_text(tokenized)
             text_encodings[prompt].append(text_encoding)
 
-for class_encoding in text_encodings.values():
-    class_encoding = torch.cat(class_encoding)
-
 # #normalize to unit vectors
 # text_encodings /= text_encodings.norm(dim=-1, keepdim=True)
 
