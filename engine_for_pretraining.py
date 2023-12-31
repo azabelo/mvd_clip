@@ -114,6 +114,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
         videos, videos_for_teacher, bool_masked_pos, class_name = batch
         print(class_name)
+
         videos = videos.to(device, non_blocking=True)
         videos_for_teacher = videos_for_teacher.to(device, non_blocking=True)
         bool_masked_pos = bool_masked_pos.to(device, non_blocking=True).flatten(1).to(torch.bool)
@@ -223,6 +224,9 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
     print("Averaged stats:", metric_logger)
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
+
+def class_names_to_embedding_targets(class_names):
+    pass
 
 def pretraining_accuracy(model, video_teacher_model, args):
     test_teacher = False

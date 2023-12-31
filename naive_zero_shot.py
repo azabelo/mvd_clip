@@ -65,6 +65,8 @@ templates = [
 ]
 
 class_names_str = "brush_hair clap draw_sword fall_floor handstand kick pick push run shoot_gun smoke sword turn cartwheel climb dribble fencing hit kick_ball pour pushup shake_hands sit somersault sword_exercise walk catch climb_stairs drink flic_flac hug kiss pullup ride_bike shoot_ball situp stand talk wave chew dive eat golf jump laugh punch ride_horse shoot_bow smile swing_baseball throw"
+action_names = ['brushing hair', 'doing a cartwheel', 'catching', 'chewing', 'clapping', 'climbing', 'climbing stairs', 'diving', 'drawing a sword', 'dribbling', 'drinking', 'eating', 'falling to the floor', 'fencing', 'doing flic flac', 'golfing', 'doing a handstand', 'hitting', 'hugging', 'jumping', 'kicking', 'kicking a ball', 'kissing', 'laughing', 'picking', 'pouring', 'doing pullups', 'punching', 'pushing', 'doing pushups', 'riding a bike', 'riding a horse', 'running', 'shaking hands', 'shooting a ball', 'shooting a bow', 'shooting a gun', 'sitting', 'doing situps', 'smiling', 'smoking', 'doing a somersault', 'standing', 'swinging a baseball bat', 'using a sword', 'doing sword exercises', 'talking', 'throwing', 'turning', 'walking', 'waving']
+
 # Convert the string to a list by splitting on spaces and then removing underscores
 class_names = class_names_str.split()
 # Sort the list alphabetically
@@ -73,51 +75,53 @@ print(class_names)
 
 
 # each group of 48 correspond to one class, get index by integer division
-prompts = []
-for name in class_names:
+prompts = {}
+for name in action_names:
     for template in templates:
-        prompts.append(template.format(name))
+        if name not in prompts:
+            prompts[name] = []
+        prompts[name].append(template.format(name))
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model, preprocess = clip.load("ViT-B/16", device=device)
 
-text_encodings = []
+text_encodings = {}
 model.eval()
 with torch.no_grad():
     model.eval()
 
     count = 0
-    for prompt_batch in [prompts[i:i + 1] for i in range(0, len(prompts), 1)]:
-        print(count)
-        count += 1
-        text_batch = clip.tokenize(prompt_batch).to(device)
-        text_encoding = model.encode_text(text_batch)
-        text_encodings.append(text_encoding)
+    for name in action_names:
+        for prompt in prompts[name]:
+            if prompt not in text_encodings:
+                text_encodings[prompt] = []
+            print(count)
+            count += 1
+            tokenized = clip.tokenize(prompt).to(device)
+            text_encoding = model.encode_text(tokenized)
+            text_encodings[prompt].append(text_encoding)
 
-    text_encodings = torch.cat(text_encodings)
-    #normalize to unit vectors
-    text_encodings /= text_encodings.norm(dim=-1, keepdim=True)
+for class_encoding in text_encodings:
+    class_encoding = torch.cat(class_encoding)
 
-    save_path = "text_encodings.pth"
-    torch.save(text_encodings, save_path)
-    print(f"Text encodings saved to {save_path}")
+# #normalize to unit vectors
+# text_encodings /= text_encodings.norm(dim=-1, keepdim=True)
 
-cosine_similarities = torch.nn.functional.cosine_similarity(text_encodings.unsqueeze(0), text_encodings.unsqueeze(1), dim=-1)
+save_path = "action_encodings.pth"
+torch.save(text_encodings, save_path)
+print(f"Text encodings saved to {save_path}")
+
+action_encodings = torch.cat(list(text_encodings.values()))
+
+text_encodings = torch.load("text_encodings.pth")
+
+
+
+
+cosine_similarities = torch.nn.functional.cosine_similarity(action_encodings.unsqueeze(0), text_encodings.unsqueeze(1), dim=-1)
 
 print(cosine_similarities.shape)
-
-# # Visualize cosine similarities with a heatmap
-# plt.figure(figsize=(45, 50))
-# sns.heatmap(cosine_similarities.cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False, cbar=True)
-#
-# # Save the heatmap image
-# heatmap_path = "cosine_similarity_heatmap.png"
-# plt.savefig(heatmap_path)
-# plt.close()
-#
-# print(f"Heatmap saved to {heatmap_path}")
-
 
 # Set the figure size and create the heatmap
 fig, ax = plt.subplots(figsize=(2448/100, 2448/100))
