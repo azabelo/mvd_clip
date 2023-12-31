@@ -478,6 +478,7 @@ class VideoDistillation(torch.utils.data.Dataset):
 
         # CHANGES HERE TOO
         directory, target, cls = self.clips[index]
+        print(cls)
         if self.video_loader:
             if '.' in directory.split('/')[-1]:
                 # data in the "setting" file already have extension, e.g., demo.mp4
