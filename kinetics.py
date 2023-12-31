@@ -486,7 +486,7 @@ class VideoDistillation(torch.utils.data.Dataset):
                 # data in the "setting" file do not have extension, e.g., demo
                 # So we need to provide extension (i.e., .mp4) to complete the file name.
                 video_name = '{}.{}'.format(directory, self.video_ext)
-            class_name = video_name.split('/')[1]
+            class_name = video_name.split('/')[2]
             print(class_name)
 
             decord_vr = decord.VideoReader(video_name, num_threads=1)
