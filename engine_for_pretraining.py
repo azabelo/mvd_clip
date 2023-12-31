@@ -102,6 +102,24 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
     tubelet_size = args.tubelet_size
 
+    action_embeddings = torch.load("action_encodings.pth")
+    class_names_str = "brush_hair clap draw_sword fall_floor handstand kick pick push run shoot_gun smoke sword turn cartwheel climb dribble fencing hit kick_ball pour pushup shake_hands sit somersault sword_exercise walk catch climb_stairs drink flic_flac hug kiss pullup ride_bike shoot_ball situp stand talk wave chew dive eat golf jump laugh punch ride_horse shoot_bow smile swing_baseball throw"
+    action_names = ['brushing hair', 'doing a cartwheel', 'catching', 'chewing', 'clapping', 'climbing',
+                    'climbing stairs', 'diving', 'drawing a sword', 'dribbling', 'drinking', 'eating',
+                    'falling to the floor', 'fencing', 'doing flic flac', 'golfing', 'doing a handstand',
+                    'hitting',
+                    'hugging', 'jumping', 'kicking', 'kicking a ball', 'kissing', 'laughing', 'picking',
+                    'pouring',
+                    'doing pullups', 'punching', 'pushing', 'doing pushups', 'riding a bike',
+                    'riding a horse',
+                    'running', 'shaking hands', 'shooting a ball', 'shooting a bow', 'shooting a gun',
+                    'sitting',
+                    'doing situps', 'smiling', 'smoking', 'doing a somersault', 'standing',
+                    'swinging a baseball bat',
+                    'using a sword', 'doing sword exercises', 'talking', 'throwing', 'turning', 'walking',
+                    'waving']
+    class_names = class_names_str.split()
+
     for step, batch in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
         # assign learning rate & weight decay for each step
         update_step = step // update_freq
@@ -113,9 +131,12 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
                 if wd_schedule_values is not None and param_group["weight_decay"] > 0:
                     param_group["weight_decay"] = wd_schedule_values[it]
 
-        videos, videos_for_teacher, bool_masked_pos, class_name, text_embeddings = batch
-        print(class_name)
-        print(text_embeddings.shape)
+        videos, videos_for_teacher, bool_masked_pos, class_names = batch
+        print(class_names)
+        action_names = [action_names[class_names.index(class_name)] for class_name in class_names]
+        embeddings = [action_embeddings[action_name] for action_name in action_names]
+        embeddings = torch.stack(embeddings)
+        print(embeddings.shape)
 
         videos = videos.to(device, non_blocking=True)
         videos_for_teacher = videos_for_teacher.to(device, non_blocking=True)
