@@ -4,8 +4,8 @@ import os
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-file_path = "vid_encodings.pth"
-#file_path = "img_encodings.pth"
+#file_path = "vid_encodings.pth"
+file_path = "img_encodings.pth"
 #file_path = "text_encodings.pth"
 
 video_encodings = torch.load(file_path)
@@ -23,7 +23,7 @@ sns.heatmap(vid_cosine_similarities.cpu().numpy(), cmap="viridis", xticklabels=F
 dpi = 100
 fig.set_dpi(dpi)
 # Save the heatmap image with the desired resolution
-heatmap_path = "video_cosine_similarity_heatmap.png"
+heatmap_path = "image_cosine_similarity_heatmap.png"
 plt.savefig(heatmap_path, dpi=dpi)
 plt.close()
 print(f"Heatmap saved to {heatmap_path}")
