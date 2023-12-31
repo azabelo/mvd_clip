@@ -112,7 +112,8 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
                 if wd_schedule_values is not None and param_group["weight_decay"] > 0:
                     param_group["weight_decay"] = wd_schedule_values[it]
 
-        videos, videos_for_teacher, bool_masked_pos = batch
+        videos, videos_for_teacher, bool_masked_pos, class_name = batch
+        print(class_name)
         videos = videos.to(device, non_blocking=True)
         videos_for_teacher = videos_for_teacher.to(device, non_blocking=True)
         bool_masked_pos = bool_masked_pos.to(device, non_blocking=True).flatten(1).to(torch.bool)

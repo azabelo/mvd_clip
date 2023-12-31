@@ -487,7 +487,6 @@ class VideoDistillation(torch.utils.data.Dataset):
                 # So we need to provide extension (i.e., .mp4) to complete the file name.
                 video_name = '{}.{}'.format(directory, self.video_ext)
             class_name = video_name.split('/')[2]
-            print(class_name)
 
             decord_vr = decord.VideoReader(video_name, num_threads=1)
             duration = len(decord_vr)
@@ -513,7 +512,7 @@ class VideoDistillation(torch.utils.data.Dataset):
             process_data_0 = process_data_0.view((self.new_length, 3) + process_data_0.size()[-2:]).transpose(0, 1)  # T*C,H,W -> T,C,H,W -> C,T,H,W
             process_data_1 = process_data_1.view((self.new_length, 3) + process_data_1.size()[-2:]).transpose(0, 1)  # T*C,H,W -> T,C,H,W -> C,T,H,W
 
-            return (process_data_0, process_data_1, mask)
+            return (process_data_0, process_data_1, mask, class_name)
 
     def __len__(self):
         return len(self.clips)
