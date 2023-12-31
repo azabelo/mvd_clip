@@ -506,9 +506,9 @@ class VideoDistillation(torch.utils.data.Dataset):
                             'swinging a baseball bat',
                             'using a sword', 'doing sword exercises', 'talking', 'throwing', 'turning', 'walking',
                             'waving']
-            class_names = class_names_str.split()
-            action_name = action_names[class_names.index(class_name)]
-            embeddings = self.action_embeddings[action_name]
+            # class_names = class_names_str.split()
+            # action_name = action_names[class_names.index(class_name)]
+            # embeddings = self.action_embeddings[action_name]
 
 
             decord_vr = decord.VideoReader(video_name, num_threads=1)
