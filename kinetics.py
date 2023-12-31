@@ -478,7 +478,6 @@ class VideoDistillation(torch.utils.data.Dataset):
 
         # CHANGES HERE TOO
         directory, target, cls = self.clips[index]
-        print(cls)
         if self.video_loader:
             if '.' in directory.split('/')[-1]:
                 # data in the "setting" file already have extension, e.g., demo.mp4
@@ -487,7 +486,7 @@ class VideoDistillation(torch.utils.data.Dataset):
                 # data in the "setting" file do not have extension, e.g., demo
                 # So we need to provide extension (i.e., .mp4) to complete the file name.
                 video_name = '{}.{}'.format(directory, self.video_ext)
-
+            print(video_name)
             decord_vr = decord.VideoReader(video_name, num_threads=1)
             duration = len(decord_vr)
 
