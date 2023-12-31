@@ -468,6 +468,8 @@ class VideoDistillation(torch.utils.data.Dataset):
         self.lazy_init = lazy_init
         self.num_sample = num_sample
 
+        self.action_embeddings = torch.load("action_encodings.pth")
+
         if not self.lazy_init:
             self.clips = self._make_dataset(root, setting)
             if len(self.clips) == 0:
@@ -487,6 +489,27 @@ class VideoDistillation(torch.utils.data.Dataset):
                 # So we need to provide extension (i.e., .mp4) to complete the file name.
                 video_name = '{}.{}'.format(directory, self.video_ext)
             class_name = video_name.split('/')[2]
+
+
+            class_names_str = "brush_hair clap draw_sword fall_floor handstand kick pick push run shoot_gun smoke sword turn cartwheel climb dribble fencing hit kick_ball pour pushup shake_hands sit somersault sword_exercise walk catch climb_stairs drink flic_flac hug kiss pullup ride_bike shoot_ball situp stand talk wave chew dive eat golf jump laugh punch ride_horse shoot_bow smile swing_baseball throw"
+            action_names = ['brushing hair', 'doing a cartwheel', 'catching', 'chewing', 'clapping', 'climbing',
+                            'climbing stairs', 'diving', 'drawing a sword', 'dribbling', 'drinking', 'eating',
+                            'falling to the floor', 'fencing', 'doing flic flac', 'golfing', 'doing a handstand',
+                            'hitting',
+                            'hugging', 'jumping', 'kicking', 'kicking a ball', 'kissing', 'laughing', 'picking',
+                            'pouring',
+                            'doing pullups', 'punching', 'pushing', 'doing pushups', 'riding a bike',
+                            'riding a horse',
+                            'running', 'shaking hands', 'shooting a ball', 'shooting a bow', 'shooting a gun',
+                            'sitting',
+                            'doing situps', 'smiling', 'smoking', 'doing a somersault', 'standing',
+                            'swinging a baseball bat',
+                            'using a sword', 'doing sword exercises', 'talking', 'throwing', 'turning', 'walking',
+                            'waving']
+            class_names = class_names_str.split()
+            action_name = action_names[class_names.index(class_name)]
+            embeddings = self.action_embeddings[action_name]
+
 
             decord_vr = decord.VideoReader(video_name, num_threads=1)
             duration = len(decord_vr)
@@ -512,7 +535,7 @@ class VideoDistillation(torch.utils.data.Dataset):
             process_data_0 = process_data_0.view((self.new_length, 3) + process_data_0.size()[-2:]).transpose(0, 1)  # T*C,H,W -> T,C,H,W -> C,T,H,W
             process_data_1 = process_data_1.view((self.new_length, 3) + process_data_1.size()[-2:]).transpose(0, 1)  # T*C,H,W -> T,C,H,W -> C,T,H,W
 
-            return (process_data_0, process_data_1, mask, class_name)
+            return (process_data_0, process_data_1, mask, class_name, embeddings)
 
     def __len__(self):
         return len(self.clips)

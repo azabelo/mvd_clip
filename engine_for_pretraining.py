@@ -33,6 +33,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
                     image_teacher_model=None, video_teacher_model=None, norm_feature=False):
 
     # MY CHANGES
+
     # test that the student is the same prior to the start of training
     if epoch % args.knn_freq == 0:
         model.eval()
@@ -112,8 +113,9 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
                 if wd_schedule_values is not None and param_group["weight_decay"] > 0:
                     param_group["weight_decay"] = wd_schedule_values[it]
 
-        videos, videos_for_teacher, bool_masked_pos, class_name = batch
+        videos, videos_for_teacher, bool_masked_pos, class_name, text_embeddings = batch
         print(class_name)
+        print(text_embeddings.shape)
 
         videos = videos.to(device, non_blocking=True)
         videos_for_teacher = videos_for_teacher.to(device, non_blocking=True)
@@ -225,8 +227,6 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
 
-def class_names_to_embedding_targets(class_names):
-    pass
 
 def pretraining_accuracy(model, video_teacher_model, args):
     test_teacher = False
