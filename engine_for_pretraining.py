@@ -265,7 +265,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
     data_loader_train = torch.utils.data.DataLoader(
         dataset_train, sampler=sampler_train,
         batch_size=args_copy.batch_size,
-        num_workers=1,
+        num_workers=0,
         pin_memory=args_copy.pin_mem,
         drop_last=True,
         collate_fn=collate_func,
