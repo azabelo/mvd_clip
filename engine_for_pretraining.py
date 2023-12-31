@@ -439,21 +439,21 @@ def pretraining_accuracy(model, video_teacher_model, args):
             image_encodings.append(img_space_features)
 
             # for each of the features, find the cosine similarity with each of the text features
-            tensor1 = vid_space_features.unsqueeze(1)
-            tensor2 = text_encodings.unsqueeze(0)
-            vid_cosine_sim = torch.nn.functional.cosine_similarity(tensor1, tensor2, dim=2)
-
-            total_zero_shot += vid_cosine_sim.shape[0]
-            # find the index of the highest cosine similarity for each of the features
-            max_index = torch.argmax(vid_cosine_sim, dim=1)
-            print("max index: ", max_index)
-            max_index = max_index // 48
-            print("max index: ", max_index)
-            print("target: ", target)
-            # find how many of these match the target
-            zero_shot_correct += torch.sum(max_index == target).item()
-            zero_shot_accuracy = zero_shot_correct / total_zero_shot
-            print("zero shot accuracy: ", zero_shot_accuracy)
+            # tensor1 = vid_space_features.unsqueeze(1)
+            # tensor2 = text_encodings.unsqueeze(0)
+            # vid_cosine_sim = torch.nn.functional.cosine_similarity(tensor1, tensor2, dim=2)
+            #
+            # total_zero_shot += vid_cosine_sim.shape[0]
+            # # find the index of the highest cosine similarity for each of the features
+            # max_index = torch.argmax(vid_cosine_sim, dim=1)
+            # print("max index: ", max_index)
+            # max_index = max_index // 48
+            # print("max index: ", max_index)
+            # print("target: ", target)
+            # # find how many of these match the target
+            # zero_shot_correct += torch.sum(max_index == target).item()
+            # zero_shot_accuracy = zero_shot_correct / total_zero_shot
+            # print("zero shot accuracy: ", zero_shot_accuracy)
 
             # # find the sum of every 48 elements in the cosine sim
             # cosine_sim = cosine_sim.view(8, 51, 48)
