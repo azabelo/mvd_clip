@@ -101,6 +101,7 @@ with torch.no_grad():
             tokenized = clip.tokenize(prompt).to(device)
             text_encoding = model.encode_text(tokenized)
             text_encodings[prompt].append(text_encoding)
+            text_encodings[prompt] = torch.cat(text_encodings[prompt], dim=0)
 
 # #normalize to unit vectors
 # text_encodings /= text_encodings.norm(dim=-1, keepdim=True)
