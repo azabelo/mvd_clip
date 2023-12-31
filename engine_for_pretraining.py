@@ -387,7 +387,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
     zero_shot_correct = 0
     total_zero_shot = 0
 
-    image_encodings = []
+    video_encodings = []
     for batch_idx, (input_data, target, _, _) in enumerate(data_loader_train):
         linear_optimizer.zero_grad()
 
@@ -425,7 +425,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
             clip_space_features = torch.matmul(cls_token, clip_model.visual.proj.float())
             clip_space_features /= clip_space_features.norm(dim=-1, keepdim=True)
 
-            image_encodings.append(clip_space_features)
+            video_encodings.append(clip_space_features)
 
 
             # for each of the features, find the cosine similarity with each of the text features
@@ -489,9 +489,9 @@ def pretraining_accuracy(model, video_teacher_model, args):
 
 
     ## this is for generating the heatmap of the cosine similarities of the videos
-    image_encodings = torch.cat(image_encodings)
-    cosine_similarities = torch.nn.functional.cosine_similarity(text_encodings.unsqueeze(0),
-                                                                text_encodings.unsqueeze(1), dim=-1)
+    video_encodings = torch.cat(video_encodings)
+    cosine_similarities = torch.nn.functional.cosine_similarity(video_encodings.unsqueeze(0),
+                                                                video_encodings.unsqueeze(1), dim=-1)
     print(cosine_similarities.shape)
     # Set the figure size and create the heatmap
     fig, ax = plt.subplots(figsize=(3570 / 100, 3570 / 100))
@@ -502,7 +502,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
     dpi = 100
     fig.set_dpi(dpi)
     # Save the heatmap image with the desired resolution
-    heatmap_path = "image_cosine_similarity_heatmap.png"
+    heatmap_path = "video_cosine_similarity_heatmap.png"
     plt.savefig(heatmap_path, dpi=dpi)
     plt.close()
     print(f"Heatmap saved to {heatmap_path}")
