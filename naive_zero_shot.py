@@ -77,9 +77,9 @@ print(class_names)
 # each group of 48 correspond to one class, get index by integer division
 prompts = {}
 for name in action_names:
+    if name not in prompts:
+        prompts[name] = []
     for template in templates:
-        if name not in prompts:
-            prompts[name] = []
         prompts[name].append(template.format(name))
 
 
@@ -93,15 +93,15 @@ with torch.no_grad():
 
     count = 0
     for name in action_names:
+        if name not in text_encodings:
+            text_encodings[name] = []
         for prompt in prompts[name]:
-            if name not in text_encodings:
-                text_encodings[name] = []
             print(count)
             count += 1
             tokenized = clip.tokenize(prompt).to(device)
             text_encoding = model.encode_text(tokenized)
             text_encodings[name].append(text_encoding)
-            text_encodings[name] = torch.cat(text_encodings[name], dim=0)
+        text_encodings[name] = torch.cat(text_encodings[name], dim=0)
 
 # #normalize to unit vectors
 # text_encodings /= text_encodings.norm(dim=-1, keepdim=True)
