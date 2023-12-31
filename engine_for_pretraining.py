@@ -388,6 +388,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
     total_zero_shot = 0
 
     video_encodings = []
+    image_encodings = []
     for batch_idx, (input_data, target, _, _) in enumerate(data_loader_train):
         linear_optimizer.zero_grad()
 
@@ -409,9 +410,12 @@ def pretraining_accuracy(model, video_teacher_model, args):
                 features = model.forward(input_data)
             else:
                 features = model.module.forward_encoder(input_data, empty_mask)
+                image_features, _ = model.module.forward(input_data, empty_mask)
 
             # features = features.detach()
             cls_token = features[:, 0, :]
+            first_token = image_features[:, 0, :]
+
             knn_features_train = np.append(knn_features_train, cls_token.cpu().numpy(), axis=0)
             knn_labels_train = np.append(knn_labels_train, target.cpu().numpy(), axis=0)
             # knn_features_train = np.concatenate((knn_features_train, cls_token.cpu().numpy()), axis=0)
@@ -422,19 +426,22 @@ def pretraining_accuracy(model, video_teacher_model, args):
             import clip
             clip_model, preprocess = clip.load("ViT-B/16", device=args.device)
             # multiply the features by the model.visual.proj matrix (not to be done when model is the teacher)
-            clip_space_features = torch.matmul(cls_token, clip_model.visual.proj.float())
-            clip_space_features /= clip_space_features.norm(dim=-1, keepdim=True)
+            vid_space_features = torch.matmul(cls_token, clip_model.visual.proj.float())
+            vid_space_features /= vid_space_features.norm(dim=-1, keepdim=True)
+            video_encodings.append(vid_space_features)
 
-            video_encodings.append(clip_space_features)
-
+            img_space_features = torch.matmul(first_token, clip_model.visual.proj.float())
+            img_space_features /= img_space_features.norm(dim=-1, keepdim=True)
+            image_encodings.append(img_space_features)
 
             # for each of the features, find the cosine similarity with each of the text features
-            tensor1 = clip_space_features.unsqueeze(1)
+            tensor1 = vid_space_features.unsqueeze(1)
             tensor2 = text_encodings.unsqueeze(0)
-            cosine_sim = torch.nn.functional.cosine_similarity(tensor1, tensor2, dim=2)
-            total_zero_shot += cosine_sim.shape[0]
+            vid_cosine_sim = torch.nn.functional.cosine_similarity(tensor1, tensor2, dim=2)
+
+            total_zero_shot += vid_cosine_sim.shape[0]
             # find the index of the highest cosine similarity for each of the features
-            max_index = torch.argmax(cosine_sim, dim=1)
+            max_index = torch.argmax(vid_cosine_sim, dim=1)
             print("max index: ", max_index)
             max_index = max_index // 48
             print("max index: ", max_index)
@@ -444,14 +451,12 @@ def pretraining_accuracy(model, video_teacher_model, args):
             zero_shot_accuracy = zero_shot_correct / total_zero_shot
             print("zero shot accuracy: ", zero_shot_accuracy)
 
-            # find the sum of every 48 elements in the cosine sim
-            cosine_sim = cosine_sim.view(8, 51, 48)
-            cosine_sim = torch.sum(cosine_sim, dim=2)
-            # find the index of the highest cosine similarity for each of the features
-            max_index = torch.argmax(cosine_sim, dim=1)
-            print("max index: ", max_index)
-
-
+            # # find the sum of every 48 elements in the cosine sim
+            # cosine_sim = cosine_sim.view(8, 51, 48)
+            # cosine_sim = torch.sum(cosine_sim, dim=2)
+            # # find the index of the highest cosine similarity for each of the features
+            # max_index = torch.argmax(cosine_sim, dim=1)
+            # print("max index: ", max_index)
 
         linear_output = linear_model(features)
         linear_loss = linear_criterion(linear_output, target)
@@ -490,12 +495,12 @@ def pretraining_accuracy(model, video_teacher_model, args):
 
     ## this is for generating the heatmap of the cosine similarities of the videos
     video_encodings = torch.cat(video_encodings)
-    cosine_similarities = torch.nn.functional.cosine_similarity(video_encodings.unsqueeze(0),
+    vid_cosine_similarities = torch.nn.functional.cosine_similarity(video_encodings.unsqueeze(0),
                                                                 video_encodings.unsqueeze(1), dim=-1)
-    print(cosine_similarities.shape)
+    print(vid_cosine_similarities.shape)
     # Set the figure size and create the heatmap
     fig, ax = plt.subplots(figsize=(3570 / 100, 3570 / 100))
-    sns.heatmap(cosine_similarities.cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False, cbar=True,
+    sns.heatmap(vid_cosine_similarities.cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False, cbar=True,
                 ax=ax)
 
     # Set the DPI to control the image size
@@ -506,6 +511,27 @@ def pretraining_accuracy(model, video_teacher_model, args):
     plt.savefig(heatmap_path, dpi=dpi)
     plt.close()
     print(f"Heatmap saved to {heatmap_path}")
+
+    ## this is for generating the heatmap of the cosine similarities of the image space
+    image_encodings = torch.cat(image_encodings)
+    img_cosine_similarities = torch.nn.functional.cosine_similarity(image_encodings.unsqueeze(0),
+                                                                image_encodings.unsqueeze(1), dim=-1)
+    print(img_cosine_similarities.shape)
+    # Set the figure size and create the heatmap
+    fig, ax = plt.subplots(figsize=(3570 / 100, 3570 / 100))
+    sns.heatmap(img_cosine_similarities.cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False, cbar=True,
+                ax=ax)
+
+    # Set the DPI to control the image size
+    dpi = 100
+    fig.set_dpi(dpi)
+    # Save the heatmap image with the desired resolution
+    heatmap_path = "image_cosine_similarity_heatmap.png"
+    plt.savefig(heatmap_path, dpi=dpi)
+    plt.close()
+    print(f"Heatmap saved to {heatmap_path}")
+
+
 
 
 
