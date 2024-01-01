@@ -126,10 +126,15 @@ if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
     # Your specific action for "yes" on the fifth question goes here
 fi
 
+
+
 cd official_hmdb_splits1
 sort -t',' -k1,1 -o alpha.csv train.csv
 head -n 1000 alpha.csv > train1000.csv
 mv train.csv original.csv
 mv alpha.csv train.csv
 cd ..
+
+python3 naive_zero_shot.py
+
 
