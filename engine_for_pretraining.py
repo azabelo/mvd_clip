@@ -616,7 +616,8 @@ def pretraining_accuracy(model, video_teacher_model, args):
     wandb.log({"vid-vid heatmap": wandb.Image("vid_cosine_heatmap.png")})
 
     action_encodings = torch.load("action_encodings.pth")
-    action_encodings = torch.cat(action_encodings.values())
+    # it is a dictionary of arrays of tensors, so we need to concatenate them
+    action_encodings = torch.cat([torch.cat(action_encoding) for action_encoding in action_encodings.values()])
     # create vid cosine heatmap with text
     create_cosine_heatmap(video_encodings, action_encodings, "vid_action_cosine_heatmap.png")
     wandb.log({"vid-action heatmap": wandb.Image("vid_action_cosine_heatmap.png")})
