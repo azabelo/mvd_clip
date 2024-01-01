@@ -308,6 +308,9 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
                     {"batch": step, "alignment loss": loss.mean().item()})
 
                 metric_logger.update(loss=loss)
+                metric_logger.update()
+                metric_logger.update(lr=1)
+                metric_logger.update(min_lr=1)
                 if log_writer is not None:
                     log_writer.update(loss=loss, head="loss")
                     log_writer.set_step()
