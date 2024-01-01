@@ -25,6 +25,7 @@ while IFS= read -r module; do
     pip install "$module"
   fi
 done < "$requirements_file"
+pip install seaborn
 
 echo "All modules from '$requirements_file' have been installed."
 

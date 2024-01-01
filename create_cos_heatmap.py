@@ -6,7 +6,7 @@ import seaborn as sns
 
 vid_path = "vid_encodings.pth"
 img_path = "img_encodings.pth"
-text_path = "text_encodings.pth"
+text_path = "action_encodings.pth"
 
 video_encodings = torch.load(vid_path)
 video_encodings = video_encodings[:video_encodings.shape[0] // 2, ...]

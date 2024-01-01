@@ -20,6 +20,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 import numpy as np
 import clip
+import os
 import matplotlib.pyplot as plt
 import seaborn as sns
 # END MY CHANGES
@@ -122,18 +123,22 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
     class_names = class_names_str.split()
 
     alignment = True
-    align_matrix_only = False
+    align_matrix_only = True
     class Alignment_Model(nn.Module):
         def __init__(self):
             super(Alignment_Model, self).__init__()
-            clip_model, _ = clip.load("ViT-B/16", device=args.device)
-            clip_matrix = clip_model.visual.proj.float().t()
-            print("clip_matrix shape: ", clip_matrix.shape)
+            if os.path.exists("alignment_matrix.pth"):
+                alignment_matrix = torch.load("alignment_matrix.pth")
+            else:
+                clip_model, _ = clip.load("ViT-B/16", device=args.device)
+                # need to transpose it to give it to a linear layer
+                alignment_matrix = clip_model.visual.proj.float()
+
             # Initialize a linear layer
             self.linear_layer = nn.Linear(768, 512)
             # Set the weight of the linear layer to the CLIP matrix
             with torch.no_grad():
-                self.linear_layer.weight.copy_(clip_matrix)
+                self.linear_layer.weight.copy_(alignment_matrix.t())
 
         def forward(self, x):
             empty_mask = torch.zeros((x.shape[0], 1568), dtype=torch.bool)
@@ -315,6 +320,9 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
                     log_writer.update(loss=loss, head="loss")
                     log_writer.set_step()
 
+    if alignment:
+        weight_matrix = alignment_model.linear_layer.weight.data.t()
+        torch.save(weight_matrix, "alignment_matrix.pth")
 
 
 
@@ -373,9 +381,6 @@ def pretraining_accuracy(model, video_teacher_model, args):
         collate_fn=collate_func,
     )
 
-    # get the array of text encodings from the text_encodings.pth file
-    text_encodings = torch.load('text_encodings.pth')
-    print(text_encodings.shape)
 
     # unnecessary
     linear_probe_video_teacher = False
@@ -486,11 +491,15 @@ def pretraining_accuracy(model, video_teacher_model, args):
     knn_features_train = np.empty((0, 768))
     knn_labels_train = np.empty(0)
 
-    zero_shot_correct = 0
-    total_zero_shot = 0
+
+    if os.path.exists("alignment_matrix.pth"):
+        alignment_matrix = torch.load("alignment_matrix.pth")
+    else:
+        clip_model, _ = clip.load("ViT-B/16", device=args.device)
+        # need to transpose it to give it to a linear layer
+        alignment_matrix = clip_model.visual.proj.float()
 
     video_encodings = []
-    image_encodings = []
     for batch_idx, (input_data, target, _, _) in enumerate(data_loader_train):
         linear_optimizer.zero_grad()
 
@@ -525,10 +534,8 @@ def pretraining_accuracy(model, video_teacher_model, args):
 
 
             # naive zero shot testing
-            clip_model, preprocess = clip.load("ViT-B/16", device=args.device)
             # multiply the features by the model.visual.proj matrix (not to be done when model is the teacher)
-            #vid_space_features = torch.matmul(cls_token, clip_model.visual.proj.float())
-            vid_space_features = cls_token
+            vid_space_features = torch.matmul(cls_token, alignment_matrix)
 
             vid_space_features /= vid_space_features.norm(dim=-1, keepdim=True)
             video_encodings.append(vid_space_features)
@@ -600,14 +607,19 @@ def pretraining_accuracy(model, video_teacher_model, args):
 
     ## this is for generating the heatmap of the cosine similarities of the videos
     video_encodings = torch.cat(video_encodings)
-    vid_path = "vid_encodings_no_matrix.pth"
+    vid_path = "vid_encodings.pth"
     torch.save(video_encodings, vid_path)
-    print(f"Text encodings saved to {vid_path}")
+    print(f"vid encodings saved to {vid_path}")
 
-    # image_encodings = torch.cat(image_encodings)
-    # img_path = "img_encodings_no_matrix.pth"
-    # torch.save(image_encodings, img_path)
-    # print(f"Text encodings saved to {img_path}")
+    # create vid cosine heatmap with itself
+    create_cosine_heatmap(video_encodings, video_encodings, "vid_cosine_heatmap.png")
+    wandb.log({"vid-vid heatmap": wandb.Image("vid_cosine_heatmap.png")})
+
+    text_encodings = torch.load("text_encodings.pth")
+    # create vid cosine heatmap with text
+    create_cosine_heatmap(video_encodings, text_encodings, "vid_text_cosine_heatmap.png")
+    wandb.log({"vid-text heatmap": wandb.Image("vid_text_cosine_heatmap.png")})
+
 
 
     knn_classifier19.fit(knn_features_train, knn_labels_train)
@@ -706,3 +718,20 @@ def pretraining_accuracy(model, video_teacher_model, args):
     # del two_layer_criterion
     torch.cuda.empty_cache()
 
+def create_cosine_heatmap(embeddings1, embeddings2, save_path):
+    tensor1 = embeddings1.unsqueeze(1)
+    tensor2 = embeddings2.unsqueeze(0)
+    cosine_sim = torch.nn.functional.cosine_similarity(tensor1, tensor2, dim=2)
+
+    # Set the figure size and create the heatmap
+    fig, ax = plt.subplots(figsize=(3570 / 100, 3570 / 100))
+    sns.heatmap(cosine_sim.cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False, cbar=True,
+                ax=ax)
+
+    # Set the DPI to control the image size
+    dpi = 100
+    fig.set_dpi(dpi)
+    # Save the heatmap image with the desired resolution
+    plt.savefig(save_path, dpi=dpi)
+    plt.close()
+    print(f"Heatmap saved to {save_path}")
