@@ -75,6 +75,12 @@ if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
     gdown https://drive.google.com/uc?id=1m6ioRxQiB0OmfmiBmHxebuwy6KY22SFn --output checkpoint-4799.pth
 fi
 
+read -p "mae4799 checkpoint (y/n): " answer
+if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
+    echo "downloading mae4799 checkpoint"
+    gdown https://drive.google.com/uc?id=1Vk1IWgAwwPaALcgrYDqlHxidEnWnL7rX --output mae_checkpoint-4799.pth
+fi
+
 read -p "VideoCLIP (y/n): " answer
 if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
     echo "downloading VideoCLIP"
@@ -120,5 +126,10 @@ if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
     # Your specific action for "yes" on the fifth question goes here
 fi
 
-
+cd official_hmdb_splits1
+sort -t',' -k1,1 -o alpha.csv train.csv
+head -n 1000 alpha.csv > train1000.csv
+mv train.csv original.csv
+mv alpha.csv train.csv
+cd ..
 
