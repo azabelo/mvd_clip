@@ -306,7 +306,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
                 wandb.log(
                     {"batch": step, "alignment loss": loss.mean().item()})
-
+                metric_logger.update(loss=loss)
 
 
 
