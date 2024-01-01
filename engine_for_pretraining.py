@@ -615,10 +615,10 @@ def pretraining_accuracy(model, video_teacher_model, args):
     create_cosine_heatmap(video_encodings, video_encodings, "vid_cosine_heatmap.png")
     wandb.log({"vid-vid heatmap": wandb.Image("vid_cosine_heatmap.png")})
 
-    text_encodings = torch.load("text_encodings.pth")
+    action_encodings = torch.load("action_encodings.pth")
     # create vid cosine heatmap with text
-    create_cosine_heatmap(video_encodings, text_encodings, "vid_text_cosine_heatmap.png")
-    wandb.log({"vid-text heatmap": wandb.Image("vid_text_cosine_heatmap.png")})
+    create_cosine_heatmap(video_encodings, action_encodings, "vid_action_cosine_heatmap.png")
+    wandb.log({"vid-action heatmap": wandb.Image("vid_action_cosine_heatmap.png")})
 
 
 
