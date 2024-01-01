@@ -307,16 +307,9 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
                 wandb.log(
                     {"batch": step, "alignment loss": loss.mean().item()})
 
-                metric_logger.update(loss=loss.mean().item())
+                metric_logger.update(loss=loss)
                 if log_writer is not None:
-                    log_writer.update(loss=loss_value, head="loss")
-                    log_writer.update(loss_img_feat=loss_value_img_feat, head="loss_img_feat")
-                    log_writer.update(loss_vid_feat=loss_value_vid_feat, head="loss_vid_feat")
-                    log_writer.update(loss_scale=loss_scale_value, head="opt")
-                    log_writer.update(lr=max_lr, head="opt")
-                    log_writer.update(min_lr=min_lr, head="opt")
-                    log_writer.update(weight_decay=weight_decay_value, head="opt")
-                    log_writer.update(grad_norm=grad_norm, head="opt")
+                    log_writer.update(loss=loss, head="loss")
                     log_writer.set_step()
 
 
