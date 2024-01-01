@@ -294,14 +294,17 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             print(video_embeddings.shape)
             print(embeddings.shape)
 
-            losses = criterion(video_embeddings, embeddings)
-            loss = losses.mean(dim=1)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+            embeddings = embeddings.to(device, non_blocking=True)
 
-            wandb.log(
-                {"batch": step, "alignment loss": loss.mean().item()})
+            for i in range(embeddings.shape[1]):
+                embedding = embeddings[:, i, :]
+                loss = criterion(video_embeddings, embedding)
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+
+                wandb.log(
+                    {"batch": step, "alignment loss": loss.mean().item()})
 
 
 
