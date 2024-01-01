@@ -294,7 +294,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             print(video_embeddings.shape)
             print(embeddings.shape)
 
-            embeddings = embeddings.to(device, non_blocking=True)
+            embeddings = embeddings.to(device, non_blocking=True).float()
 
             for i in range(embeddings.shape[1]):
                 embedding = embeddings[:, i, :]
