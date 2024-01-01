@@ -128,6 +128,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             super(Alignment_Model, self).__init__()
             clip_model, _ = clip.load("ViT-B/16", device=args.device)
             clip_matrix = clip_model.visual.proj.float()
+            print("clip_matrix shape: ", clip_matrix.shape)
             # Initialize a linear layer
             self.linear_layer = nn.Linear(768, 512)
             # Set the weight of the linear layer to the CLIP matrix
