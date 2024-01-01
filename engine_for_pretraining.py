@@ -124,10 +124,15 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
     alignment = True
     align_matrix_only = True
     class Alignment_Model(nn.Module):
-        def __init__(self, input_dim, output_dim):
+        def __init__(self):
             super(Alignment_Model, self).__init__()
             clip_model, _ = clip.load("ViT-B/16", device=args.device)
-            self.matrix = clip_model.visual.proj.float()
+            clip_matrix = clip_model.visual.proj.float()
+            # Initialize a linear layer
+            self.linear_layer = nn.Linear(768, 512)
+            # Set the weight of the linear layer to the CLIP matrix
+            with torch.no_grad():
+                self.linear_layer.weight.copy_(clip_matrix)
 
         def forward(self, x):
             empty_mask = torch.zeros((x.shape[0], 1568), dtype=torch.bool)
