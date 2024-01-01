@@ -127,7 +127,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
         def __init__(self):
             super(Alignment_Model, self).__init__()
             clip_model, _ = clip.load("ViT-B/16", device=args.device)
-            clip_matrix = clip_model.visual.proj.float()
+            clip_matrix = clip_model.visual.proj.float().t()
             print("clip_matrix shape: ", clip_matrix.shape)
             # Initialize a linear layer
             self.linear_layer = nn.Linear(768, 512)
@@ -147,7 +147,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             else:
                 x = model.module.forward_encoder(x, empty_mask)
                 x = x[:, 0, :]
-            x = torch.matmul(x, self.matrix)
+            x = self.linear_layer(x)
             return x
 
     if alignment:
