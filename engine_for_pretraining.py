@@ -299,6 +299,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             for i in range(embeddings.shape[1]):
                 embedding = embeddings[:, i, :]
                 loss = criterion(video_embeddings, embedding)
+                print(loss)
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
