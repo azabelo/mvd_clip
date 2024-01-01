@@ -301,7 +301,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
                 loss = criterion(video_embeddings, embedding)
                 loss = loss.mean()
                 optimizer.zero_grad()
-                loss.backward()
+                loss.backward(retain_graph=True)
                 optimizer.step()
 
                 wandb.log(
