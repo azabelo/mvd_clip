@@ -122,7 +122,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
     class_names = class_names_str.split()
 
     alignment = True
-    align_matrix_only = True
+    align_matrix_only = False
     class Alignment_Model(nn.Module):
         def __init__(self):
             super(Alignment_Model, self).__init__()
