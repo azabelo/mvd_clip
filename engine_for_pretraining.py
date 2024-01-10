@@ -28,6 +28,43 @@ import seaborn as sns
 Loss_func_choice = {'L1': torch.nn.L1Loss, 'L2': torch.nn.MSELoss, 'SmoothL1': torch.nn.SmoothL1Loss}
 
 
+class Alignment_Model(nn.Module):
+    def __init__(self, backbone, align_matrix_only=True):
+        super(Alignment_Model, self).__init__()
+        if os.path.exists("alignment_matrix.pth"):
+            alignment_matrix = torch.load("alignment_matrix.pth")
+        else:
+            clip_model, _ = clip.load("ViT-B/16", device="cuda")
+            # need to transpose it to give it to a linear layer
+            alignment_matrix = clip_model.visual.proj.float()
+
+        self.align_matrix_only = align_matrix_only
+        self.backbone = backbone
+        # Initialize a linear layer
+        self.linear_layer = nn.Linear(768, 512)
+        # Set the weight of the linear layer to the CLIP matrix
+        with torch.no_grad():
+            self.linear_layer.weight.copy_(alignment_matrix.t())
+
+    def forward(self, x):
+        empty_mask = torch.zeros((x.shape[0], 1568), dtype=torch.bool)
+        empty_mask = empty_mask.to('cuda', non_blocking=True)
+        # assuming that backbone is model.module
+        if self.align_matrix_only:
+            self.backbone.eval()
+            with torch.no_grad():
+                self.backbone.eval()
+                x = self.backbone.forward_encoder(x, empty_mask)
+                x = x[:, 0, :]
+        else:
+            x = self.backbone.forward_encoder(x, empty_mask)
+            x = x[:, 0, :]
+        x = self.linear_layer(x)
+        return x
+
+    def retrieve_alignment_matrix(self):
+        return self.linear_layer.weight.data.t()
+
 def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimizer: torch.optim.Optimizer,
                     device: torch.device, epoch: int, loss_scaler, max_norm: float = 0,
                     log_writer=None, lr_scheduler=None, start_steps=None, lr_schedule_values=None,
@@ -123,40 +160,9 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
     class_names = class_names_str.split()
 
     alignment = True
-    align_matrix_only = True
-    class Alignment_Model(nn.Module):
-        def __init__(self):
-            super(Alignment_Model, self).__init__()
-            if os.path.exists("alignment_matrix.pth"):
-                alignment_matrix = torch.load("alignment_matrix.pth")
-            else:
-                clip_model, _ = clip.load("ViT-B/16", device=args.device)
-                # need to transpose it to give it to a linear layer
-                alignment_matrix = clip_model.visual.proj.float()
-
-            # Initialize a linear layer
-            self.linear_layer = nn.Linear(768, 512)
-            # Set the weight of the linear layer to the CLIP matrix
-            with torch.no_grad():
-                self.linear_layer.weight.copy_(alignment_matrix.t())
-
-        def forward(self, x):
-            empty_mask = torch.zeros((x.shape[0], 1568), dtype=torch.bool)
-            empty_mask = empty_mask.to('cuda', non_blocking=True)
-            if align_matrix_only:
-                model.module.eval()
-                with torch.no_grad():
-                    model.module.eval()
-                    x = model.module.forward_encoder(x, empty_mask)
-                    x = x[:, 0, :]
-            else:
-                x = model.module.forward_encoder(x, empty_mask)
-                x = x[:, 0, :]
-            x = self.linear_layer(x)
-            return x
 
     if alignment:
-        alignment_model = Alignment_Model()
+        alignment_model = Alignment_Model(model.module)
         alignment_model.to(args.device)
         alignment_model.train()
         optimizer = torch.optim.Adam(alignment_model.parameters(), lr=args.lr)
@@ -321,9 +327,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
                     log_writer.set_step()
 
     if alignment:
-        weight_matrix = alignment_model.linear_layer.weight.data.t()
-        torch.save(weight_matrix, "alignment_matrix.pth")
-
+        torch.save(alignment_model.retrieve_alignment_matrix(), "alignment_matrix.pth")
 
 
     # gather the stats from all processes
@@ -334,6 +338,26 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
 
 def pretraining_accuracy(model, video_teacher_model, args):
+    action_embeddings = torch.load("action_encodings.pth")
+    class_names_str = "brush_hair clap draw_sword fall_floor handstand kick pick push run shoot_gun smoke sword turn cartwheel climb dribble fencing hit kick_ball pour pushup shake_hands sit somersault sword_exercise walk catch climb_stairs drink flic_flac hug kiss pullup ride_bike shoot_ball situp stand talk wave chew dive eat golf jump laugh punch ride_horse shoot_bow smile swing_baseball throw"
+    action_names = ['brushing hair', 'doing a cartwheel', 'catching', 'chewing', 'clapping', 'climbing',
+                    'climbing stairs', 'diving', 'drawing a sword', 'dribbling', 'drinking', 'eating',
+                    'falling to the floor', 'fencing', 'doing flic flac', 'golfing', 'doing a handstand',
+                    'hitting',
+                    'hugging', 'jumping', 'kicking', 'kicking a ball', 'kissing', 'laughing', 'picking',
+                    'pouring',
+                    'doing pullups', 'punching', 'pushing', 'doing pushups', 'riding a bike',
+                    'riding a horse',
+                    'running', 'shaking hands', 'shooting a ball', 'shooting a bow', 'shooting a gun',
+                    'sitting',
+                    'doing situps', 'smiling', 'smoking', 'doing a somersault', 'standing',
+                    'swinging a baseball bat',
+                    'using a sword', 'doing sword exercises', 'talking', 'throwing', 'turning', 'walking',
+                    'waving']
+    class_names = class_names_str.split()
+    action_embeddings = [action_embeddings[action_name] for action_name in action_names]
+    action_embeddings = torch.stack(action_embeddings)
+
     test_teacher = False
     if test_teacher:
         model = video_teacher_model
@@ -456,8 +480,9 @@ def pretraining_accuracy(model, video_teacher_model, args):
     linear_criterion = nn.CrossEntropyLoss()
     linear_optimizer = optim.SGD(linear_model.parameters(), lr=1e-3)
 
-
-
+    alignment_model = Alignment_Model(model.module)
+    alignment_model.to('cuda', non_blocking=True)
+    alignment_model.train()
 
     # class TwoLayerClassifier(nn.Module):
     #     def __init__(self):
@@ -492,16 +517,20 @@ def pretraining_accuracy(model, video_teacher_model, args):
     knn_labels_train = np.empty(0)
 
 
-    if os.path.exists("alignment_matrix.pth"):
-        alignment_matrix = torch.load("alignment_matrix.pth")
-    else:
-        clip_model, _ = clip.load("ViT-B/16", device=args.device)
-        # need to transpose it to give it to a linear layer
-        alignment_matrix = clip_model.visual.proj.float()
+    # if os.path.exists("alignment_matrix.pth"):
+    #     alignment_matrix = torch.load("alignment_matrix.pth")
+    # else:
+    #     clip_model, _ = clip.load("ViT-B/16", device=args.device)
+    #     # need to transpose it to give it to a linear layer
+    #     alignment_matrix = clip_model.visual.proj.float()
 
     video_encodings = []
+    total_zero_shot = 0
+    zero_shot_correct = 0
+    avg_zero_shot_correct = 0
     for batch_idx, (input_data, target, _, _) in enumerate(data_loader_train):
         linear_optimizer.zero_grad()
+        alignment_model.zero_grad()
 
         empty_mask = torch.zeros((input_data.shape[0], 1568), dtype=torch.bool)
         empty_mask = empty_mask.to('cuda', non_blocking=True)
@@ -509,6 +538,34 @@ def pretraining_accuracy(model, video_teacher_model, args):
             print("knn train: ", batch_idx)
         input_data = input_data.to('cuda', non_blocking=True)
         target = target.to('cuda', non_blocking=True)
+
+        # zero shot
+        alignment_model.eval()
+        with torch.no_grad():
+            alignment_model.eval()
+            video_encoding = alignment_model.forward(input_data)
+            video_encodings.append(video_encoding.cpu().numpy())
+            tensor1 = video_encoding.unsqueeze(1)
+            tensor2 = action_embeddings.unsqueeze(0)
+            cosine_sim = torch.nn.functional.cosine_similarity(tensor1, tensor2, dim=2)
+            total_zero_shot += cosine_sim.shape[0]
+
+            # highest zero_shot
+            max_index = torch.argmax(cosine_sim, dim=1)
+            max_index = max_index // 48 #48 different prompts
+            print("max index: ", max_index)
+            print("target: ", target)
+            # find how many of these match the target
+            zero_shot_correct += torch.sum(max_index == target).item()
+
+            # avg zero shot
+            cosine_sim = cosine_sim.view(8, 51, 48)
+            cosine_sim = torch.sum(cosine_sim, dim=2)
+            # find the index of the highest cosine similarity for each of the features
+            max_index = torch.argmax(cosine_sim, dim=1)
+            print("max index: ", max_index)
+            avg_zero_shot_correct += torch.sum(max_index == target).item()
+
 
         model.eval()
         with torch.no_grad():
@@ -532,43 +589,6 @@ def pretraining_accuracy(model, video_teacher_model, args):
             # knn_features_train = np.concatenate((knn_features_train, cls_token.cpu().numpy()), axis=0)
             # knn_labels_train = np.concatenate((knn_labels_train, target.cpu().numpy()), axis=0)
 
-
-            # naive zero shot testing
-            # multiply the features by the model.visual.proj matrix (not to be done when model is the teacher)
-            vid_space_features = torch.matmul(cls_token, alignment_matrix)
-
-            vid_space_features /= vid_space_features.norm(dim=-1, keepdim=True)
-            video_encodings.append(vid_space_features)
-
-            #img_space_features = torch.matmul(first_token, clip_model.visual.proj.float())
-            # img_space_features = first_token
-            #
-            # img_space_features /= img_space_features.norm(dim=-1, keepdim=True)
-            # image_encodings.append(img_space_features)
-
-            # for each of the features, find the cosine similarity with each of the text features
-            # tensor1 = vid_space_features.unsqueeze(1)
-            # tensor2 = text_encodings.unsqueeze(0)
-            # vid_cosine_sim = torch.nn.functional.cosine_similarity(tensor1, tensor2, dim=2)
-            #
-            # total_zero_shot += vid_cosine_sim.shape[0]
-            # # find the index of the highest cosine similarity for each of the features
-            # max_index = torch.argmax(vid_cosine_sim, dim=1)
-            # print("max index: ", max_index)
-            # max_index = max_index // 48
-            # print("max index: ", max_index)
-            # print("target: ", target)
-            # # find how many of these match the target
-            # zero_shot_correct += torch.sum(max_index == target).item()
-            # zero_shot_accuracy = zero_shot_correct / total_zero_shot
-            # print("zero shot accuracy: ", zero_shot_accuracy)
-
-            # # find the sum of every 48 elements in the cosine sim
-            # cosine_sim = cosine_sim.view(8, 51, 48)
-            # cosine_sim = torch.sum(cosine_sim, dim=2)
-            # # find the index of the highest cosine similarity for each of the features
-            # max_index = torch.argmax(cosine_sim, dim=1)
-            # print("max index: ", max_index)
 
         linear_output = linear_model(features)
         linear_loss = linear_criterion(linear_output, target)
@@ -597,30 +617,40 @@ def pretraining_accuracy(model, video_teacher_model, args):
         # print("linear loss: ", linear_loss.item())
         # print("linear accuracy: ", linear_accuracy)
         wandb.log({'linear_loss': linear_loss.item(),
-                   'linear_accuracy train': linear_accuracy})
+                   'linear_accuracy train': linear_accuracy,
+                   'zero_shot_correct': zero_shot_correct,
+                     'total_zero_shot': total_zero_shot,
+                        'avg_zero_shot_correct': avg_zero_shot_correct})
 
         # wandb.log({'linear_loss': linear_loss.item(),
         #            'two_layer_loss': two_layer_loss.item(),
         #           'linear_accuracy train': linear_accuracy,
         #         'two_layer_accuracy train': two_layer_accuracy})
 
+    zero_shot_accuracy = zero_shot_correct / total_zero_shot
+    avg_zero_shot_accuracy = avg_zero_shot_correct / total_zero_shot
+    print("zero shot accuracy: ", zero_shot_accuracy)
+    print("avg zero shot accuracy: ", avg_zero_shot_accuracy)
 
-    ## this is for generating the heatmap of the cosine similarities of the videos
-    video_encodings = torch.cat(video_encodings)
-    vid_path = "vid_encodings.pth"
-    torch.save(video_encodings, vid_path)
-    print(f"vid encodings saved to {vid_path}")
 
-    # create vid cosine heatmap with itself
-    create_cosine_heatmap(video_encodings, video_encodings, "vid_cosine_heatmap.png")
-    wandb.log({"vid-vid heatmap": wandb.Image("vid_cosine_heatmap.png")})
+    visualize = False
+    if visualize:
+        ## this is for generating the heatmap of the cosine similarities of the videos
+        video_encodings = torch.cat(video_encodings)
+        vid_path = "vid_encodings.pth"
+        torch.save(video_encodings, vid_path)
+        print(f"vid encodings saved to {vid_path}")
 
-    action_encodings = torch.load("action_encodings.pth")
-    # it is a dictionary of tensors, so we need to concatenate them
-    action_encodings = torch.cat(list(action_encodings.values()), dim=0)
-    # create vid cosine heatmap with text
-    create_cosine_heatmap(video_encodings, action_encodings, "vid_action_cosine_heatmap.png")
-    wandb.log({"vid-action heatmap": wandb.Image("vid_action_cosine_heatmap.png")})
+        # create vid cosine heatmap with itself
+        create_cosine_heatmap(video_encodings, video_encodings, "vid_cosine_heatmap.png")
+        wandb.log({"vid-vid heatmap": wandb.Image("vid_cosine_heatmap.png")})
+
+        action_encodings = torch.load("action_encodings.pth")
+        # it is a dictionary of tensors, so we need to concatenate them
+        action_encodings = torch.cat(list(action_encodings.values()), dim=0)
+        # create vid cosine heatmap with text
+        create_cosine_heatmap(video_encodings, action_encodings, "vid_action_cosine_heatmap.png")
+        wandb.log({"vid-action heatmap": wandb.Image("vid_action_cosine_heatmap.png")})
 
 
 
@@ -650,6 +680,8 @@ def pretraining_accuracy(model, video_teacher_model, args):
 
         knn_features_val = np.empty((0, 768))
         knn_labels_val = np.empty(0)
+
+
         for batch_idx, (input_data, target, _) in enumerate(data_loader_val):
             empty_mask = torch.zeros((input_data.shape[0], 1568), dtype=torch.bool)
             empty_mask = empty_mask.to('cuda', non_blocking=True)
@@ -737,3 +769,4 @@ def create_cosine_heatmap(embeddings1, embeddings2, save_path):
     plt.savefig(save_path, dpi=dpi)
     plt.close()
     print(f"Heatmap saved to {save_path}")
+
