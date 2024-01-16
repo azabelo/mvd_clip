@@ -322,7 +322,8 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             tensor1 = video_embeddings.unsqueeze(1)
             tensor2 = embeddings.unsqueeze(0)
             # cosine similarity matrix [ BS , ( BS x 48) ]
-            logit_matrix = torch.nn.functional.cosine_similarity(tensor1, tensor2, dim=2)
+            logit_matrix = torch.nn.functional.cosine_similarity(tensor1, tensor2, dim=2).to(torch.float)
+            print(logit_matrix.shape)
 
             vid_loss = 0
             for i in range(logit_matrix.shape[0]):
