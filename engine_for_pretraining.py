@@ -307,6 +307,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             comparison_matrix = comparison_matrix.float()
             comparison_matrix = comparison_matrix.to(device, non_blocking=True)
 
+            print(all_class_names.index(class_name))
             action_names = [action_names[all_class_names.index(class_name)] for class_name in class_names]
             embeddings = [action_embeddings[action_name] for action_name in action_names]
             embeddings = torch.cat(embeddings)
