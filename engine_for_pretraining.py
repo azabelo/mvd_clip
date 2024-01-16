@@ -324,6 +324,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             tensor2 = embeddings.unsqueeze(0)
             # cosine similarity matrix [8 , 384]
             logit_matrix = torch.nn.functional.cosine_similarity(tensor1, tensor2, dim=2)
+            print(logit_matrix.shape)
 
             # take softmax of every row (row-wise is across the text prompts)
             row_logits = torch.nn.functional.softmax(logit_matrix, dim=1)
