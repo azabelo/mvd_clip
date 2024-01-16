@@ -328,9 +328,10 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
             # take softmax of every row (row-wise is across the text prompts)
             row_logits = torch.nn.functional.softmax(logit_matrix, dim=1)
+            print(row_logits.shape)
             # combine the logits from the same set of prompts ( every 48 )
             row_logits = row_logits.view(-1, 48, 384).mean(dim=1)
-            print(row_logits.shape)
+
 
             # take softmax of every column (column-wise is across the videos)
             col_logits = torch.nn.functional.softmax(logit_matrix, dim=0)
