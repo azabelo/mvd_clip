@@ -306,8 +306,6 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             comparison_matrix = class_numbers.unsqueeze(0) == class_numbers.unsqueeze(1)
             comparison_matrix = comparison_matrix.float()
             comparison_matrix = comparison_matrix.to(device, non_blocking=True)
-            # this repeats the rows for each of the text prompts
-            target_matrix = comparison_matrix.unsqueeze(1).repeat(1, 48, 1).view(-1, comparison_matrix.size(1))
 
             action_names = [action_names[all_class_names.index(class_name)] for class_name in class_names]
             embeddings = [action_embeddings[action_name] for action_name in action_names]
@@ -334,7 +332,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             print(row_probs.shape)
 
             # take softmax of every column (column-wise is across the videos)
-            col_probs = torch.nn.functional.softmax(logit_matrix, dim=0)
+            col_probs = torch.nn.functional.softmax(logit_matrix, dim=0).t()
             # no need for adding probs of columns because we only have 1 video
             # 384x8
             print(col_probs.shape)
