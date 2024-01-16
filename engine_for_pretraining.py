@@ -322,11 +322,21 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
             tensor1 = video_embeddings.unsqueeze(1)
             tensor2 = embeddings.unsqueeze(0)
-            # cosine similarity matrix [ BS , ( BS x 48) ]
-            logit_matrix = torch.nn.functional.cosine_similarity(tensor1, tensor2, dim=2).t()
+            # cosine similarity matrix [8 , 384]
+            logit_matrix = torch.nn.functional.cosine_similarity(tensor1, tensor2, dim=2)
 
-            print(target_matrix.shape)
-            print(logit_matrix.shape)
+            # take softmax of every row (row-wise is across the text prompts)
+            row_logits = torch.nn.functional.softmax(logit_matrix, dim=1)
+            # combine the logits from the same set of prompts ( every 48 )
+            row_logits = row_logits.view(-1, 48, 384).mean(dim=1)
+            print(row_logits.shape)
+
+            # take softmax of every column (column-wise is across the videos)
+            col_logits = torch.nn.functional.softmax(logit_matrix, dim=0)
+            print(col_logits.shape)
+
+            #video_target = torch.arange(384)
+
 
             # vid_loss = 0
             # for i in range(logit_matrix.shape[0]):
