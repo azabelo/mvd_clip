@@ -339,10 +339,10 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             # 384x8
             print(col_probs.shape)
 
-            video_target = torch.arange(8).float().to(device, non_blocking=True)
+            video_target = torch.arange(8).to(dtype=torch.long).to(device, non_blocking=True)
             vid_loss = loss_func_vid(row_probs, video_target)
 
-            text_target = torch.arange(8).float().repeat(48).to(device, non_blocking=True)
+            text_target = torch.arange(8).to(dtype=torch.long).repeat(48).to(device, non_blocking=True)
             text_loss = loss_func_text(col_probs, text_target)
 
             # could weigh these differently
