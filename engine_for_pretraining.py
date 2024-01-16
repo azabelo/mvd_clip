@@ -166,7 +166,13 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
         alignment_model.to(args.device)
         alignment_model.train()
         optimizer = torch.optim.Adam(alignment_model.parameters(), lr=args.lr)
-        criterion = nn.MSELoss(reduction='none')
+        # two different cross entropy losses, one should be for comparing one text encoding to
+        # all the video encodings, the other should be for comparing one video encoding to all
+        # the text encodings
+        loss_func_text = nn.CrossEntropyLoss() # comparing the one text encoding
+        loss_func_vid = nn.CrossEntropyLoss() # comparing the one video encoding
+
+
 
     for step, batch in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
 
@@ -296,6 +302,12 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             # alignment!!!
             videos, videos_for_teacher, bool_masked_pos, class_names = batch
             print(class_names)
+            class_numbers = [action_names.index(class_name) for class_name in class_names]
+            comparison_matrix = class_numbers.unsqueeze(0) == class_numbers.unsqueeze(1)
+            comparison_matrix = comparison_matrix.to(device, non_blocking=True)
+            # this repeats the rows for each of the text prompts
+            target_matrix = comparison_matrix.unsqueeze(1).repeat(1, 48, 1).view(-1, comparison_matrix.size(1))
+
             action_names = [action_names[class_names.index(class_name)] for class_name in class_names]
             embeddings = [action_embeddings[action_name] for action_name in action_names]
             embeddings = torch.stack(embeddings)
@@ -307,24 +319,39 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
             embeddings = embeddings.to(device, non_blocking=True).float()
 
-            for i in range(embeddings.shape[1]):
-                embedding = embeddings[:, i, :]
-                loss = criterion(video_embeddings, embedding)
-                loss = loss.mean()
-                optimizer.zero_grad()
-                loss.backward(retain_graph=True)
-                optimizer.step()
+            tensor1 = video_embeddings.unsqueeze(1)
+            tensor2 = embeddings.unsqueeze(0)
+            # cosine similarity matrix [ BS , ( BS x 48) ]
+            logit_matrix = torch.nn.functional.cosine_similarity(tensor1, tensor2, dim=2)
 
-                wandb.log(
-                    {"batch": step, "alignment loss": loss.mean().item()})
+            vid_loss = 0
+            for i in range(logit_matrix.shape[0]):
+                vid_loss += loss_func_vid(logit_matrix[i], target_matrix[i])
+            vid_loss = vid_loss / logit_matrix.shape[0]
 
-                metric_logger.update(loss=loss)
-                metric_logger.update()
-                metric_logger.update(lr=1)
-                metric_logger.update(min_lr=1)
-                if log_writer is not None:
-                    log_writer.update(loss=loss, head="loss")
-                    log_writer.set_step()
+            text_loss = 0
+            for i in range(logit_matrix.shape[1]):
+                text_loss += loss_func_text(logit_matrix[:, i], target_matrix[:, i])
+            text_loss = text_loss / logit_matrix.shape[1]
+
+            # could weigh these differently
+            loss = vid_loss + text_loss
+
+            #loss = loss.mean()
+            optimizer.zero_grad()
+            loss.backward(retain_graph=True)
+            optimizer.step()
+
+            wandb.log(
+                {"batch": step, "alignment loss": loss.mean().item()})
+
+            metric_logger.update(loss=loss)
+            metric_logger.update()
+            metric_logger.update(lr=1)
+            metric_logger.update(min_lr=1)
+            if log_writer is not None:
+                log_writer.update(loss=loss, head="loss")
+                log_writer.set_step()
 
     if alignment:
         torch.save(alignment_model.retrieve_alignment_matrix(), "alignment_matrix.pth")
