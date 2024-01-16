@@ -302,7 +302,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             # alignment!!!
             videos, videos_for_teacher, bool_masked_pos, class_names = batch
             print(class_names)
-            class_numbers = [all_class_names.index(class_name) for class_name in class_names]
+            class_numbers = torch.tensor([all_class_names.index(class_name) for class_name in class_names])
             comparison_matrix = class_numbers.unsqueeze(0) == class_numbers.unsqueeze(1)
             comparison_matrix = comparison_matrix.to(device, non_blocking=True)
             # this repeats the rows for each of the text prompts
