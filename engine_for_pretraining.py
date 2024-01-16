@@ -330,30 +330,20 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             row_probs = torch.nn.functional.softmax(logit_matrix, dim=1)
             # add each group of 48 elements in each row
             row_probs = row_probs.view(row_probs.shape[0], row_probs.shape[0], -1).sum(dim=2)
+            # 8x8
             print(row_probs.shape)
 
-
-
             # take softmax of every column (column-wise is across the videos)
-            col_logits = torch.nn.functional.softmax(logit_matrix, dim=0)
-            print(col_logits.shape)
+            col_probs = torch.nn.functional.softmax(logit_matrix, dim=0)
+            # no need for adding probs of columns because we only have 1 video
+            # 384x8
+            print(col_probs.shape)
 
-            #video_target = torch.arange(384)
+            video_target = torch.arange(8).float().to(device, non_blocking=True)
+            vid_loss = loss_func_vid(row_probs, video_target)
 
-
-            # vid_loss = 0
-            # for i in range(logit_matrix.shape[0]):
-            #     print(logit_matrix[i].shape)
-            #     print(target_matrix[i].shape)
-            #     vid_loss += loss_func_vid(logit_matrix[i], target_matrix[i])
-            # vid_loss = vid_loss / logit_matrix.shape[0]
-
-            vid_loss = loss_func_vid(logit_matrix, target_matrix)
-
-            text_loss = 0
-            for i in range(logit_matrix.shape[1]):
-                text_loss += loss_func_text(logit_matrix[:, i], target_matrix[:, i])
-            text_loss = text_loss / logit_matrix.shape[1]
+            text_target = torch.arange(8).float().repeat(48).to(device, non_blocking=True)
+            text_loss = loss_func_text(col_probs, text_target)
 
             # could weigh these differently
             loss = vid_loss + text_loss
