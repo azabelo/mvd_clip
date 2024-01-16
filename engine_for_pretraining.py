@@ -330,6 +330,8 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
             vid_loss = 0
             for i in range(logit_matrix.shape[0]):
+                print(logit_matrix[i].shape)
+                print(target_matrix[i].shape)
                 vid_loss += loss_func_vid(logit_matrix[i], target_matrix[i])
             vid_loss = vid_loss / logit_matrix.shape[0]
 
