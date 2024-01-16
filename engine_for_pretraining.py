@@ -353,7 +353,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
                 log_writer.update(loss=loss, head="loss")
                 log_writer.set_step()
 
-    if alignment[]:
+    if alignment:
         torch.save(alignment_model.retrieve_alignment_matrix(), "alignment_matrix.pth")
 
 
