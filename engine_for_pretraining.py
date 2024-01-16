@@ -143,7 +143,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
     action_embeddings = torch.load("action_encodings.pth")
     class_names_str = "brush_hair clap draw_sword fall_floor handstand kick pick push run shoot_gun smoke sword turn cartwheel climb dribble fencing hit kick_ball pour pushup shake_hands sit somersault sword_exercise walk catch climb_stairs drink flic_flac hug kiss pullup ride_bike shoot_ball situp stand talk wave chew dive eat golf jump laugh punch ride_horse shoot_bow smile swing_baseball throw"
-    action_names = ['brushing hair', 'doing a cartwheel', 'catching', 'chewing', 'clapping', 'climbing',
+    all_action_names = ['brushing hair', 'doing a cartwheel', 'catching', 'chewing', 'clapping', 'climbing',
                     'climbing stairs', 'diving', 'drawing a sword', 'dribbling', 'drinking', 'eating',
                     'falling to the floor', 'fencing', 'doing flic flac', 'golfing', 'doing a handstand',
                     'hitting',
@@ -189,7 +189,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
             videos, videos_for_teacher, bool_masked_pos, class_names = batch
             print(class_names)
-            action_names = [action_names[all_class_names.index(class_name)] for class_name in class_names]
+            action_names = [all_action_names[all_class_names.index(class_name)] for class_name in class_names]
             embeddings = [action_embeddings[action_name] for action_name in action_names]
             embeddings = torch.stack(embeddings)
             print(embeddings.shape)
@@ -307,8 +307,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             comparison_matrix = comparison_matrix.float()
             comparison_matrix = comparison_matrix.to(device, non_blocking=True)
 
-            print([all_class_names.index(class_name) for class_name in class_names])
-            action_names = [action_names[all_class_names.index(class_name)] for class_name in class_names]
+            action_names = [all_action_names[all_class_names.index(class_name)] for class_name in class_names]
             embeddings = [action_embeddings[action_name] for action_name in action_names]
             embeddings = torch.cat(embeddings)
             videos = videos.to(device, non_blocking=True)
