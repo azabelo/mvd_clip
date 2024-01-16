@@ -157,7 +157,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
                     'swinging a baseball bat',
                     'using a sword', 'doing sword exercises', 'talking', 'throwing', 'turning', 'walking',
                     'waving']
-    class_names = class_names_str.split()
+    all_class_names = class_names_str.split()
 
     alignment = True
 
@@ -189,7 +189,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
             videos, videos_for_teacher, bool_masked_pos, class_names = batch
             print(class_names)
-            action_names = [action_names[class_names.index(class_name)] for class_name in class_names]
+            action_names = [action_names[all_class_names.index(class_name)] for class_name in class_names]
             embeddings = [action_embeddings[action_name] for action_name in action_names]
             embeddings = torch.stack(embeddings)
             print(embeddings.shape)
@@ -302,13 +302,13 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             # alignment!!!
             videos, videos_for_teacher, bool_masked_pos, class_names = batch
             print(class_names)
-            class_numbers = [class_names_str.index(class_name) for class_name in class_names]
+            class_numbers = [all_class_names.index(class_name) for class_name in class_names]
             comparison_matrix = class_numbers.unsqueeze(0) == class_numbers.unsqueeze(1)
             comparison_matrix = comparison_matrix.to(device, non_blocking=True)
             # this repeats the rows for each of the text prompts
             target_matrix = comparison_matrix.unsqueeze(1).repeat(1, 48, 1).view(-1, comparison_matrix.size(1))
 
-            action_names = [action_names[class_names_str.index(class_name)] for class_name in class_names]
+            action_names = [action_names[all_class_names.index(class_name)] for class_name in class_names]
             embeddings = [action_embeddings[action_name] for action_name in action_names]
             embeddings = torch.stack(embeddings)
             videos = videos.to(device, non_blocking=True)
@@ -381,7 +381,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
                     'swinging a baseball bat',
                     'using a sword', 'doing sword exercises', 'talking', 'throwing', 'turning', 'walking',
                     'waving']
-    class_names = class_names_str.split()
+    all_class_names = class_names_str.split()
     action_embeddings = [action_embeddings[action_name] for action_name in action_names]
     action_embeddings = torch.stack(action_embeddings)
 
