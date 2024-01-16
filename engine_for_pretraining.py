@@ -304,6 +304,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             print(class_names)
             class_numbers = torch.tensor([all_class_names.index(class_name) for class_name in class_names])
             comparison_matrix = class_numbers.unsqueeze(0) == class_numbers.unsqueeze(1)
+            comparison_matrix = comparison_matrix.float()
             comparison_matrix = comparison_matrix.to(device, non_blocking=True)
             # this repeats the rows for each of the text prompts
             target_matrix = comparison_matrix.unsqueeze(1).repeat(1, 48, 1).view(-1, comparison_matrix.size(1))
@@ -322,7 +323,8 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             tensor1 = video_embeddings.unsqueeze(1)
             tensor2 = embeddings.unsqueeze(0)
             # cosine similarity matrix [ BS , ( BS x 48) ]
-            logit_matrix = torch.nn.functional.cosine_similarity(tensor1, tensor2, dim=2).to(torch.float)
+            logit_matrix = torch.nn.functional.cosine_similarity(tensor1, tensor2, dim=2)
+
             print(logit_matrix.shape)
 
             vid_loss = 0
