@@ -322,7 +322,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             # take softmax of every row (row-wise is across the text prompts)
             row_probs = torch.nn.functional.softmax(logit_matrix, dim=1)
             # add each group of 48 elements in each row
-            row_probs = row_probs.view(row_probs.shape[0], row_probs.shape[0], -1).sum(dim=2)
+            row_probs = row_probs.view(len(class_names), len(class_names), -1).sum(dim=2)
             # 8x8
             # print(row_probs.shape)
 
@@ -332,10 +332,10 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             # 384x8
             # print(col_probs.shape)
 
-            video_target = torch.arange(8).to(dtype=torch.long).to(device, non_blocking=True)
+            video_target = torch.arange(len(class_names)).to(dtype=torch.long).to(device, non_blocking=True)
             vid_loss = loss_func_vid(row_probs, video_target)
 
-            text_target = torch.arange(8).to(dtype=torch.long).repeat(48).to(device, non_blocking=True)
+            text_target = torch.arange(len(class_names)).to(dtype=torch.long).repeat(48).to(device, non_blocking=True)
             text_loss = loss_func_text(col_probs, text_target)
 
             # could weigh these differently
