@@ -162,7 +162,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
     alignment = True
 
     if alignment:
-        alignment_model = Alignment_Model(model.module)
+        alignment_model = Alignment_Model(model.module, align_matrix_only=False)
         alignment_model.to(args.device)
         alignment_model.train()
         optimizer = torch.optim.Adam(alignment_model.parameters(), lr=args.lr)
