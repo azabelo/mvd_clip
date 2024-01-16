@@ -301,7 +301,6 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
         else:
             # alignment!!!
             videos, videos_for_teacher, bool_masked_pos, class_names = batch
-            print(class_names)
             class_numbers = torch.tensor([all_class_names.index(class_name) for class_name in class_names])
             comparison_matrix = class_numbers.unsqueeze(0) == class_numbers.unsqueeze(1)
             comparison_matrix = comparison_matrix.float()
@@ -313,29 +312,25 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             videos = videos.to(device, non_blocking=True)
 
             video_embeddings = alignment_model(videos)
-            print(video_embeddings.shape)
-            print(embeddings.shape)
-
             embeddings = embeddings.to(device, non_blocking=True).float()
 
             tensor1 = video_embeddings.unsqueeze(1)
             tensor2 = embeddings.unsqueeze(0)
             # cosine similarity matrix [8 , 384]
             logit_matrix = torch.nn.functional.cosine_similarity(tensor1, tensor2, dim=2)
-            print(logit_matrix.shape)
 
             # take softmax of every row (row-wise is across the text prompts)
             row_probs = torch.nn.functional.softmax(logit_matrix, dim=1)
             # add each group of 48 elements in each row
             row_probs = row_probs.view(row_probs.shape[0], row_probs.shape[0], -1).sum(dim=2)
             # 8x8
-            print(row_probs.shape)
+            # print(row_probs.shape)
 
             # take softmax of every column (column-wise is across the videos)
             col_probs = torch.nn.functional.softmax(logit_matrix, dim=0).t()
             # no need for adding probs of columns because we only have 1 video
             # 384x8
-            print(col_probs.shape)
+            # print(col_probs.shape)
 
             video_target = torch.arange(8).to(dtype=torch.long).to(device, non_blocking=True)
             vid_loss = loss_func_vid(row_probs, video_target)
