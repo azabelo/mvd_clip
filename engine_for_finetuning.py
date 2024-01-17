@@ -348,7 +348,6 @@ def align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         samples = samples.to(device, non_blocking=True)
         targets = targets.to(device, non_blocking=True)
 
-        action_embeddings = torch.load("action_encodings.pth")
         class_names_str = "brush_hair clap draw_sword fall_floor handstand kick pick push run shoot_gun smoke sword turn cartwheel climb dribble fencing hit kick_ball pour pushup shake_hands sit somersault sword_exercise walk catch climb_stairs drink flic_flac hug kiss pullup ride_bike shoot_ball situp stand talk wave chew dive eat golf jump laugh punch ride_horse shoot_bow smile swing_baseball throw"
         all_action_names = ['brushing hair', 'doing a cartwheel', 'catching', 'chewing', 'clapping', 'climbing',
                             'climbing stairs', 'diving', 'drawing a sword', 'dribbling', 'drinking', 'eating',
