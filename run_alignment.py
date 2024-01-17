@@ -269,6 +269,8 @@ class Alignment_Model(nn.Module):
         targets = torch.nn.functional.softmax(
             (videos_similarity + texts_similarity) / 2 * self.temperature, dim=-1
         )
+        print(logits)
+        print(targets)
 
         texts_loss = cross_entropy(logits, targets, reduction='none')
         images_loss = cross_entropy(logits.T, targets.T, reduction='none')
