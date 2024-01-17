@@ -274,8 +274,32 @@ class Alignment_Model(nn.Module):
         vid_pred_correct = (max_video_preds == torch.arange(bs).to(self.device)).sum().item()
         text_pred_correct = (max_text_preds == torch.arange(bs).to(self.device)).sum().item()
 
-        print(logits)
-        print(logits.shape)
+        import wandb
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        fig, ax = plt.subplots(figsize=(8, 8))
+        sns.heatmap(logits.cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False, cbar=True,
+                    ax=ax)
+
+        # Set the DPI to control the image size
+        dpi = 10
+        fig.set_dpi(dpi)
+        # Save the heatmap image with the desired resolution
+        plt.savefig("logits.png", dpi=dpi)
+        plt.close()
+        wandb.log({"logits heatmap": wandb.Image("logits.png")})
+        fig, ax = plt.subplots(figsize=(8, 8))
+        sns.heatmap(targets.cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False, cbar=True,
+                    ax=ax)
+
+        # Set the DPI to control the image size
+        dpi = 10
+        fig.set_dpi(dpi)
+        # Save the heatmap image with the desired resolution
+        plt.savefig("logits.png", dpi=dpi)
+        plt.close()
+        wandb.log({"logits heatmap": wandb.Image("logits.png")})
+
 
         texts_loss = cross_entropy(logits, targets, reduction='none')
         images_loss = cross_entropy(logits.T, targets.T, reduction='none')
