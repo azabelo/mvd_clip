@@ -32,7 +32,7 @@ OUTPUT_DIR='OUTPUT/finetune/'
 OMP_NUM_THREADS=1 python -m torch.distributed.launch --nproc_per_node=${GPUS} \
     --master_port ${PORT} --nnodes=1 \
     --node_rank=0 --master_addr=localhost \
-    run_class_finetuning.py \
+    run_alignment.py \
     --model vit_base_patch16_224 \
     --data_set HMDB51 --nb_classes 51 \
     --data_path ${CSV_DIR} \
