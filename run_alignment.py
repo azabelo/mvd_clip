@@ -278,7 +278,7 @@ class Alignment_Model(nn.Module):
         import matplotlib.pyplot as plt
         import seaborn as sns
         fig, ax = plt.subplots(figsize=(8, 8))
-        sns.heatmap(logits.clone().cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False, cbar=True,
+        sns.heatmap(logits.clone().detach().cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False, cbar=True,
                     ax=ax)
 
         # Set the DPI to control the image size
@@ -290,7 +290,7 @@ class Alignment_Model(nn.Module):
 
         wandb.log({"logits heatmap": wandb.Image("logits.png")})
         fig, ax = plt.subplots(figsize=(8, 8))
-        sns.heatmap(targets.clone().cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False, cbar=True,
+        sns.heatmap(targets.clone().detach().cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False, cbar=True,
                     ax=ax)
 
         # Set the DPI to control the image size
