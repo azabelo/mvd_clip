@@ -268,6 +268,9 @@ class Alignment_Model(nn.Module):
         videos_similarity = video_embeddings @ video_embeddings.T
         texts_similarity = text_embeddings @ text_embeddings.T
 
+        print("videos_similarity", videos_similarity)
+        print("texts_similarity", texts_similarity)
+
         fig, ax = plt.subplots(figsize=(8, 8))
         sns.heatmap(videos_similarity.clone().detach().cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False,
                     cbar=True,
@@ -345,8 +348,6 @@ class Alignment_Model(nn.Module):
         plt.savefig("targets.png", dpi=dpi)
         plt.close()
         wandb.log({"targets heatmap": wandb.Image("targets.png")})
-        print("logits", logits)
-        print("targets", targets)
 
         texts_loss = cross_entropy(logits, targets, reduction='none')
         images_loss = cross_entropy(logits.T, targets.T, reduction='none')
