@@ -315,9 +315,8 @@ class Alignment_Model(nn.Module):
         wandb.log({"texts_similarity heatmap": wandb.Image("texts_similarity.png")})
 
         logits = (text_embeddings @ video_embeddings.T) / self.temperature
-        # videos_similarity
         targets = torch.nn.functional.softmax(
-            (texts_similarity + torch.eye(bs).to(self.device)) / 2 * self.temperature, dim=-1
+            (texts_similarity + videos_similarity) / 2 * self.temperature, dim=-1
         )
         max_video_preds = torch.argmax(logits, dim=0)
         max_text_preds = torch.argmax(logits, dim=1)
