@@ -326,6 +326,7 @@ class Alignment_Model(nn.Module):
         sns.heatmap(targets.clone().detach().cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False, cbar=True,
                     ax=ax)
 
+
         # Set the DPI to control the image size
         dpi = 10
         fig.set_dpi(dpi)
