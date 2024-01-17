@@ -261,21 +261,16 @@ class Alignment_Model(nn.Module):
     def forward(self, videos, text):
         bs = videos.shape[0]
 
-        video_embeddings = self.video_encoder(videos)[:, 0, :]
-        video_embeddings = self.linear_layer(video_embeddings)
-
-        tokenized = clip.tokenize(text).to(self.device)
-        text_embeddings = self.clip_model.encode_text(tokenized)
-
-
-        # self.clip_model.eval()
-        # self.video_encoder.eval()
+        self.clip_model.eval()
+        self.video_encoder.eval()
         with torch.no_grad():
-            # self.clip_model.eval()
-            # self.video_encoder.eval()
+            self.clip_model.eval()
+            self.video_encoder.eval()
 
+            video_embeddings = self.video_encoder(videos)[:, 0, :]
 
-
+            tokenized = clip.tokenize(text).to(self.device)
+            text_embeddings = self.clip_model.encode_text(tokenized)
 
             # making sure things that shouldn't change don't
             print(self.temperature)
@@ -283,8 +278,7 @@ class Alignment_Model(nn.Module):
             test_embedding = self.clip_model.encode_text(test)
             print(test_embedding[0, :10])
 
-
-
+        video_embeddings = self.linear_layer(video_embeddings)
 
 
         video_embeddings_mean = video_embeddings.mean(dim=1, keepdim=True)
