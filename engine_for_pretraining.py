@@ -65,6 +65,13 @@ class Alignment_Model(nn.Module):
     def retrieve_alignment_matrix(self):
         return self.linear_layer.weight.data.t()
 
+def align_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimizer: torch.optim.Optimizer,
+                    device: torch.device, epoch: int, loss_scaler, max_norm: float = 0,
+                    log_writer=None, lr_scheduler=None, start_steps=None, lr_schedule_values=None,
+                    wd_schedule_values=None, update_freq=None, time_stride_loss=True, lr_scale=1.0,
+                    image_teacher_model=None, video_teacher_model=None, norm_feature=False):
+    pass
+
 def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimizer: torch.optim.Optimizer,
                     device: torch.device, epoch: int, loss_scaler, max_norm: float = 0,
                     log_writer=None, lr_scheduler=None, start_steps=None, lr_schedule_values=None,
@@ -90,12 +97,12 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
             # test that the output of the video teacher doesn't change by passing in a ones vector
             # (found that it doesn't change)
-            if video_teacher_model != None:
-                ones_video_features = video_teacher_model(torch.ones((1, 3, 16, 224, 224)).cuda())
-                print("video teacher feats (epoch start): ", ones_video_features[:, 0, :25])
-                #only need to do this for one slice (one image)
-                ones_image_features = image_teacher_model(torch.ones((1, 3, 224, 224)).cuda())
-                print("image teacher feats (epoch start): ", ones_image_features[:, 0, :25])
+
+            ones_video_features = video_teacher_model(torch.ones((1, 3, 16, 224, 224)).cuda())
+            print("video teacher feats (epoch start): ", ones_video_features[:, 0, :25])
+            #only need to do this for one slice (one image)
+            ones_image_features = image_teacher_model(torch.ones((1, 3, 224, 224)).cuda())
+            print("image teacher feats (epoch start): ", ones_image_features[:, 0, :25])
 
     # not sure if the pretraining accuracy stuff needs normalization
     if args.knn_freq != -1 and epoch % args.knn_freq == 0:
@@ -301,6 +308,8 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
                 lr_scheduler.step_update(start_steps + step)
         else:
             # alignment!!!
+            torch.cuda.empty_cache()
+
             videos, videos_for_teacher, bool_masked_pos, class_names = batch
             class_numbers = torch.tensor([all_class_names.index(class_name) for class_name in class_names])
             comparison_matrix = class_numbers.unsqueeze(0) == class_numbers.unsqueeze(1)

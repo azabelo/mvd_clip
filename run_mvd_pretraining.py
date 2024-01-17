@@ -711,10 +711,6 @@ def main(args):
         exit(1)
     video_teacher_model.to(device)
 
-    del video_teacher_model
-    del image_teacher_model
-    video_teacher_model = None
-    image_teacher_model = None
     ## END MY CHANGES ##
 
 
