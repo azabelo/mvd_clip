@@ -426,7 +426,7 @@ def main(args, ds_init):
 
     # test that it is the same
     ones_features = model(torch.ones((1, 3, 16, 224, 224)).cuda())
-    print(ones_features)
+    print(ones_features[:, 0, :25])
 
     exit(0)
 
