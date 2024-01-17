@@ -263,7 +263,11 @@ class Alignment_Model(nn.Module):
         video_embeddings = self.video_encoder(videos)[:,0,:]
         video_embeddings = self.linear_layer(video_embeddings)
         tokenized = clip.tokenize(text).to(self.device)
-        text_embeddings = self.clip_model.encode_text(tokenized)
+
+        self.clip_model.eval()
+        with torch.no_grad():
+            self.clip_model.eval()
+            text_embeddings = self.clip_model.encode_text(tokenized)
 
         videos_similarity = video_embeddings @ video_embeddings.T
         texts_similarity = text_embeddings @ text_embeddings.T
