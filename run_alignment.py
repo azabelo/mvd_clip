@@ -300,7 +300,8 @@ class Alignment_Model(nn.Module):
         plt.savefig("targets.png", dpi=dpi)
         plt.close()
         wandb.log({"targets heatmap": wandb.Image("targets.png")})
-
+        print("logits", logits)
+        print("targets", targets)
 
         texts_loss = cross_entropy(logits, targets, reduction='none')
         images_loss = cross_entropy(logits.T, targets.T, reduction='none')
