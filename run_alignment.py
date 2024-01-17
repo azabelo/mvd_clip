@@ -548,6 +548,7 @@ def main(args, ds_init):
 
     alignment_model = Alignment_Model(model)
 
+
     model_ema = None
     if args.model_ema:
         model_ema = ModelEma(
@@ -689,40 +690,40 @@ def main(args, ds_init):
 
         print("after epoch")
 
-        if args.output_dir and args.save_ckpt:
-            if (epoch + 1) % args.save_ckpt_freq == 0 or epoch + 1 == args.epochs:
-                utils.save_model(
-                    args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
-                    loss_scaler=loss_scaler, epoch=epoch, model_ema=model_ema)
-        if data_loader_val is not None:
-            test_stats = validation_one_epoch(data_loader_val, model, device)
-            print(f"Accuracy of the network on the {len(dataset_val)} val videos: {test_stats['acc1']:.1f}%")
-            if max_accuracy < test_stats["acc1"]:
-                max_accuracy = test_stats["acc1"]
-                if args.output_dir and args.save_ckpt and not args.no_save_best_ckpt:
-                    utils.save_model(
-                        args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
-                        loss_scaler=loss_scaler, epoch="best", model_ema=model_ema)
-
-            print(f'Max accuracy: {max_accuracy:.2f}%')
-            if log_writer is not None:
-                log_writer.update(val_acc1=test_stats['acc1'], head="perf", step=epoch)
-                log_writer.update(val_acc5=test_stats['acc5'], head="perf", step=epoch)
-                log_writer.update(val_loss=test_stats['loss'], head="perf", step=epoch)
-
-            log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
-                         **{f'val_{k}': v for k, v in test_stats.items()},
-                         'epoch': epoch,
-                         'n_parameters': n_parameters}
-        else:
-            log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
-                         'epoch': epoch,
-                         'n_parameters': n_parameters}
-        if args.output_dir and utils.is_main_process():
-            if log_writer is not None:
-                log_writer.flush()
-            with open(os.path.join(args.output_dir, "log.txt"), mode="a", encoding="utf-8") as f:
-                f.write(json.dumps(log_stats) + "\n")
+        # if args.output_dir and args.save_ckpt:
+        #     if (epoch + 1) % args.save_ckpt_freq == 0 or epoch + 1 == args.epochs:
+        #         utils.save_model(
+        #             args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
+        #             loss_scaler=loss_scaler, epoch=epoch, model_ema=model_ema)
+        # if data_loader_val is not None:
+        #     test_stats = validation_one_epoch(data_loader_val, model, device)
+        #     print(f"Accuracy of the network on the {len(dataset_val)} val videos: {test_stats['acc1']:.1f}%")
+        #     if max_accuracy < test_stats["acc1"]:
+        #         max_accuracy = test_stats["acc1"]
+        #         if args.output_dir and args.save_ckpt and not args.no_save_best_ckpt:
+        #             utils.save_model(
+        #                 args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
+        #                 loss_scaler=loss_scaler, epoch="best", model_ema=model_ema)
+        #
+        #     print(f'Max accuracy: {max_accuracy:.2f}%')
+        #     if log_writer is not None:
+        #         log_writer.update(val_acc1=test_stats['acc1'], head="perf", step=epoch)
+        #         log_writer.update(val_acc5=test_stats['acc5'], head="perf", step=epoch)
+        #         log_writer.update(val_loss=test_stats['loss'], head="perf", step=epoch)
+        #
+        #     log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
+        #                  **{f'val_{k}': v for k, v in test_stats.items()},
+        #                  'epoch': epoch,
+        #                  'n_parameters': n_parameters}
+        # else:
+        #     log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
+        #                  'epoch': epoch,
+        #                  'n_parameters': n_parameters}
+        # if args.output_dir and utils.is_main_process():
+        #     if log_writer is not None:
+        #         log_writer.flush()
+        #     with open(os.path.join(args.output_dir, "log.txt"), mode="a", encoding="utf-8") as f:
+        #         f.write(json.dumps(log_stats) + "\n")
 
     preds_file = os.path.join(args.output_dir, str(global_rank) + '.txt')
     test_stats = final_test(data_loader_test, model, device, preds_file)
