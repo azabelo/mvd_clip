@@ -287,6 +287,7 @@ class Alignment_Model(nn.Module):
         # Save the heatmap image with the desired resolution
         plt.savefig("logits.png", dpi=dpi)
         plt.close()
+
         wandb.log({"logits heatmap": wandb.Image("logits.png")})
         fig, ax = plt.subplots(figsize=(8, 8))
         sns.heatmap(targets.cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False, cbar=True,
@@ -296,9 +297,9 @@ class Alignment_Model(nn.Module):
         dpi = 10
         fig.set_dpi(dpi)
         # Save the heatmap image with the desired resolution
-        plt.savefig("logits.png", dpi=dpi)
+        plt.savefig("targets.png", dpi=dpi)
         plt.close()
-        wandb.log({"logits heatmap": wandb.Image("logits.png")})
+        wandb.log({"targets heatmap": wandb.Image("targets.png")})
 
 
         texts_loss = cross_entropy(logits, targets, reduction='none')
