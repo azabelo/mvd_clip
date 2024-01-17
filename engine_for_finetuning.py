@@ -313,7 +313,7 @@ def align_class_batch(model, samples, text, criterion):
     print("text correct / 8:", text_pred_correct)
 
     # outputs
-    return loss
+    return loss, vid_pred_correct, text_pred_correct
 
 def align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
                     data_loader: Iterable, optimizer: torch.optim.Optimizer,
@@ -383,11 +383,11 @@ def align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
             if loss_scaler is None:
                 samples = samples.half()
-                loss = align_class_batch(
+                loss, vid_pred_correct, text_pred_correct = align_class_batch(
                     model, samples, text, criterion)
             else:
                 with torch.cuda.amp.autocast():
-                    loss = align_class_batch(
+                    loss, vid_pred_correct, text_pred_correct = align_class_batch(
                         model, samples, text, criterion)
 
             loss_value = loss.item()
@@ -423,7 +423,7 @@ def align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
             torch.cuda.synchronize()
 
-            class_acc = 0
+            class_acc = (vid_pred_correct + text_pred_correct) / (2 * len(targets))
             # if mixup_fn is None:
             #     class_acc = (output.max(-1)[-1] == targets).float().mean()
             # else:
