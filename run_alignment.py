@@ -269,13 +269,15 @@ class Alignment_Model(nn.Module):
         targets = torch.nn.functional.softmax(
             (videos_similarity + texts_similarity) / 2 * self.temperature, dim=-1
         )
-        print(logits)
-        print(targets)
+        max_video_preds = torch.argmax(logits, dim=0)
+        max_text_preds = torch.argmax(logits, dim=1)
+        vid_pred_correct = (max_video_preds == torch.arange(bs).to(self.device)).sum().item()
+        text_pred_correct = (max_text_preds == torch.arange(bs).to(self.device)).sum().item()
 
         texts_loss = cross_entropy(logits, targets, reduction='none')
         images_loss = cross_entropy(logits.T, targets.T, reduction='none')
         loss = (images_loss + texts_loss) / 2.0  # shape: (batch_size)
-        return loss.mean()
+        return loss.mean(), vid_pred_correct, text_pred_correct
 
     def get_num_layers(self):
         return len(self.video_encoder.blocks)

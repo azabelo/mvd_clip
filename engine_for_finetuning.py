@@ -308,7 +308,9 @@ def compute_video(lst):
 
 def align_class_batch(model, samples, text, criterion):
 
-    loss = model(samples, text)
+    loss, vid_pred_correct, text_pred_correct = model(samples, text)
+    print("vid correct / 8:", vid_pred_correct)
+    print("text correct / 8:", text_pred_correct)
 
     # outputs
     return loss
