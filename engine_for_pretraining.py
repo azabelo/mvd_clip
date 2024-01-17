@@ -66,13 +66,6 @@ class Alignment_Model(nn.Module):
     def retrieve_alignment_matrix(self):
         return self.linear_layer.weight.data.t()
 
-def align_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimizer: torch.optim.Optimizer,
-                    device: torch.device, epoch: int, loss_scaler, max_norm: float = 0,
-                    log_writer=None, lr_scheduler=None, start_steps=None, lr_schedule_values=None,
-                    wd_schedule_values=None, update_freq=None, time_stride_loss=True, lr_scale=1.0,
-                    image_teacher_model=None, video_teacher_model=None, norm_feature=False):
-    pass
-
 def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimizer: torch.optim.Optimizer,
                     device: torch.device, epoch: int, loss_scaler, max_norm: float = 0,
                     log_writer=None, lr_scheduler=None, start_steps=None, lr_schedule_values=None,
@@ -174,7 +167,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
         alignment_model = Alignment_Model(model.module, align_matrix_only=True)
         alignment_model.to(args.device)
         alignment_model.train()
-        optimizer = torch.optim.Adam(alignment_model.parameters(), lr=args.lr)
+        alignment_optimizer = torch.optim.Adam(alignment_model.parameters(), lr=args.lr)
         # two different cross entropy losses, one should be for comparing one text encoding to
         # all the video encodings, the other should be for comparing one video encoding to all
         # the text encodings
@@ -311,10 +304,6 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             # alignment!!!
 
             videos, videos_for_teacher, bool_masked_pos, class_names = batch
-            class_numbers = torch.tensor([all_class_names.index(class_name) for class_name in class_names])
-            comparison_matrix = class_numbers.unsqueeze(0) == class_numbers.unsqueeze(1)
-            comparison_matrix = comparison_matrix.float()
-            comparison_matrix = comparison_matrix.to(device, non_blocking=True)
 
             action_names = [all_action_names[all_class_names.index(class_name)] for class_name in class_names]
             embeddings = [action_embeddings[action_name] for action_name in action_names]
@@ -352,9 +341,9 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
             loss = vid_loss + text_loss
 
             #loss = loss.mean()
-            optimizer.zero_grad()
+            alignment_optimizer.zero_grad()
             loss.backward(retain_graph=True)
-            optimizer.step()
+            alignment_optimizer.step()
 
             wandb.log(
                 {"batch": step, "alignment loss": loss.mean().item()})

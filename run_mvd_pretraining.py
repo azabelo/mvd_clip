@@ -24,7 +24,6 @@ import modeling_video_teacher
 import wandb
 import clip
 from rei.eva_clip import create_model_and_transforms, get_tokenizer
-import modeling_finetune_v2 #videomaev2 teacher
 import torch.nn as nn
 import copy
 # END MY CHANGES
