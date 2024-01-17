@@ -371,9 +371,9 @@ def align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             'a example of a person {}.',
             'a demonstration of a person {}.']
 
+        print("_____________________")
         # repeat the training loop for each template
         for template in templates:
-            print("_____________________")
             text = [template.format(all_action_names[targets[i]]) for i in range(len(targets))]
 
             # if mixup_fn is not None:
