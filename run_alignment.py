@@ -433,6 +433,7 @@ def main(args, ds_init):
         ones_features = model(torch.ones((1, 3, 16, 224, 224)).cuda())
         print(ones_features.shape)
         print(ones_features[:, 0, :25])
+        print(ones_features[:, 1, :25])
 
     exit(0)
 
