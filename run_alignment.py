@@ -17,7 +17,7 @@ from timm.data import Mixup
 from optim_factory import create_optimizer, get_parameter_groups, LayerDecayValueAssigner
 
 from datasets import build_dataset
-from engine_for_finetuning import train_one_epoch, validation_one_epoch, final_test, merge
+from engine_for_finetuning import align_one_epoch, validation_one_epoch, final_test, merge
 from utils import NativeScalerWithGradNormCount as NativeScaler
 from utils import multiple_samples_collate
 import utils
@@ -25,6 +25,8 @@ import modeling_finetune
 
 # MY CHANGES
 import wandb
+import clip
+import torch.nn as nn
 
 
 # END MY CHANGES
@@ -236,6 +238,45 @@ def get_args():
     # END MY_CHANGES
 
 
+def cross_entropy(preds, targets, reduction='none'):
+    log_softmax = nn.LogSoftmax(dim=-1)
+    loss = (-targets * log_softmax(preds)).sum(1)
+    if reduction == "none":
+        return loss
+    elif reduction == "mean":
+        return loss.mean()
+
+
+class Alignment_Model(nn.Module):
+    def __init__(self, video_encoder):
+        super(Alignment_Model, self).__init__()
+        self.video_encoder = video_encoder
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.clip_model, self.preprocess = clip.load("ViT-B/16", device=self.device)
+        self.linear_layer = nn.Linear(768, 512)
+        self.temperature = 1.0
+
+    def forward(self, videos, text):
+        bs = videos.shape[0]
+
+        video_embeddings = self.video_encoder(videos)
+        video_embeddings = self.linear_layer(video_embeddings)
+        tokenized = clip.tokenize(text).to(self.device)
+        text_embeddings = self.clip_model.encode_text(tokenized).float()
+
+        videos_similarity = video_embeddings @ video_embeddings.T
+        texts_similarity = text_embeddings @ text_embeddings.T
+        logits = (text_embeddings @ video_embeddings.T) / self.temperature
+        targets = torch.nn.functional.softmax(
+            (videos_similarity + texts_similarity) / 2 * self.temperature, dim=-1
+        )
+
+        texts_loss = cross_entropy(logits, targets, reduction='none')
+        images_loss = cross_entropy(logits.T, targets.T, reduction='none')
+        loss = (images_loss + texts_loss) / 2.0  # shape: (batch_size)
+        return loss.mean()
+
+
 def main(args, ds_init):
     utils.init_distributed_mode(args)
 
@@ -424,30 +465,21 @@ def main(args, ds_init):
 
     model.to(device)
 
-    print(model)
-
-    # test that it is the same
-    model.eval()
-    with torch.no_grad():
-        model.eval()
-        ones_features = model(torch.ones((1, 3, 16, 224, 224)).cuda())
-        print(ones_features.shape)
-        print(ones_features[:, 0, :25])
-        print(ones_features[:, 1, :25])
-
-    exit(0)
+    alignment_model = Alignment_Model(model)
 
     model_ema = None
     if args.model_ema:
         model_ema = ModelEma(
-            model,
+            alignment_model,
             decay=args.model_ema_decay,
             device='cpu' if args.model_ema_force_cpu else '',
             resume='')
         print("Using EMA with decay = %.8f" % args.model_ema_decay)
 
-    model_without_ddp = model
-    n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+
+    model_without_ddp = alignment_model
+    n_parameters = sum(p.numel() for p in alignment_model.parameters() if p.requires_grad)
 
     print("Model = %s" % str(model_without_ddp))
     print('number of params:', n_parameters)
@@ -482,25 +514,25 @@ def main(args, ds_init):
     if assigner is not None:
         print("Assigned values = %s" % str(assigner.values))
 
-    skip_weight_decay_list = model.no_weight_decay()
+    skip_weight_decay_list = alignment_model.no_weight_decay()
     print("Skip weight decay list: ", skip_weight_decay_list)
 
     if args.enable_deepspeed:
         loss_scaler = None
         optimizer_params = get_parameter_groups(
-            model, args.weight_decay, skip_weight_decay_list,
+            alignment_model, args.weight_decay, skip_weight_decay_list,
             assigner.get_layer_id if assigner is not None else None,
             assigner.get_scale if assigner is not None else None)
-        model, optimizer, _, _ = ds_init(
-            args=args, model=model, model_parameters=optimizer_params, dist_init_required=not args.distributed,
+        alignment_model, optimizer, _, _ = ds_init(
+            args=args, model=alignment_model, model_parameters=optimizer_params, dist_init_required=not args.distributed,
         )
 
-        print("model.gradient_accumulation_steps() = %d" % model.gradient_accumulation_steps())
-        assert model.gradient_accumulation_steps() == args.update_freq
+        print("model.gradient_accumulation_steps() = %d" % alignment_model.gradient_accumulation_steps())
+        assert alignment_model.gradient_accumulation_steps() == args.update_freq
     else:
         if args.distributed:
-            model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=True)
-            model_without_ddp = model.module
+            alignment_model = torch.nn.parallel.DistributedDataParallel(alignment_model, device_ids=[args.gpu], find_unused_parameters=True)
+            model_without_ddp = alignment_model.module
 
         optimizer = create_optimizer(
             args, model_without_ddp, skip_list=skip_weight_decay_list,
@@ -530,7 +562,7 @@ def main(args, ds_init):
     print("criterion = %s" % str(criterion))
 
     utils.auto_load_model(
-        args=args, model=model, model_without_ddp=model_without_ddp,
+        args=args, model=alignment_model, model_without_ddp=model_without_ddp,
         optimizer=optimizer, loss_scaler=loss_scaler, model_ema=model_ema)
 
     if args.output_dir and utils.is_main_process():
@@ -539,21 +571,21 @@ def main(args, ds_init):
             for arg in vars(args):
                 f.write(format(arg, '<20') + " " + format(str(getattr(args, arg)), '<') + "\n")  # str, arg_type
 
-    if args.eval:
-        if not args.merge_test:
-            preds_file = os.path.join(args.output_dir, str(global_rank) + '.txt')
-            test_stats = final_test(data_loader_test, model, device, preds_file)
-            torch.distributed.barrier()
-        if global_rank == 0:
-            print("Start merging results...")
-            final_top1, final_top5 = merge(args.output_dir, num_tasks)
-            print(
-                f"Accuracy of the network on the {len(dataset_test)} test videos: Top-1: {final_top1:.2f}%, Top-5: {final_top5:.2f}%")
-            log_stats = {'Final top-1': final_top1, 'Final Top-5': final_top5}
-            if args.output_dir and utils.is_main_process():
-                with open(os.path.join(args.output_dir, args.eval_log_name + ".txt"), mode="a", encoding="utf-8") as f:
-                    f.write(json.dumps(log_stats) + "\n")
-        exit(0)
+    # if args.eval:
+    #     if not args.merge_test:
+    #         preds_file = os.path.join(args.output_dir, str(global_rank) + '.txt')
+    #         test_stats = final_test(data_loader_test, model, device, preds_file)
+    #         torch.distributed.barrier()
+    #     if global_rank == 0:
+    #         print("Start merging results...")
+    #         final_top1, final_top5 = merge(args.output_dir, num_tasks)
+    #         print(
+    #             f"Accuracy of the network on the {len(dataset_test)} test videos: Top-1: {final_top1:.2f}%, Top-5: {final_top5:.2f}%")
+    #         log_stats = {'Final top-1': final_top1, 'Final Top-5': final_top5}
+    #         if args.output_dir and utils.is_main_process():
+    #             with open(os.path.join(args.output_dir, args.eval_log_name + ".txt"), mode="a", encoding="utf-8") as f:
+    #                 f.write(json.dumps(log_stats) + "\n")
+    #     exit(0)
 
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
@@ -564,13 +596,18 @@ def main(args, ds_init):
         if log_writer is not None:
             log_writer.set_step(epoch * num_training_steps_per_epoch * args.update_freq)
 
-        train_stats = train_one_epoch(
-            model, criterion, data_loader_train, optimizer,
+        print("before epoch")
+
+        train_stats = align_one_epoch(
+            alignment_model, criterion, data_loader_train, optimizer,
             device, epoch, loss_scaler, args.clip_grad, model_ema, mixup_fn,
             log_writer=log_writer, start_steps=epoch * num_training_steps_per_epoch,
             lr_schedule_values=lr_schedule_values, wd_schedule_values=wd_schedule_values,
             num_training_steps_per_epoch=num_training_steps_per_epoch, update_freq=args.update_freq,
         )
+
+        print("after epoch")
+
         if args.output_dir and args.save_ckpt:
             if (epoch + 1) % args.save_ckpt_freq == 0 or epoch + 1 == args.epochs:
                 utils.save_model(
