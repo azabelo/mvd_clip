@@ -552,8 +552,11 @@ class AlignmentVisionTransformer(nn.Module):
         else:
             for blk in self.blocks:
                 x = blk(x)
-
+        print(x)
+        print(x.shape)
         x = self.norm(x)
+        print(x)
+        print(x.shape)
         if self.fc_norm is not None:
             if self.use_cls_token:
                 x = x[:, 1:]
