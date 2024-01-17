@@ -279,6 +279,9 @@ class Alignment_Model(nn.Module):
     def get_num_layers(self):
         return len(self.video_encoder.blocks)
 
+    def no_weight_decay(self):
+        return {'pos_embed', 'cls_token'}
+
 
 def main(args, ds_init):
     utils.init_distributed_mode(args)
