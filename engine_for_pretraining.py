@@ -308,7 +308,6 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
                 lr_scheduler.step_update(start_steps + step)
         else:
             # alignment!!!
-            torch.cuda.empty_cache()
 
             videos, videos_for_teacher, bool_masked_pos, class_names = batch
             class_numbers = torch.tensor([all_class_names.index(class_name) for class_name in class_names])
