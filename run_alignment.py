@@ -294,7 +294,7 @@ class Alignment_Model(nn.Module):
                     ax=ax)
 
         # Set the DPI to control the image size
-        dpi = 10
+        dpi = 50
         fig.set_dpi(dpi)
         # Save the heatmap image with the desired resolution
         plt.savefig("videos_similarity.png", dpi=dpi)
@@ -308,7 +308,6 @@ class Alignment_Model(nn.Module):
                     ax=ax)
 
         # Set the DPI to control the image size
-        dpi = 10
         fig.set_dpi(dpi)
         # Save the heatmap image with the desired resolution
         plt.savefig("texts_similarity.png", dpi=dpi)
@@ -331,7 +330,6 @@ class Alignment_Model(nn.Module):
                     ax=ax)
 
         # Set the DPI to control the image size
-        dpi = 10
         fig.set_dpi(dpi)
         # Save the heatmap image with the desired resolution
         plt.savefig("logits.png", dpi=dpi)
@@ -345,7 +343,6 @@ class Alignment_Model(nn.Module):
 
 
         # Set the DPI to control the image size
-        dpi = 10
         fig.set_dpi(dpi)
         # Save the heatmap image with the desired resolution
         plt.savefig("targets.png", dpi=dpi)
