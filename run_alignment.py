@@ -258,7 +258,7 @@ class Alignment_Model(nn.Module):
 
     def forward(self, videos, text):
         bs = videos.shape[0]
-        video_embeddings = self.video_encoder(videos)
+        video_embeddings = self.video_encoder(videos)[0]
         video_embeddings = self.linear_layer(video_embeddings)
         tokenized = clip.tokenize(text).to(self.device)
         text_embeddings = self.clip_model.encode_text(tokenized)
