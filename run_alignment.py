@@ -255,13 +255,13 @@ class Alignment_Model(nn.Module):
         self.video_encoder = video_encoder
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.clip_model, self.preprocess = clip.load("ViT-B/16", device=self.device)
-        self.linear_layer = nn.Linear(768, 512)
+        #self.linear_layer = nn.Linear(768, 512)
         self.temperature = 0.07
 
     def forward(self, videos, text):
         bs = videos.shape[0]
         video_embeddings = self.video_encoder(videos)[:,0,:]
-        video_embeddings = self.linear_layer(video_embeddings)
+        #video_embeddings = self.linear_layer(video_embeddings)
 
         self.clip_model.eval()
         with torch.no_grad():
@@ -275,11 +275,16 @@ class Alignment_Model(nn.Module):
             test_embedding = self.clip_model.encode_text(test)
             print(test_embedding[0,:10])
 
+        video_embeddings_mean = video_embeddings.mean(dim=1, keepdim=True)
+        video_embeddings_std = video_embeddings.std(dim=1, keepdim=True)
+        video_embeddings = (video_embeddings - video_embeddings_mean) / video_embeddings_std
+
+        text_embeddings_mean = text_embeddings.mean(dim=1, keepdim=True)
+        text_embeddings_std = text_embeddings.std(dim=1, keepdim=True)
+        text_embeddings = (text_embeddings - text_embeddings_mean) / text_embeddings_std
+
         videos_similarity = video_embeddings @ video_embeddings.T
         texts_similarity = text_embeddings @ text_embeddings.T
-
-        videos_similarity = (videos_similarity - videos_similarity.mean()) / videos_similarity.std()
-        texts_similarity = (texts_similarity - texts_similarity.mean()) / texts_similarity.std()
 
         fig, ax = plt.subplots(figsize=(8, 8))
         sns.heatmap(videos_similarity.clone().detach().cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False,
