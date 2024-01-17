@@ -255,13 +255,13 @@ class Alignment_Model(nn.Module):
         self.video_encoder = video_encoder
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.clip_model, self.preprocess = clip.load("ViT-B/16", device=self.device)
-        #self.linear_layer = nn.Linear(768, 512)
+        self.linear_layer = nn.Linear(768, 512)
         self.temperature = 0.07
 
     def forward(self, videos, text):
         bs = videos.shape[0]
         video_embeddings = self.video_encoder(videos)[:,0,:]
-        #video_embeddings = self.linear_layer(video_embeddings)
+        video_embeddings = self.linear_layer(video_embeddings)
 
         self.clip_model.eval()
         with torch.no_grad():
