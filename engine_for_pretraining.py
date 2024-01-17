@@ -57,6 +57,7 @@ class Alignment_Model(nn.Module):
                 x = self.backbone.forward_encoder(x, empty_mask)
                 x = x[:, 0, :]
         else:
+            self.backbone.train()
             x = self.backbone.forward_encoder(x, empty_mask)
             x = x[:, 0, :]
         x = self.linear_layer(x)
@@ -170,7 +171,7 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
     alignment = True
 
     if alignment:
-        alignment_model = Alignment_Model(model.module, align_matrix_only=False)
+        alignment_model = Alignment_Model(model.module, align_matrix_only=True)
         alignment_model.to(args.device)
         alignment_model.train()
         optimizer = torch.optim.Adam(alignment_model.parameters(), lr=args.lr)
