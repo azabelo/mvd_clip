@@ -99,6 +99,7 @@ with torch.no_grad():
             print(count)
             count += 1
             tokenized = clip.tokenize(prompt).to(device)
+            print(tokenized.dtype)
             text_encoding = model.encode_text(tokenized)
             text_encodings[name].append(text_encoding)
         text_encodings[name] = torch.cat(text_encodings[name], dim=0)
