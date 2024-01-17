@@ -47,7 +47,7 @@ OMP_NUM_THREADS=1 python -m torch.distributed.launch --nproc_per_node=${GPUS} \
     --save_ckpt_freq ${SAVE_FREQ} --no_save_best_ckpt \
     --num_frames 16 \
     --lr ${LEARNING_RATE} --epochs ${EPOCHS} \
-    --dist_eval --test_num_segment 2 --test_num_crop 3 \
+    --dist_eval --test_num_segment 1 --test_num_crop 3 \
     --use_checkpoint \
     --enable_deepspeed \
     --warmup_epochs ${WARMUP} --knn_freq ${KNN_FREQ} --use_wandb ${USE_WANDB} \
