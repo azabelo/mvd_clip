@@ -373,6 +373,7 @@ def align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             'a demonstration of a person {}.']
 
         print("_____________________")
+        print(targets)
         # repeat the training loop for each template
         for template in templates:
             text = [template.format(all_action_names[targets[i]]) for i in range(len(targets))]
