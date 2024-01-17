@@ -271,9 +271,6 @@ class Alignment_Model(nn.Module):
         videos_similarity = (videos_similarity - videos_similarity.mean()) / videos_similarity.std()
         texts_similarity = (texts_similarity - texts_similarity.mean()) / texts_similarity.std()
 
-        print("videos_similarity", videos_similarity)
-        print("texts_similarity", texts_similarity)
-
         fig, ax = plt.subplots(figsize=(8, 8))
         sns.heatmap(videos_similarity.clone().detach().cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False,
                     cbar=True,
@@ -301,21 +298,6 @@ class Alignment_Model(nn.Module):
         plt.close()
 
         wandb.log({"texts_similarity heatmap": wandb.Image("texts_similarity.png")})
-
-        fig, ax = plt.subplots(figsize=(8, 8))
-        sns.heatmap(texts_similarity.clone().detach().cpu().numpy()+videos_similarity.clone().detach().cpu().numpy(), cmap="viridis", xticklabels=False,
-                    yticklabels=False,
-                    cbar=True,
-                    ax=ax)
-
-        # Set the DPI to control the image size
-        dpi = 10
-        fig.set_dpi(dpi)
-        # Save the heatmap image with the desired resolution
-        plt.savefig("texts_similarity.png", dpi=dpi)
-        plt.close()
-
-        wandb.log({"vid+text heatmap": wandb.Image("texts_similarity.png")})
 
         logits = (text_embeddings @ video_embeddings.T) / self.temperature
         targets = torch.nn.functional.softmax(
