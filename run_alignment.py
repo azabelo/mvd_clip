@@ -254,7 +254,7 @@ class Alignment_Model(nn.Module):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.clip_model, self.preprocess = clip.load("ViT-B/16", device=self.device)
         self.linear_layer = nn.Linear(768, 512)
-        self.temperature = 1.0
+        self.temperature = 0.1
 
     def forward(self, videos, text):
         bs = videos.shape[0]
