@@ -276,6 +276,9 @@ class Alignment_Model(nn.Module):
         loss = (images_loss + texts_loss) / 2.0  # shape: (batch_size)
         return loss.mean()
 
+    def get_num_layers(self):
+        return len(self.video_encoder.blocks)
+
 
 def main(args, ds_init):
     utils.init_distributed_mode(args)
