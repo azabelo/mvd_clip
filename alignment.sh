@@ -43,11 +43,11 @@ OMP_NUM_THREADS=1 python -m torch.distributed.launch --nproc_per_node=${GPUS} \
     --output_dir ${OUTPUT_DIR} \
     --input_size 224 --short_side_size 224 \
     --opt adamw --opt_betas 0.9 0.999 --weight_decay 0.05 \
-    --batch_size ${BATCH_SIZE} --update_freq ${UPDATE_FREQ} --num_sample 2 \
+    --batch_size ${BATCH_SIZE} --update_freq ${UPDATE_FREQ} --num_sample 1 \
     --save_ckpt_freq ${SAVE_FREQ} --no_save_best_ckpt \
     --num_frames 16 \
     --lr ${LEARNING_RATE} --epochs ${EPOCHS} \
-    --dist_eval --test_num_segment 1 --test_num_crop 3 \
+    --dist_eval --test_num_segment 1 --test_num_crop 1 \
     --use_checkpoint \
     --enable_deepspeed \
     --warmup_epochs ${WARMUP} --knn_freq ${KNN_FREQ} --use_wandb ${USE_WANDB} \

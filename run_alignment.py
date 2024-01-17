@@ -275,6 +275,7 @@ class Alignment_Model(nn.Module):
         text_pred_correct = (max_text_preds == torch.arange(bs).to(self.device)).sum().item()
 
         print(logits)
+        print(logits.shape)
 
         texts_loss = cross_entropy(logits, targets, reduction='none')
         images_loss = cross_entropy(logits.T, targets.T, reduction='none')
