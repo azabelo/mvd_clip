@@ -427,9 +427,12 @@ def main(args, ds_init):
     print(model)
 
     # test that it is the same
-    ones_features = model(torch.ones((1, 3, 16, 224, 224)).cuda())
-    print(ones_features.shape)
-    print(ones_features[:, 0, :25])
+    model.eval()
+    with torch.no_grad():
+        model.eval()
+        ones_features = model(torch.ones((1, 3, 16, 224, 224)).cuda())
+        print(ones_features.shape)
+        print(ones_features[:, 0, :25])
 
     exit(0)
 
