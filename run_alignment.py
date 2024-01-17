@@ -274,6 +274,8 @@ class Alignment_Model(nn.Module):
         vid_pred_correct = (max_video_preds == torch.arange(bs).to(self.device)).sum().item()
         text_pred_correct = (max_text_preds == torch.arange(bs).to(self.device)).sum().item()
 
+        print(logits)
+
         texts_loss = cross_entropy(logits, targets, reduction='none')
         images_loss = cross_entropy(logits.T, targets.T, reduction='none')
         loss = (images_loss + texts_loss) / 2.0  # shape: (batch_size)
