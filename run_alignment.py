@@ -272,7 +272,7 @@ class Alignment_Model(nn.Module):
         texts_similarity = (texts_similarity - texts_similarity.mean()) / texts_similarity.std()
 
         print("videos_similarity", videos_similarity)
-        print("texts_similarity", texts_similarity)g
+        print("texts_similarity", texts_similarity)
 
         fig, ax = plt.subplots(figsize=(8, 8))
         sns.heatmap(videos_similarity.clone().detach().cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False,
