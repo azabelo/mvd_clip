@@ -376,8 +376,8 @@ def align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             print(targets.shape)
             text = [template.format(all_action_names[targets[i]]) for i in range(len(targets))]
 
-            if mixup_fn is not None:
-                samples, targets = mixup_fn(samples, targets)
+            # if mixup_fn is not None:
+            #     samples, targets = mixup_fn(samples, targets)
 
             if loss_scaler is None:
                 samples = samples.half()
