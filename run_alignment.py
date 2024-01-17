@@ -27,7 +27,9 @@ import modeling_finetune
 import wandb
 import clip
 import torch.nn as nn
-
+import wandb
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # END MY CHANGES
 
@@ -265,6 +267,36 @@ class Alignment_Model(nn.Module):
 
         videos_similarity = video_embeddings @ video_embeddings.T
         texts_similarity = text_embeddings @ text_embeddings.T
+
+        fig, ax = plt.subplots(figsize=(8, 8))
+        sns.heatmap(videos_similarity.clone().detach().cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False,
+                    cbar=True,
+                    ax=ax)
+
+        # Set the DPI to control the image size
+        dpi = 10
+        fig.set_dpi(dpi)
+        # Save the heatmap image with the desired resolution
+        plt.savefig("videos_similarity.png", dpi=dpi)
+        plt.close()
+
+        wandb.log({"videos_similarity heatmap": wandb.Image("videos_similarity.png")})
+
+        fig, ax = plt.subplots(figsize=(8, 8))
+        sns.heatmap(texts_similarity.clone().detach().cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False,
+                    cbar=True,
+                    ax=ax)
+
+        # Set the DPI to control the image size
+        dpi = 10
+        fig.set_dpi(dpi)
+        # Save the heatmap image with the desired resolution
+        plt.savefig("texts_similarity.png", dpi=dpi)
+        plt.close()
+
+        wandb.log({"texts_similarity heatmap": wandb.Image("texts_similarity.png")})
+
+
         logits = (text_embeddings @ video_embeddings.T) / self.temperature
         targets = torch.nn.functional.softmax(
             (videos_similarity + texts_similarity) / 2 * self.temperature, dim=-1
@@ -274,9 +306,7 @@ class Alignment_Model(nn.Module):
         vid_pred_correct = (max_video_preds == torch.arange(bs).to(self.device)).sum().item()
         text_pred_correct = (max_text_preds == torch.arange(bs).to(self.device)).sum().item()
 
-        import wandb
-        import matplotlib.pyplot as plt
-        import seaborn as sns
+
         fig, ax = plt.subplots(figsize=(8, 8))
         sns.heatmap(logits.clone().detach().cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False, cbar=True,
                     ax=ax)
@@ -289,6 +319,7 @@ class Alignment_Model(nn.Module):
         plt.close()
 
         wandb.log({"logits heatmap": wandb.Image("logits.png")})
+
         fig, ax = plt.subplots(figsize=(8, 8))
         sns.heatmap(targets.clone().detach().cpu().numpy(), cmap="viridis", xticklabels=False, yticklabels=False, cbar=True,
                     ax=ax)
