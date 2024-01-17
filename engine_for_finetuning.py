@@ -373,7 +373,6 @@ def align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
         # repeat the training loop for each template
         for template in templates:
-            print(targets.shape)
             text = [template.format(all_action_names[targets[i]]) for i in range(len(targets))]
 
             # if mixup_fn is not None:
@@ -426,9 +425,10 @@ def align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             #     class_acc = (output.max(-1)[-1] == targets).float().mean()
             # else:
             #     class_acc = None
-            # metric_logger.update(loss=loss_value)
-            # metric_logger.update(class_acc=class_acc)
-            # metric_logger.update(loss_scale=loss_scale_value)
+
+            metric_logger.update(loss=loss_value)
+            metric_logger.update(class_acc=class_acc)
+            metric_logger.update(loss_scale=loss_scale_value)
             min_lr = 10.
             max_lr = 0.
             for group in optimizer.param_groups:
