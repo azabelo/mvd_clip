@@ -10,6 +10,7 @@ if [ "$#" -ne 16 ]; then
   exit 1
 fi
 
+
 # Assign command line arguments to variables
 GPUS=$1
 PORT=$2
