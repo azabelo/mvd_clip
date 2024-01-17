@@ -266,14 +266,16 @@ class Alignment_Model(nn.Module):
         self.clip_model.eval()
         with torch.no_grad():
             self.clip_model.eval()
-            tokenized = clip.tokenize(text).to(self.device)
-            text_embeddings = self.clip_model.encode_text(tokenized)
-
             # making sure things that shouldn't change don't
             print(self.temperature)
             test = clip.tokenize("test").to(self.device)
             test_embedding = self.clip_model.encode_text(test)
-            print(test_embedding[0,:10])
+            print(test_embedding[0, :10])
+
+        tokenized = clip.tokenize(text).to(self.device)
+        text_embeddings = self.clip_model.encode_text(tokenized)
+
+
 
         video_embeddings_mean = video_embeddings.mean(dim=1, keepdim=True)
         video_embeddings_std = video_embeddings.std(dim=1, keepdim=True)
