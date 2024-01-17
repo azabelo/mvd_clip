@@ -262,6 +262,7 @@ class Alignment_Model(nn.Module):
         video_embeddings = self.video_encoder(videos)
         video_embeddings = self.linear_layer(video_embeddings)
         tokenized = clip.tokenize(text).to(self.device)
+        print(tokenized.dtype)
         text_embeddings = self.clip_model.encode_text(tokenized)
 
         videos_similarity = video_embeddings @ video_embeddings.T
