@@ -326,6 +326,7 @@ def precompute_text():
             text_encodings[name] = torch.cat(text_encodings[name], dim=0)
 
     action_encodings = torch.cat(list(text_encodings.values()))
+    print(action_encodings.shape)
 
     return action_encodings
 
@@ -341,11 +342,15 @@ def precompute_train_video(model, data_loader):
         metric_logger = utils.MetricLogger(delimiter="  ")
         for data_iter_step, (samples, targets, _, _) in enumerate(
                 metric_logger.log_every(data_loader, print_freq, header)):
+            print(len(video_embeddings))
             samples = samples.cuda()
             video_embeddings.append(model(samples).cpu().numpy())
     np.concatenate(video_embeddings, axis=0)
 
-    return torch.cat(video_embeddings, dim=0)
+    video_embeddings = torch.cat(video_embeddings, dim=0)
+    print(video_embeddings.shape)
+
+    return video_embeddings
 
 def log_matrix(matrix, title):
     # fig, ax = plt.subplots(figsize=(8, 8))
