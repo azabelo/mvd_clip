@@ -360,7 +360,7 @@ def precompute_train_video(model, data_loader):
         for data_iter_step, (samples, targets, _, _) in enumerate(
                 metric_logger.log_every(data_loader, print_freq, header)):
             print(len(video_embeddings))
-            samples = samples.cuda().half()
+            samples = samples.cuda().float()
             all_targets.append(targets)
             print(targets)
 
@@ -399,7 +399,7 @@ def precompute_test_video(model, data_loader):
             samples = batch[0]
             targets = batch[1]
             print(len(video_embeddings))
-            samples = samples.cuda().half()
+            samples = samples.cuda().float()
             all_targets.append(targets)
             print(targets)
 
