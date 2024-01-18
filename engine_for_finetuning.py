@@ -503,7 +503,7 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
     random_train_targets = random_train_targets.reshape(num_batches, batch_size)
 
 
-    batched_data = zip(random_train_video_embeddings, random_train_targets)
+    batched_data = [(i,j) for _, (i,j) in enumerate(zip(random_train_video_embeddings, random_train_targets))]
     batch_count = 0
     for data_iter_step, (samples, targets, _, _) in enumerate(
             metric_logger.log_every(data_loader, print_freq, header)):
