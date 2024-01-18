@@ -364,7 +364,8 @@ def precompute_train_video(model, data_loader):
             all_targets.append(targets)
             print(targets)
 
-            embedding = model(samples).view(-1)  #[:, 0, :]
+            output = model(samples)
+            embedding = output.view(output.size(0), -1)  #[:, 0, :]
             # normalize each vector
             # mean = torch.mean(embedding, dim=1, keepdim=True)
             # std = torch.std(embedding, dim=1, keepdim=True)
@@ -403,7 +404,8 @@ def precompute_test_video(model, data_loader):
             all_targets.append(targets)
             print(targets)
 
-            embedding = model(samples).view(-1)  #[:,0,:]
+            output = model(samples)
+            embedding = output.view(output.size(0), -1)  # [:, 0, :]
             # normalize each vector
             # mean = torch.mean(embedding, dim=1, keepdim=True)
             # std = torch.std(embedding, dim=1, keepdim=True)
