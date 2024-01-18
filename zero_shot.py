@@ -32,6 +32,7 @@ from utils import NativeScalerWithGradNormCount as NativeScaler
 from utils import multiple_samples_collate
 import utils
 
+import modeling_finetune
 
 def get_args():
     parser = argparse.ArgumentParser('MVD fine-tuning and evaluation script for video classification', add_help=False)
