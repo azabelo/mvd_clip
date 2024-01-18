@@ -410,7 +410,7 @@ def log_matrix(matrix, title):
 
     matrix = matrix.clone().detach().cpu().numpy()
     # Create a figure and axis
-    fig, ax = plt.subplots(figsize=(matrix.shape[1] / 4, matrix.shape[0] / 4), dpi=3)
+    fig, ax = plt.subplots()
     # Plot the heatmap
     cax = ax.matshow(matrix, cmap='viridis')
     # Set the aspect ratio to be equal
@@ -422,7 +422,7 @@ def log_matrix(matrix, title):
     ax.set_xlabel("Columns")
     ax.set_ylabel("Rows")
     # Log the figure to WandB
-    wandb.log({title: wandb.Image(fig)})
+    wandb.log({title: wandb.Image(fig, caption=title, grouping="heatmap", dpi=100)})
 
 
 class Efficient_Align(nn.Module):
