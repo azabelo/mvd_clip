@@ -456,6 +456,7 @@ class Efficient_Align(nn.Module):
         super(Efficient_Align, self).__init__()
         self.linear_layer = nn.Linear(768, 512)
         self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def cross_entropy(self, preds, targets, reduction='none'):
         log_softmax = nn.LogSoftmax(dim=-1)
