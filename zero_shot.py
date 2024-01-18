@@ -410,7 +410,7 @@ def log_matrix(matrix, title):
 
     matrix = matrix.clone().detach().cpu().numpy()
     # Create a figure and axis
-    fig, ax = plt.subplots(dpi=1000)
+    fig, ax = plt.subplots(dpi=727)
     # Plot the heatmap
     cax = ax.matshow(matrix, cmap='viridis')
     # Set the aspect ratio to be equal
