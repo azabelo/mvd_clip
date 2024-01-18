@@ -823,14 +823,9 @@ def main(args, ds_init):
     video_similarity = torch.mm(torch.tensor(train_video_embeddings), torch.tensor(train_video_embeddings).T)
     text_similarity = torch.mm(torch.tensor(text_encodings), torch.tensor(text_encodings).T)
 
-    #normalize the entire matrix
-    video_similarity_mean = torch.mean(video_similarity)
-    video_similarity_std = torch.std(video_similarity)
-    video_similarity = (video_similarity - video_similarity_mean) / video_similarity_std
-
-    text_similarity_mean = torch.mean(text_similarity)
-    text_similarity_std = torch.std(text_similarity)
-    text_similarity = (text_similarity - text_similarity_mean) / text_similarity_std
+    # apply softmax to entire matrix
+    video_similarity = torch.nn.functional.softmax(video_similarity, dim=None)
+    text_similarity = torch.nn.functional.softmax(text_similarity, dim=None)
 
     log_matrix(video_similarity,
                "train_video_embeddings similarity heatmap", dpi=968)
