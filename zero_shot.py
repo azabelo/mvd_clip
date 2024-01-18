@@ -785,8 +785,12 @@ def main(args, ds_init):
     test_video_embeddings, test_targets = precompute_test_video(model, data_loader_val)
 
     # reorder train_video_embeddings in order of increasing train_targets
+    sorted_indices = torch.argsort(train_targets)
+    train_video_embeddings = train_video_embeddings[sorted_indices]
 
-    train_video_embeddings = [x for _, x in sorted(zip(train_targets.tolist(), train_video_embeddings))]
+    # reorder test_video_embeddings in order of increasing test_targets
+    sorted_indices = torch.argsort(test_targets)
+    test_video_embeddings = test_video_embeddings[sorted_indices]
 
     # make sure to do this on a CSV that is in alphabetical order
     log_matrix(torch.mm(torch.tensor(train_video_embeddings), torch.tensor(train_video_embeddings).T),
