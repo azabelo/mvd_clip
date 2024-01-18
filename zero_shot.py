@@ -852,7 +852,7 @@ def main(args, ds_init):
             log_writer=log_writer, start_steps=epoch * num_training_steps_per_epoch,
             lr_schedule_values=lr_schedule_values, wd_schedule_values=wd_schedule_values,
             num_training_steps_per_epoch=num_training_steps_per_epoch, update_freq=args.update_freq,
-            train_video_embeddings=train_video_embeddings, train_target=train_targets,
+            train_video_embeddings=train_video_embeddings, train_targets=train_targets,
             text_encodings=text_encodings, batch_size=args.batch_size
         )
 
