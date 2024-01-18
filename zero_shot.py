@@ -484,6 +484,11 @@ class Efficient_Align(nn.Module):
             (texts_similarity + videos_similarity) / 2 , dim=-1
         )
 
+        max_video_preds = torch.argmax(logits, dim=0)
+        max_text_preds = torch.argmax(logits, dim=1)
+        vid_pred_correct = (max_video_preds == torch.arange(bs).to(self.device)).sum().item()
+        text_pred_correct = (max_text_preds == torch.arange(bs).to(self.device)).sum().item()
+
         log_matrix(videos_similarity, "videos_similarity", dpi=100)
         log_matrix(texts_similarity, "texts_similarity", dpi=100)
         log_matrix(logits, "logits", dpi=100)
@@ -493,7 +498,7 @@ class Efficient_Align(nn.Module):
         images_loss = self.cross_entropy(logits.T, targets.T, reduction='none')
         loss = (images_loss + texts_loss) / 2.0  # shape: (batch_size)
 
-        return loss.mean()
+        return loss.mean(), vid_pred_correct, text_pred_correct
 
     def get_num_layers(self):
         return 1

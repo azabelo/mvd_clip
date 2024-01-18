@@ -532,10 +532,10 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
 
         if loss_scaler is None:
             samples = samples.half()
-            loss = model(video_embeddings, text_embeddings)
+            loss, vid_preds_correct, text_preds_correct = model(video_embeddings, text_embeddings)
         else:
             with torch.cuda.amp.autocast():
-                loss = model(video_embeddings, text_embeddings)
+                loss, vid_preds_correct, text_preds_correct = model(video_embeddings, text_embeddings)
 
         loss_value = loss.item()
 
@@ -570,7 +570,7 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
 
         torch.cuda.synchronize()
 
-        class_acc = (vid_pred_correct + text_pred_correct) / (2 * len(targets))
+        class_acc = text_preds_correct
         # if mixup_fn is None:
         #     class_acc = (output.max(-1)[-1] == targets).float().mean()
         # else:
