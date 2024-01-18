@@ -325,6 +325,10 @@ def precompute_text():
                 count += 1
                 tokenized = clip.tokenize(prompt).to(device)
                 text_encoding = model.encode_text(tokenized)
+
+                # normalize each vector
+                text_encoding = text_encoding / torch.norm(text_encoding, dim=1, keepdim=True)
+
                 text_encodings[name].append(text_encoding)
             text_encodings[name] = torch.cat(text_encodings[name], dim=0)
 
@@ -354,7 +358,11 @@ def precompute_train_video(model, data_loader):
             print(len(video_embeddings))
             samples = samples.cuda().half()
             all_targets.append(targets)
-            video_embeddings.append(model(samples)[:,0,:].cpu().numpy())
+
+            embedding = model(samples)[:, 0, :]
+            # normalize each vector
+            embedding = embedding / torch.norm(embedding, dim=1, keepdim=True)
+            video_embeddings.append(embedding.cpu().numpy())
 
     video_embeddings = torch.tensor(np.concatenate(video_embeddings, axis=0), dtype=torch.float32)
     all_targets = torch.tensor(np.concatenate(all_targets, axis=0), dtype=torch.int64)
@@ -384,7 +392,11 @@ def precompute_test_video(model, data_loader):
             print(len(video_embeddings))
             samples = samples.cuda().half()
             all_targets.append(targets)
-            video_embeddings.append(model(samples)[:,0,:].cpu().numpy())
+
+            embedding = model(samples)[:,0,:]
+            # normalize each vector
+            embedding = embedding / torch.norm(embedding, dim=1, keepdim=True)
+            video_embeddings.append(embedding.cpu().numpy())
 
     video_embeddings = torch.tensor(np.concatenate(video_embeddings, axis=0), dtype=torch.float32)
     print(video_embeddings.shape)
