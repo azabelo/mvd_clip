@@ -511,7 +511,6 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
         # so janky lmao
         video_embeddings, targets = batched_data[batch_count]
         video_embeddings = video_embeddings.half().to(device)
-        text_encodings = text_encodings.half().to(device)
         batch_count += 1
 
         step = data_iter_step // update_freq
