@@ -334,6 +334,9 @@ def precompute_text():
 
 def precompute_train_video(model, data_loader):
 
+    if os.path.exists("train_video_embeddings.pth"):
+        return torch.load("train_video_embeddings.pth")
+
     model.eval()
     video_embeddings = []
     with torch.no_grad():
@@ -345,11 +348,35 @@ def precompute_train_video(model, data_loader):
             print(len(video_embeddings))
             samples = samples.cuda().half()
             video_embeddings.append(model(samples).cpu().numpy())
-    np.concatenate(video_embeddings, axis=0)
 
-    video_embeddings = torch.from_numpy(video_embeddings)
-    video_embeddings = torch.cat(video_embeddings, dim=0)
+    video_embeddings = torch.tensor(np.concatenate(video_embeddings, axis=0), dtype=torch.float32)
     print(video_embeddings.shape)
+
+    torch.save(video_embeddings, "train_video_embeddings.pth")
+
+    return video_embeddings
+
+
+def precompute_test_video(model, data_loader):
+    if os.path.exists("test_video_embeddings.pth"):
+        return torch.load("test_video_embeddings.pth")
+
+    model.eval()
+    video_embeddings = []
+    with torch.no_grad():
+        header = 'Epoch: [{}]'.format("1 epoch")
+        print_freq = 10
+        metric_logger = utils.MetricLogger(delimiter="  ")
+        for data_iter_step, (samples, targets, _, _) in enumerate(
+                metric_logger.log_every(data_loader, print_freq, header)):
+            print(len(video_embeddings))
+            samples = samples.cuda().half()
+            video_embeddings.append(model(samples).cpu().numpy())
+
+    video_embeddings = torch.tensor(np.concatenate(video_embeddings, axis=0), dtype=torch.float32)
+    print(video_embeddings.shape)
+
+    torch.save(video_embeddings, "test_video_embeddings.pth")
 
     return video_embeddings
 
