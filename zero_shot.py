@@ -720,8 +720,8 @@ def main(args, ds_init):
     text_encodings.clone().detach().to(device)
 
     # make sure to do this on a CSV that is in alphabetical order
-    video_similarity = torch.mm(torch.tensor(train_video_embeddings), torch.tensor(train_video_embeddings).T)
-    text_similarity = torch.mm(torch.tensor(text_encodings), torch.tensor(text_encodings).T)
+    video_similarity = train_video_embeddings @ train_video_embeddings.T
+    text_similarity = text_encodings @ text_encodings.T
 
     log_matrix(video_similarity,
                "train_video_embeddings similarity heatmap", dpi=968)
