@@ -364,7 +364,7 @@ def precompute_train_video(model, data_loader):
             all_targets.append(targets)
             print(targets)
 
-            embedding = model(samples)  #[:, 0, :]
+            embedding = model(samples).view(-1)  #[:, 0, :]
             # normalize each vector
             # mean = torch.mean(embedding, dim=1, keepdim=True)
             # std = torch.std(embedding, dim=1, keepdim=True)
@@ -403,7 +403,7 @@ def precompute_test_video(model, data_loader):
             all_targets.append(targets)
             print(targets)
 
-            embedding = model(samples)  #[:,0,:]
+            embedding = model(samples).view(-1)  #[:,0,:]
             # normalize each vector
             # mean = torch.mean(embedding, dim=1, keepdim=True)
             # std = torch.std(embedding, dim=1, keepdim=True)
@@ -469,9 +469,6 @@ class Efficient_Align(nn.Module):
             return loss.mean()
     def forward(self, video_embeddings, text_embeddings):
         bs = video_embeddings.shape[0]
-
-        video_embeddings = video_embeddings.view(bs, -1)
-
         video_embeddings = self.linear_layer(video_embeddings)
 
         video_embeddings_mean = video_embeddings.mean(dim=1, keepdim=True)
