@@ -481,7 +481,7 @@ class Efficient_Align(nn.Module):
 
         logits = (text_embeddings @ video_embeddings.T) * self.logit_scale
         targets = torch.nn.functional.softmax(
-            (texts_similarity + videos_similarity) / 2 * self.temperature, dim=-1
+            (texts_similarity + videos_similarity) / 2 , dim=-1
         )
 
         log_matrix(videos_similarity, "videos_similarity")
