@@ -847,7 +847,7 @@ def main(args, ds_init):
         print("before epoch")
 
         train_stats = efficient_align_one_epoch(
-            alignment_model, criterion, data_loader_train, optimizer,
+            model, criterion, data_loader_train, optimizer,
             device, epoch, loss_scaler, args.clip_grad, model_ema, mixup_fn,
             log_writer=log_writer, start_steps=epoch * num_training_steps_per_epoch,
             lr_schedule_values=lr_schedule_values, wd_schedule_values=wd_schedule_values,
