@@ -296,6 +296,9 @@ action_names = ['brushing hair', 'doing a cartwheel', 'catching', 'chewing', 'cl
 
 
 def precompute_text():
+    if os.path.exists('action_encodings'):
+        return torch.load('action_encodings')
+
     # each group of 48 correspond to one class, get index by integer division
     prompts = {}
     for name in action_names:
@@ -327,6 +330,7 @@ def precompute_text():
 
     action_encodings = torch.cat(list(text_encodings.values()))
     print(action_encodings.shape)
+    torch.save(action_encodings, "action_encodings.pth")
 
     return action_encodings
 
