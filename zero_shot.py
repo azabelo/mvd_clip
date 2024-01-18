@@ -327,11 +327,11 @@ def precompute_text():
                 text_encoding = model.encode_text(tokenized)
 
                 # normalize each vector
-                mean = torch.mean(text_encoding, dim=1, keepdim=True)
-                std = torch.std(text_encoding, dim=1, keepdim=True)
-                text_encoding = (text_encoding - mean) / std
+                # mean = torch.mean(text_encoding, dim=1, keepdim=True)
+                # std = torch.std(text_encoding, dim=1, keepdim=True)
+                # text_encoding = (text_encoding - mean) / std
 
-                # text_encoding = text_encoding / torch.norm(text_encoding, dim=1, keepdim=True)
+                text_encoding = text_encoding / torch.norm(text_encoding, dim=1, keepdim=True)
 
                 text_encodings[name].append(text_encoding)
             text_encodings[name] = torch.cat(text_encodings[name], dim=0)
@@ -366,11 +366,11 @@ def precompute_train_video(model, data_loader):
 
             embedding = model(samples)[:, 0, :]
             # normalize each vector
-            mean = torch.mean(embedding, dim=1, keepdim=True)
-            std = torch.std(embedding, dim=1, keepdim=True)
+            # mean = torch.mean(embedding, dim=1, keepdim=True)
+            # std = torch.std(embedding, dim=1, keepdim=True)
             embedding = (embedding - mean) / std
 
-            # embedding = embedding / torch.norm(embedding, dim=1, keepdim=True)
+            embedding = embedding / torch.norm(embedding, dim=1, keepdim=True)
             video_embeddings.append(embedding.cpu().numpy())
 
     video_embeddings = torch.tensor(np.concatenate(video_embeddings, axis=0), dtype=torch.float32)
@@ -405,11 +405,11 @@ def precompute_test_video(model, data_loader):
 
             embedding = model(samples)[:,0,:]
             # normalize each vector
-            mean = torch.mean(embedding, dim=1, keepdim=True)
-            std = torch.std(embedding, dim=1, keepdim=True)
-            embedding = (embedding - mean) / std
+            # mean = torch.mean(embedding, dim=1, keepdim=True)
+            # std = torch.std(embedding, dim=1, keepdim=True)
+            # embedding = (embedding - mean) / std
 
-            # embedding = embedding / torch.norm(embedding, dim=1, keepdim=True)
+            embedding = embedding / torch.norm(embedding, dim=1, keepdim=True)
             video_embeddings.append(embedding.cpu().numpy())
 
     video_embeddings = torch.tensor(np.concatenate(video_embeddings, axis=0), dtype=torch.float32)
@@ -820,9 +820,21 @@ def main(args, ds_init):
     test_video_embeddings = test_video_embeddings[sorted_indices]
 
     # make sure to do this on a CSV that is in alphabetical order
-    log_matrix(torch.mm(torch.tensor(train_video_embeddings), torch.tensor(train_video_embeddings).T),
+    video_similarity = torch.mm(torch.tensor(train_video_embeddings), torch.tensor(train_video_embeddings).T)
+    text_similarity = torch.mm(torch.tensor(text_encodings), torch.tensor(text_encodings).T)
+
+    #normalize the entire matrix
+    video_similarity_mean = torch.mean(video_similarity)
+    video_similarity_std = torch.std(video_similarity)
+    video_similarity = (video_similarity - video_similarity_mean) / video_similarity_std
+
+    text_similarity_mean = torch.mean(text_similarity)
+    text_similarity_std = torch.std(text_similarity)
+    text_similarity = (text_similarity - text_similarity_mean) / text_similarity_std
+
+    log_matrix(video_similarity,
                "train_video_embeddings similarity heatmap", dpi=968)
-    log_matrix(torch.mm(torch.tensor(text_encodings), torch.tensor(text_encodings).T),
+    log_matrix(text_similarity,
                "text_encodings similarity heatmap", dpi=727)
 
     exit(0)
