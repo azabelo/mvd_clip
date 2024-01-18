@@ -449,6 +449,7 @@ def log_matrix(matrix, title, dpi):
     ax.set_ylabel("Rows")
     # Log the figure to WandB
     wandb.log({title: wandb.Image(fig)})
+    plt.close(fig)
 
 
 class Efficient_Align(nn.Module):
