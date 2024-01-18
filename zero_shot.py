@@ -347,7 +347,7 @@ def precompute_train_video(model, data_loader):
                 metric_logger.log_every(data_loader, print_freq, header)):
             print(len(video_embeddings))
             samples = samples.cuda().half()
-            video_embeddings.append(model(samples).cpu().numpy())
+            video_embeddings.append(model(samples)[:,0,:].cpu().numpy())
 
     video_embeddings = torch.tensor(np.concatenate(video_embeddings, axis=0), dtype=torch.float32)
     print(video_embeddings.shape)
@@ -371,7 +371,7 @@ def precompute_test_video(model, data_loader):
                 metric_logger.log_every(data_loader, print_freq, header)):
             print(len(video_embeddings))
             samples = samples.cuda().half()
-            video_embeddings.append(model(samples).cpu().numpy())
+            video_embeddings.append(model(samples)[:,0,:].cpu().numpy())
 
     video_embeddings = torch.tensor(np.concatenate(video_embeddings, axis=0), dtype=torch.float32)
     print(video_embeddings.shape)
@@ -768,7 +768,7 @@ def main(args, ds_init):
 
     text_encodings = precompute_text()
     train_video_embeddings = precompute_train_video(model, data_loader_train)
-    test_video_embeddings = precompute_test_video(model, data_loader_test)
+    test_video_embeddings = precompute_test_video(model, data_loader_val)
 
     # make sure to do this on a CSV that is in alphabetical order
     log_matrix(torch.mm(torch.tensor(train_video_embeddings), torch.tensor(train_video_embeddings).T),
