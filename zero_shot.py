@@ -347,6 +347,7 @@ def precompute_train_video(model, data_loader):
             video_embeddings.append(model(samples).cpu().numpy())
     np.concatenate(video_embeddings, axis=0)
 
+    video_embeddings = torch.from_numpy(video_embeddings)
     video_embeddings = torch.cat(video_embeddings, dim=0)
     print(video_embeddings.shape)
 
