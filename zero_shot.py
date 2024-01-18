@@ -368,7 +368,7 @@ def precompute_train_video(model, data_loader):
             # normalize each vector
             # mean = torch.mean(embedding, dim=1, keepdim=True)
             # std = torch.std(embedding, dim=1, keepdim=True)
-            embedding = (embedding - mean) / std
+            #embedding = (embedding - mean) / std
 
             embedding = embedding / torch.norm(embedding, dim=1, keepdim=True)
             video_embeddings.append(embedding.cpu().numpy())
