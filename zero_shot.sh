@@ -6,7 +6,7 @@
 if [ "$#" -ne 16 ]; then
   echo "Usage: $0 GPUS PORT CHECKPOINT_PATH DATA_DIRECTORY CSV_DIR EPOCHS BATCH_SIZE LEARNING_RATE WARMUP UPDATE_FREQ SAVE_FREQ KNN_FREQ USE_WANDB WANDB_PROJECT_NAME NOTES_FOR_WANDB_RUN USE_CLS_TOKEN"
   echo " "
-  echo "Example: $0 1 12345 video_teacher.pth hmdb51_mp4 official_hmdb_splits1 101 16 5e-4 5 4 10 10 1 project_name wandb_notes 1"
+  echo "Example: $0 1 12345 video_teacher.pth hmdb51_mp4 alphabetical_splits 101 16 5e-4 5 4 10 10 1 project_name wandb_notes 1"
   exit 1
 fi
 
