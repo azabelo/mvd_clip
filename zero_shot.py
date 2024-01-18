@@ -343,7 +343,7 @@ def precompute_train_video(model, data_loader):
         for data_iter_step, (samples, targets, _, _) in enumerate(
                 metric_logger.log_every(data_loader, print_freq, header)):
             print(len(video_embeddings))
-            samples = samples.cuda()
+            samples = samples.cuda().half()
             video_embeddings.append(model(samples).cpu().numpy())
     np.concatenate(video_embeddings, axis=0)
 
@@ -749,6 +749,10 @@ def main(args, ds_init):
                "text_encodings similarity heatmap")
 
     exit(0)
+
+
+
+
 
 
 
