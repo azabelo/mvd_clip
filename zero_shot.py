@@ -768,7 +768,7 @@ def main(args, ds_init):
 
     text_encodings = precompute_text()
     train_video_embeddings = precompute_train_video(model, data_loader_train)
-    test_video_embeddings = precompute_train_video(model, data_loader_test)
+    test_video_embeddings = precompute_test_video(model, data_loader_test)
 
     # make sure to do this on a CSV that is in alphabetical order
     log_matrix(torch.mm(torch.tensor(train_video_embeddings), torch.tensor(train_video_embeddings).T),
