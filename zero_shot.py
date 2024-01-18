@@ -686,6 +686,15 @@ def main(args, ds_init):
 
     model.to(device)
 
+    # MY CHANGES
+    if args.use_wandb != 0:
+        run_name = f"alignment {args.notes_for_wandb_run} model: {args.finetune}, bs: {args.batch_size}, update: {args.update_freq}, lr: {args.lr}, epochs: {args.epochs}, \
+    warmup: {args.warmup_epochs}, "
+        print(run_name)
+        wandb.init(project=args.wandb_project_name, name=run_name)
+        wandb.config.update(args)
+    # END MY CHANGES
+
     text_encodings = precompute_text()
     train_video_embeddings, train_targets = precompute_train_video(model, data_loader_train)
     test_video_embeddings, test_targets = precompute_test_video(model, data_loader_val)
@@ -733,14 +742,7 @@ def main(args, ds_init):
     print("Number of training examples = %d" % len(dataset_train))
     print("Number of training training per epoch = %d" % num_training_steps_per_epoch)
 
-    # MY CHANGES
-    if args.use_wandb != 0:
-        run_name = f"alignment {args.notes_for_wandb_run} model: {args.finetune}, bs: {args.batch_size}, update: {args.update_freq}, lr: {args.lr}, epochs: {args.epochs}, \
- warmup: {args.warmup_epochs}, "
-        print(run_name)
-        wandb.init(project=args.wandb_project_name, name=run_name)
-        wandb.config.update(args)
-    # END MY CHANGES
+
 
     num_layers = model_without_ddp.get_num_layers()
     if args.layer_decay < 1.0:
