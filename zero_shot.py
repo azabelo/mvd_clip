@@ -484,10 +484,10 @@ class Efficient_Align(nn.Module):
             (texts_similarity + videos_similarity) / 2 , dim=-1
         )
 
-        log_matrix(videos_similarity, "videos_similarity")
-        log_matrix(texts_similarity, "texts_similarity")
-        log_matrix(logits, "logits")
-        log_matrix(targets, "targets")
+        log_matrix(videos_similarity, "videos_similarity", dpi=100)
+        log_matrix(texts_similarity, "texts_similarity", dpi=100)
+        log_matrix(logits, "logits", dpi=100)
+        log_matrix(targets, "targets", dpi=100)
 
         texts_loss = self.cross_entropy(logits, targets, reduction='none')
         images_loss = self.cross_entropy(logits.T, targets.T, reduction='none')
