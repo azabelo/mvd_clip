@@ -534,7 +534,7 @@ def main(args, ds_init):
     num_tasks = utils.get_world_size()
     global_rank = utils.get_rank()
     sampler_train = torch.utils.data.DistributedSampler(
-        dataset_train, num_replicas=num_tasks, rank=global_rank, shuffle=True
+        dataset_train, num_replicas=num_tasks, rank=global_rank, shuffle=False
     )
     print("Sampler_train = %s" % str(sampler_train))
     if args.dist_eval:
