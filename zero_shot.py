@@ -394,7 +394,7 @@ def precompute_test_video(model, data_loader):
 
     return video_embeddings, all_targets
 
-def log_matrix(matrix, title):
+def log_matrix(matrix, title, dpi):
     # fig, ax = plt.subplots(figsize=(8, 8))
     # sns.heatmap(matrix.clone().detach().cpu().numpy(), cmap="viridis", xticklabels=False,
     #             yticklabels=False,
@@ -410,7 +410,7 @@ def log_matrix(matrix, title):
 
     matrix = matrix.clone().detach().cpu().numpy()
     # Create a figure and axis
-    fig, ax = plt.subplots(dpi=727)
+    fig, ax = plt.subplots(dpi=dpi)
     # Plot the heatmap
     cax = ax.matshow(matrix, cmap='viridis')
     # Set the aspect ratio to be equal
@@ -784,13 +784,14 @@ def main(args, ds_init):
     train_video_embeddings, train_targets = precompute_train_video(model, data_loader_train)
     test_video_embeddings, test_targets = precompute_test_video(model, data_loader_val)
 
-
+    # reorder train_video_embeddings in order of increasing train_targets
+    train_video_embeddings = [x for _, x in sorted(zip(train_targets, train_video_embeddings))]
 
     # make sure to do this on a CSV that is in alphabetical order
     log_matrix(torch.mm(torch.tensor(train_video_embeddings), torch.tensor(train_video_embeddings).T),
-               "train_video_embeddings similarity heatmap")
+               "train_video_embeddings similarity heatmap", dpi=968)
     log_matrix(torch.mm(torch.tensor(text_encodings), torch.tensor(text_encodings).T),
-               "text_encodings similarity heatmap")
+               "text_encodings similarity heatmap", dpi=727)
 
     exit(0)
 
