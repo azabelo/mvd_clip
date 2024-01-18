@@ -719,6 +719,8 @@ def main(args, ds_init):
     test_video_embeddings.clone().detach().to(device)
     text_encodings.clone().detach().to(device)
 
+    train_video_embeddings = train_video_embeddings[:, :1000]
+
     # make sure to do this on a CSV that is in alphabetical order
     video_similarity = train_video_embeddings @ train_video_embeddings.T
     text_similarity = text_encodings @ text_encodings.T
