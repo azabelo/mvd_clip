@@ -549,4 +549,3 @@ def make_text_embeddings():
     import clip
     clip_model, _ = clip.load("ViT-B/16", device="cuda")
     text_embeddings = []
-    for action_name in action_names:
