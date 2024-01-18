@@ -712,8 +712,8 @@ def main(args, ds_init):
     # END MY CHANGES
 
     text_encodings = precompute_text()
-    train_video_embeddings, train_targets = precompute_train_video(model, data_loader_train)
-    test_video_embeddings, test_targets = precompute_test_video(model, data_loader_val)
+    train_video_embeddings, train_targets = precompute_train_video(model, data_loader_train).to(device)
+    test_video_embeddings, test_targets = precompute_test_video(model, data_loader_val).to(device)
 
     # make sure to do this on a CSV that is in alphabetical order
     video_similarity = torch.mm(torch.tensor(train_video_embeddings), torch.tensor(train_video_embeddings).T)
