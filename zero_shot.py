@@ -346,9 +346,9 @@ def precompute_text():
 
 def precompute_train_video(model, data_loader):
 
-    # if os.path.exists("train_video_embeddings.pth"):
-    #     save = torch.load("train_video_embeddings.pth")
-    #     return save[0], save[1]
+    if os.path.exists("train_video_embeddings.pth"):
+        save = torch.load("train_video_embeddings.pth")
+        return save[0], save[1]
 
     model.eval()
     video_embeddings = []
@@ -384,9 +384,9 @@ def precompute_train_video(model, data_loader):
 
 
 def precompute_test_video(model, data_loader):
-    # if os.path.exists("test_video_embeddings.pth"):
-    #     save = torch.load("test_video_embeddings.pth")
-    #     return save[0], save[1]
+    if os.path.exists("test_video_embeddings.pth"):
+        save = torch.load("test_video_embeddings.pth")
+        return save[0], save[1]
 
     model.eval()
     video_embeddings = []
