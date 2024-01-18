@@ -358,6 +358,7 @@ def precompute_train_video(model, data_loader):
             print(len(video_embeddings))
             samples = samples.cuda().half()
             all_targets.append(targets)
+            print(targets)
 
             embedding = model(samples)[:, 0, :]
             # normalize each vector
@@ -392,6 +393,7 @@ def precompute_test_video(model, data_loader):
             print(len(video_embeddings))
             samples = samples.cuda().half()
             all_targets.append(targets)
+            print(targets)
 
             embedding = model(samples)[:,0,:]
             # normalize each vector
