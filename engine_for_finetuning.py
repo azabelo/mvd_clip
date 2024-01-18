@@ -470,3 +470,83 @@ def align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
 
+def efficient_align():
+    pass
+
+def make_video_embeddings(model, data_loader):
+    model.eval()
+    video_embeddings = []
+    with torch.no_grad():
+        header = 'Epoch: [{}]'.format("1 epoch")
+        print_freq = 10
+        metric_logger = utils.MetricLogger(delimiter="  ")
+        for data_iter_step, (samples, targets, _, _) in enumerate(
+                metric_logger.log_every(data_loader, print_freq, header)):
+            samples = samples.cuda()
+            video_embeddings.append(model(samples).cpu().numpy())
+    return np.concatenate(video_embeddings, axis=0)
+
+def make_text_embeddings():
+    templates = [
+        'a photo of a person {}.',
+        'a video of a person {}.',
+        'an example of a person {}.',
+        'a demonstration of a person {}.',
+        'a photo of the person {}.',
+        'a video of the person {}.',
+        'an example of the person {}.',
+        'a demonstration of the person {}.',
+        'a photo of a person using {}.',
+        'a video of a person using {}.',
+        'an example of a person using {}.',
+        'a demonstration of a person using {}.',
+        'a photo of the person using {}.',
+        'a video of the person using {}.',
+        'an example of the person using {}.',
+        'a demonstration of the person using {}.',
+        'a photo of a person doing {}.',
+        'a video of a person doing {}.',
+        'an example of a person doing {}.',
+        'a demonstration of a person doing {}.',
+        'a photo of the person doing {}.',
+        'a video of the person doing {}.',
+        'an example of the person doing {}.',
+        'a demonstration of the person doing {}.',
+        'a photo of a person during {}.',
+        'a video of a person during {}.',
+        'an example of a person during {}.',
+        'a demonstration of a person during {}.',
+        'a photo of the person during {}.',
+        'a video of the person during {}.',
+        'an example of the person during {}.',
+        'a demonstration of the person during {}.',
+        'a photo of a person performing {}.',
+        'a video of a person performing {}.',
+        'an example of a person performing {}.',
+        'a demonstration of a person performing {}.',
+        'a photo of the person performing {}.',
+        'a video of the person performing {}.',
+        'an example of the person performing {}.',
+        'a demonstration of the person performing {}.',
+        'a photo of a person practicing {}.',
+        'a video of a person practicing {}.',
+        'an example of a person practicing {}.',
+        'a demonstration of a person practicing {}.',
+        'a photo of the person practicing {}.',
+        'a video of the person practicing {}.',
+        'an example of the person practicing {}.',
+        'a demonstration of the person practicing {}.',
+    ]
+
+    action_names = ['brushing hair', 'doing a cartwheel', 'catching', 'chewing', 'clapping', 'climbing',
+                    'climbing stairs', 'diving', 'drawing a sword', 'dribbling', 'drinking', 'eating',
+                    'falling to the floor', 'fencing', 'doing flic flac', 'golfing', 'doing a handstand', 'hitting',
+                    'hugging', 'jumping', 'kicking', 'kicking a ball', 'kissing', 'laughing', 'picking', 'pouring',
+                    'doing pullups', 'punching', 'pushing', 'doing pushups', 'riding a bike', 'riding a horse',
+                    'running', 'shaking hands', 'shooting a ball', 'shooting a bow', 'shooting a gun', 'sitting',
+                    'doing situps', 'smiling', 'smoking', 'doing a somersault', 'standing', 'swinging a baseball bat',
+                    'using a sword', 'doing sword exercises', 'talking', 'throwing', 'turning', 'walking', 'waving']
+    import clip
+    clip_model, _ = clip.load("ViT-B/16", device="cuda")
+    text_embeddings = []
+    for action_name in action_names:
