@@ -495,6 +495,12 @@ class Efficient_Align(nn.Module):
 
         return loss.mean()
 
+    def get_num_layers(self):
+        return 1
+
+    def no_weight_decay(self):
+        return {'pos_embed', 'cls_token'}
+
 
 
 def main(args, ds_init):
