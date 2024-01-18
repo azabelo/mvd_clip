@@ -785,6 +785,8 @@ def main(args, ds_init):
     test_video_embeddings, test_targets = precompute_test_video(model, data_loader_val)
 
     # reorder train_video_embeddings in order of increasing train_targets
+    train_targets = train_targets.tolist()
+
     train_video_embeddings = [x for _, x in sorted(zip(train_targets, train_video_embeddings))]
 
     # make sure to do this on a CSV that is in alphabetical order
