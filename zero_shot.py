@@ -452,7 +452,7 @@ def log_matrix(matrix, title, dpi):
 
 
 class Efficient_Align(nn.Module):
-    def __init__(self, video_encoder):
+    def __init__(self):
         super(Efficient_Align, self).__init__()
         self.linear_layer = nn.Linear(768, 512)
         self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
@@ -494,6 +494,7 @@ class Efficient_Align(nn.Module):
         loss = (images_loss + texts_loss) / 2.0  # shape: (batch_size)
 
         return loss.mean()
+
 
 
 def main(args, ds_init):
@@ -685,6 +686,24 @@ def main(args, ds_init):
 
     model.to(device)
 
+    text_encodings = precompute_text()
+    train_video_embeddings, train_targets = precompute_train_video(model, data_loader_train)
+    test_video_embeddings, test_targets = precompute_test_video(model, data_loader_val)
+
+    # make sure to do this on a CSV that is in alphabetical order
+    video_similarity = torch.mm(torch.tensor(train_video_embeddings), torch.tensor(train_video_embeddings).T)
+    text_similarity = torch.mm(torch.tensor(text_encodings), torch.tensor(text_encodings).T)
+
+    log_matrix(video_similarity,
+               "train_video_embeddings similarity heatmap", dpi=968)
+    log_matrix(text_similarity,
+               "text_encodings similarity heatmap", dpi=727)
+
+
+
+    model = Efficient_Align()
+    model.to(device)
+
 
     model_ema = None
     if args.model_ema:
@@ -807,38 +826,6 @@ def main(args, ds_init):
     #     exit(0)
 
 
-    text_encodings = precompute_text()
-    train_video_embeddings, train_targets = precompute_train_video(model, data_loader_train)
-    test_video_embeddings, test_targets = precompute_test_video(model, data_loader_val)
-
-    # reorder train_video_embeddings in order of increasing train_targets
-    sorted_indices = torch.argsort(train_targets)
-    train_video_embeddings = train_video_embeddings[sorted_indices]
-
-    # reorder test_video_embeddings in order of increasing test_targets
-    sorted_indices = torch.argsort(test_targets)
-    test_video_embeddings = test_video_embeddings[sorted_indices]
-
-    # make sure to do this on a CSV that is in alphabetical order
-    video_similarity = torch.mm(torch.tensor(train_video_embeddings), torch.tensor(train_video_embeddings).T)
-    text_similarity = torch.mm(torch.tensor(text_encodings), torch.tensor(text_encodings).T)
-
-    # apply softmax to entire matrix
-    video_similarity = torch.nn.functional.softmax(video_similarity, dim=1)
-    text_similarity = torch.nn.functional.softmax(text_similarity, dim=1)
-
-    log_matrix(video_similarity,
-               "train_video_embeddings similarity heatmap", dpi=968)
-    log_matrix(text_similarity,
-               "text_encodings similarity heatmap", dpi=727)
-
-    exit(0)
-
-
-
-
-
-
 
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
@@ -851,12 +838,14 @@ def main(args, ds_init):
 
         print("before epoch")
 
-        train_stats = align_one_epoch(
-            model, criterion, data_loader_train, optimizer,
+        train_stats = efficient_align_one_epoch(
+            alignment_model, criterion, data_loader_train, optimizer,
             device, epoch, loss_scaler, args.clip_grad, model_ema, mixup_fn,
             log_writer=log_writer, start_steps=epoch * num_training_steps_per_epoch,
             lr_schedule_values=lr_schedule_values, wd_schedule_values=wd_schedule_values,
             num_training_steps_per_epoch=num_training_steps_per_epoch, update_freq=args.update_freq,
+            train_video_embeddings=train_video_embeddings, train_target=train_targets,
+            text_encodings=text_encodings, batch_size=args.batch_size
         )
 
         print("after epoch")
@@ -913,7 +902,6 @@ def main(args, ds_init):
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
     print('Training time {}'.format(total_time_str))
-
 
 
 

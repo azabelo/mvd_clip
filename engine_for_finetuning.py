@@ -13,6 +13,7 @@ import torch.nn.functional as F
 
 # MY CHANGES
 import wandb
+import random
 # END MY CHANGES
 
 
@@ -469,83 +470,152 @@ def align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     print("Averaged stats:", metric_logger)
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
+def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
+                    data_loader: Iterable, optimizer: torch.optim.Optimizer,
+                    device: torch.device, epoch: int, loss_scaler, max_norm: float = 0,
+                    model_ema: Optional[ModelEma] = None, mixup_fn=None, log_writer=None,
+                    start_steps=None, lr_schedule_values=None, wd_schedule_values=None,
+                    num_training_steps_per_epoch=None, update_freq=None,
+                    train_video_embeddings=None, train_targets=None, text_encodings=None, batch_size=64):
 
-def efficient_align():
-    pass
+    model.train(True)
+    metric_logger = utils.MetricLogger(delimiter="  ")
+    metric_logger.add_meter('lr', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
+    metric_logger.add_meter('min_lr', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
+    header = 'Epoch: [{}]'.format(epoch)
+    print_freq = 10
 
-def make_video_embeddings(model, data_loader):
-    model.eval()
-    video_embeddings = []
-    with torch.no_grad():
-        header = 'Epoch: [{}]'.format("1 epoch")
-        print_freq = 10
-        metric_logger = utils.MetricLogger(delimiter="  ")
-        for data_iter_step, (samples, targets, _, _) in enumerate(
-                metric_logger.log_every(data_loader, print_freq, header)):
-            samples = samples.cuda()
-            video_embeddings.append(model(samples).cpu().numpy())
-    return np.concatenate(video_embeddings, axis=0)
+    if loss_scaler is None:
+        model.zero_grad()
+        model.micro_steps = 0
+    else:
+        optimizer.zero_grad()
 
-def make_text_embeddings():
-    templates = [
-        'a photo of a person {}.',
-        'a video of a person {}.',
-        'an example of a person {}.',
-        'a demonstration of a person {}.',
-        'a photo of the person {}.',
-        'a video of the person {}.',
-        'an example of the person {}.',
-        'a demonstration of the person {}.',
-        'a photo of a person using {}.',
-        'a video of a person using {}.',
-        'an example of a person using {}.',
-        'a demonstration of a person using {}.',
-        'a photo of the person using {}.',
-        'a video of the person using {}.',
-        'an example of the person using {}.',
-        'a demonstration of the person using {}.',
-        'a photo of a person doing {}.',
-        'a video of a person doing {}.',
-        'an example of a person doing {}.',
-        'a demonstration of a person doing {}.',
-        'a photo of the person doing {}.',
-        'a video of the person doing {}.',
-        'an example of the person doing {}.',
-        'a demonstration of the person doing {}.',
-        'a photo of a person during {}.',
-        'a video of a person during {}.',
-        'an example of a person during {}.',
-        'a demonstration of a person during {}.',
-        'a photo of the person during {}.',
-        'a video of the person during {}.',
-        'an example of the person during {}.',
-        'a demonstration of the person during {}.',
-        'a photo of a person performing {}.',
-        'a video of a person performing {}.',
-        'an example of a person performing {}.',
-        'a demonstration of a person performing {}.',
-        'a photo of the person performing {}.',
-        'a video of the person performing {}.',
-        'an example of the person performing {}.',
-        'a demonstration of the person performing {}.',
-        'a photo of a person practicing {}.',
-        'a video of a person practicing {}.',
-        'an example of a person practicing {}.',
-        'a demonstration of a person practicing {}.',
-        'a photo of the person practicing {}.',
-        'a video of the person practicing {}.',
-        'an example of the person practicing {}.',
-        'a demonstration of the person practicing {}.',
-    ]
+    # scramble the tensor
+    permutation = torch.randperm(train_video_embeddings.shape[0])
+    random_train_video_embeddings = train_video_embeddings[permutation]
+    random_train_targets = train_targets[permutation]
+    # group in batches
+    num_batches = random_train_video_embeddings.shape[0] // batch_size
+    random_train_video_embeddings = random_train_video_embeddings[:num_batches * batch_size]
+    random_train_targets = random_train_targets[:num_batches * batch_size]
+    random_train_video_embeddings = random_train_video_embeddings.reshape(num_batches, batch_size, -1)
+    random_train_targets = random_train_targets.reshape(num_batches, batch_size)
 
-    action_names = ['brushing hair', 'doing a cartwheel', 'catching', 'chewing', 'clapping', 'climbing',
-                    'climbing stairs', 'diving', 'drawing a sword', 'dribbling', 'drinking', 'eating',
-                    'falling to the floor', 'fencing', 'doing flic flac', 'golfing', 'doing a handstand', 'hitting',
-                    'hugging', 'jumping', 'kicking', 'kicking a ball', 'kissing', 'laughing', 'picking', 'pouring',
-                    'doing pullups', 'punching', 'pushing', 'doing pushups', 'riding a bike', 'riding a horse',
-                    'running', 'shaking hands', 'shooting a ball', 'shooting a bow', 'shooting a gun', 'sitting',
-                    'doing situps', 'smiling', 'smoking', 'doing a somersault', 'standing', 'swinging a baseball bat',
-                    'using a sword', 'doing sword exercises', 'talking', 'throwing', 'turning', 'walking', 'waving']
-    import clip
-    clip_model, _ = clip.load("ViT-B/16", device="cuda")
-    text_embeddings = []
+
+    batched_data = zip(random_train_video_embeddings, random_train_targets)
+    batch_count = 0
+    for data_iter_step, (samples, targets, _, _) in enumerate(
+            metric_logger.log_every(data_loader, print_freq, header)):
+
+        # so janky lmao
+        video_embeddings, targets = batched_data[batch_count]
+        batch_count += 1
+
+        step = data_iter_step // update_freq
+        if step >= num_training_steps_per_epoch:
+            continue
+        it = start_steps + step  # global training iteration
+        # Update LR & WD for the first acc
+        if lr_schedule_values is not None or wd_schedule_values is not None and data_iter_step % update_freq == 0:
+            for i, param_group in enumerate(optimizer.param_groups):
+                if lr_schedule_values is not None:
+                    param_group["lr"] = lr_schedule_values[it] * param_group["lr_scale"]
+                if wd_schedule_values is not None and param_group["weight_decay"] > 0:
+                    param_group["weight_decay"] = wd_schedule_values[it]
+
+        prompt_index = random.randint(0, 47)
+        text_embeddings = text_encodings[torch.tensor([48 * class_index + prompt_index for class_index in targets])]
+        text_embeddings = text_embeddings.to(device)
+        video_embeddings = video_embeddings.to(device)
+
+        if loss_scaler is None:
+            samples = samples.half()
+            loss = model(video_embeddings, text_embeddings)
+        else:
+            with torch.cuda.amp.autocast():
+                loss = model(video_embeddings, text_embeddings)
+
+        loss_value = loss.item()
+
+        if not math.isfinite(loss_value):
+            print("Loss is {}, stopping training".format(loss_value))
+            sys.exit(1)
+
+        if loss_scaler is None:
+            loss /= update_freq
+            model.backward(loss)
+            model.step()
+
+            if (data_iter_step + 1) % update_freq == 0:
+                # model.zero_grad()
+                # Deepspeed will call step() & model.zero_grad() automatic
+                if model_ema is not None:
+                    model_ema.update(model)
+            grad_norm = None
+            loss_scale_value = get_loss_scale_for_deepspeed(model)
+        else:
+            # this attribute is added by timm on one optimizer (adahessian)
+            is_second_order = hasattr(optimizer, 'is_second_order') and optimizer.is_second_order
+            loss /= update_freq
+            grad_norm = loss_scaler(loss, optimizer, clip_grad=max_norm,
+                                    parameters=model.parameters(), create_graph=is_second_order,
+                                    update_grad=(data_iter_step + 1) % update_freq == 0)
+            if (data_iter_step + 1) % update_freq == 0:
+                optimizer.zero_grad()
+                if model_ema is not None:
+                    model_ema.update(model)
+            loss_scale_value = loss_scaler.state_dict()["scale"]
+
+        torch.cuda.synchronize()
+
+        class_acc = (vid_pred_correct + text_pred_correct) / (2 * len(targets))
+        # if mixup_fn is None:
+        #     class_acc = (output.max(-1)[-1] == targets).float().mean()
+        # else:
+        #     class_acc = None
+
+        metric_logger.update(loss=loss_value)
+        metric_logger.update(class_acc=class_acc)
+        metric_logger.update(loss_scale=loss_scale_value)
+        min_lr = 10.
+        max_lr = 0.
+        for group in optimizer.param_groups:
+            min_lr = min(min_lr, group["lr"])
+            max_lr = max(max_lr, group["lr"])
+
+        metric_logger.update(lr=max_lr)
+        metric_logger.update(min_lr=min_lr)
+        weight_decay_value = None
+        for group in optimizer.param_groups:
+            if group["weight_decay"] > 0:
+                weight_decay_value = group["weight_decay"]
+        metric_logger.update(weight_decay=weight_decay_value)
+        metric_logger.update(grad_norm=grad_norm)
+
+        if log_writer is not None:
+            log_writer.update(loss=loss_value, head="loss")
+            log_writer.update(class_acc=class_acc, head="loss")
+            log_writer.update(loss_scale=loss_scale_value, head="opt")
+            log_writer.update(lr=max_lr, head="opt")
+            log_writer.update(min_lr=min_lr, head="opt")
+            log_writer.update(weight_decay=weight_decay_value, head="opt")
+            log_writer.update(grad_norm=grad_norm, head="opt")
+
+            log_writer.set_step()
+
+        # MY CHANGES
+        wandb.log({"epoch": epoch, "batch": step, "train_loss": loss_value, "max_lr": max_lr, "min_lr": min_lr,
+                   "weight_decay": weight_decay_value, "grad_norm": grad_norm, "loss_scale": loss_scale_value,
+                   "class_acc": class_acc})
+        # END MY CHANGES
+
+
+
+    # gather the stats from all processes
+    metric_logger.synchronize_between_processes()
+    print("Averaged stats:", metric_logger)
+    return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
+
+
+
