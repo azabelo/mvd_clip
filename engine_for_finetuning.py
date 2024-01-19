@@ -649,7 +649,7 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             print("batch count: ", batch_count)
 
             # clip-style val prediction loss
-            video_vectors = model.module.get_video_embeddings(video_embeddings)
+            video_vectors = model.module.get_video_embeddings(test_video_embeddings)
             text_encodings.to(device)
             print("video vectors shape: ", video_vectors.shape)
             print("text encodings shape: ", text_encodings.shape)
