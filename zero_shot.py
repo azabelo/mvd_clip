@@ -351,7 +351,7 @@ def precompute_train_video(model, data_loader):
         return save[0], save[1]
 
     model.eval()
-    video_embeddings = torch.tensor(0, 1569*768).cuda()
+    video_embeddings = torch.tensor((0, 1569*768)).cuda()
     all_targets = []
     with torch.no_grad():
         header = 'Epoch: [{}]'.format("1 epoch")

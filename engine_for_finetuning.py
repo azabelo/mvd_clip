@@ -654,7 +654,7 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             print("video vectors shape: ", video_vectors.shape)
             print("text encodings shape: ", text_encodings.shape)
 
-            # training-style valloss
+            # training-style val loss
 
             video_embeddings, targets = batched_data[batch_count]
             video_embeddings = video_embeddings.half().to(device)
