@@ -672,7 +672,6 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             print("text encodings shape: ", text_encodings.shape)
             logits = (text_encodings @ video_vectors.T) / model.module.logit_scale
             # take the softmax over the text encodings
-            probs = torch.nn.functional.softmax(logits, dim=0)
             print("probs shape: ", probs.shape)
             # sum each group of 48
             probs = probs.reshape(batch_size, 48, -1).sum(dim=1)
