@@ -671,6 +671,9 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             print(class_preds)
             print(targets)
             # compute accuracy
+
+            class_preds = class_preds.to(device)
+            targets = targets.to(device)
             class_correct = (class_preds == targets).sum().item()
             total_class_correct += class_correct
 
