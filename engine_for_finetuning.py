@@ -608,7 +608,7 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
         # MY CHANGES
         wandb.log({"epoch": epoch, "batch": step, "train_loss": loss_value, "max_lr": max_lr, "min_lr": min_lr,
                    "weight_decay": weight_decay_value, "grad_norm": grad_norm, "loss_scale": loss_scale_value,
-                   "class_acc": class_acc})
+                   "text_acc": text_preds_correct, "vid_acc": vid_preds_correct})
         # END MY CHANGES
 
 
@@ -619,4 +619,67 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
 
+def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
+                    data_loader: Iterable, optimizer: torch.optim.Optimizer,
+                    device: torch.device, epoch: int, loss_scaler, max_norm: float = 0,
+                    model_ema: Optional[ModelEma] = None, mixup_fn=None, log_writer=None,
+                    start_steps=None, lr_schedule_values=None, wd_schedule_values=None,
+                    num_training_steps_per_epoch=None, update_freq=None,
+                    test_video_embeddings=None, test_targets=None, text_encodings=None, batch_size=64):
 
+    model.eval()
+    with torch.no_grad():
+        model.eval()
+
+        # group in batches
+        num_batches = test_video_embeddings.shape[0] // batch_size
+        test_video_embeddings = test_video_embeddings[:num_batches * batch_size]
+        test_targets = test_targets[:num_batches * batch_size]
+        test_video_embeddings = test_video_embeddings.reshape(num_batches, batch_size, -1)
+        test_targets = test_targets.reshape(num_batches, batch_size)
+
+        batched_data = [(i,j) for _, (i,j) in enumerate(zip(test_video_embeddings, test_targets))]
+        batch_count = 0
+        total_loss = 0
+        total_vid_preds_correct = 0
+        total_text_preds_correct = 0
+        total_examples = 0
+
+        while batch_count < len(batched_data):
+            print("batch count: ", batch_count)
+
+            # clip-style val prediction loss
+            video_vectors = model.get_video_embeddings(video_embeddings)
+            text_encodings.to(device)
+            print("video vectors shape: ", video_vectors.shape)
+            print("text encodings shape: ", text_encodings.shape)
+
+            # training-style valloss
+
+            video_embeddings, targets = batched_data[batch_count]
+            video_embeddings = video_embeddings.half().to(device)
+            batch_count += 1
+            total_examples += video_embeddings.shape[0]
+
+            prompt_index = random.randint(0, 47)
+            text_embeddings = text_encodings[torch.tensor([48 * class_index + prompt_index for class_index in targets])]
+            text_embeddings = text_embeddings.to(device)
+            video_embeddings = video_embeddings.to(device)
+
+            loss, vid_preds_correct, text_preds_correct = model(video_embeddings, text_embeddings)
+            loss_value = loss.item()
+            total_loss += loss_value
+            total_vid_preds_correct += vid_preds_correct
+            total_text_preds_correct += text_preds_correct
+
+
+
+        avg_loss = total_loss / total_examples
+        avg_vid_acc = total_vid_preds_correct / total_examples
+        avg_text_acc = total_text_preds_correct / total_examples
+
+        # MY CHANGES
+        wandb.log({"epoch": epoch, "val_loss": avg_loss, "val_vid_acc": avg_vid_acc, "val_text_acc": avg_text_acc})
+        # END MY CHANGES
+
+    return

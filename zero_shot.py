@@ -511,6 +511,15 @@ class Efficient_Align(nn.Module):
     def no_weight_decay(self):
         return {'pos_embed', 'cls_token'}
 
+    def get_video_embeddings(self, video_embeddings):
+        bs = video_embeddings.shape[0]
+        video_embeddings = self.linear_layer(video_embeddings)
+
+        video_embeddings_mean = video_embeddings.mean(dim=1, keepdim=True)
+        video_embeddings_std = video_embeddings.std(dim=1, keepdim=True)
+        video_embeddings = (video_embeddings - video_embeddings_mean) / video_embeddings_std
+
+        return video_embeddings
 
 
 def main(args, ds_init):
@@ -857,6 +866,19 @@ def main(args, ds_init):
             data_loader_train.sampler.set_epoch(epoch)
         if log_writer is not None:
             log_writer.set_step(epoch * num_training_steps_per_epoch * args.update_freq)
+
+        # val
+        if epoch % 10 == 0:
+            align_val_one_epoch(
+                    model, criterion, data_loader_val, optimizer,
+                    device, epoch, loss_scaler, args.clip_grad, model_ema, mixup_fn,
+                    log_writer=log_writer, start_steps=epoch * num_training_steps_per_epoch,
+                    lr_schedule_values=lr_schedule_values, wd_schedule_values=wd_schedule_values,
+                    num_training_steps_per_epoch=num_training_steps_per_epoch, update_freq=args.update_freq,
+                    test_video_embeddings=test_video_embeddings, test_targets=test_targets,
+                    text_encodings=text_encodings, batch_size=args.batch_size
+            )
+
 
         print("before epoch")
 
