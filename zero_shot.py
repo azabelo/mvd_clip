@@ -423,18 +423,6 @@ def precompute_test_video(model, data_loader):
     return video_embeddings, all_targets
 
 def log_matrix(matrix, title, dpi):
-    # fig, ax = plt.subplots(figsize=(8, 8))
-    # sns.heatmap(matrix.clone().detach().cpu().numpy(), cmap="viridis", xticklabels=False,
-    #             yticklabels=False,
-    #             cbar=True,
-    #             ax=ax)
-    # # Set the DPI to control the image size
-    # dpi = 50
-    # fig.set_dpi(dpi)
-    # # Save the heatmap image with the desired resolution
-    # plt.savefig("image.png", dpi=dpi)
-    # plt.close()
-    # wandb.log({"videos_similarity heatmap": wandb.Image("image.png")})
 
     matrix = matrix.clone().detach().cpu().numpy()
     # Create a figure and axis

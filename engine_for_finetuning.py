@@ -646,6 +646,8 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         total_examples = 0
         total_class_correct = 0
 
+        cls_tokens = []
+
         while batch_count < len(batched_data):
             print("batch count: ", batch_count)
             video_embeddings, targets = batched_data[batch_count]
@@ -656,6 +658,9 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
             # clip-style val prediction loss
             video_vectors = model.module.get_video_embeddings(video_embeddings)
+            cls_token = video_vectors[:, 0, :]
+            cls_tokens.append(cls_token)
+
             text_encodings.to(device)
             print("video vectors shape: ", video_vectors.shape)
             print("text encodings shape: ", text_encodings.shape)
@@ -691,7 +696,9 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             total_vid_preds_correct += vid_preds_correct
             total_text_preds_correct += text_preds_correct
 
-
+        cls_tokens = torch.cat(cls_tokens, dim=0)
+        cls_token_similarity = torch.matmul(cls_tokens, cls_tokens.T)
+        log_matrix(cls_token_similarity, "cls_token_similarity", 968)
 
         avg_loss = total_loss / total_examples
         avg_vid_acc = total_vid_preds_correct / total_examples
@@ -704,3 +711,22 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         # END MY CHANGES
 
     return
+
+def log_matrix(matrix, title, dpi):
+
+    matrix = matrix.clone().detach().cpu().numpy()
+    # Create a figure and axis
+    fig, ax = plt.subplots(dpi=dpi)
+    # Plot the heatmap
+    cax = ax.matshow(matrix, cmap='viridis')
+    # Set the aspect ratio to be equal
+    ax.set_aspect('equal')
+    # Add a colorbar
+    fig.colorbar(cax)
+    # Set title and labels
+    ax.set_title(title)
+    ax.set_xlabel("Columns")
+    ax.set_ylabel("Rows")
+    # Log the figure to WandB
+    wandb.log({title: wandb.Image(fig)})
+    plt.close(fig)
