@@ -650,6 +650,7 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             print("batch count: ", batch_count)
             video_embeddings, targets = batched_data[batch_count]
             video_embeddings = video_embeddings.half().to(device)
+            targets.to(device)
             batch_count += 1
             total_examples += video_embeddings.shape[0]
 
@@ -666,7 +667,7 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             sims = sims.reshape(batch_size, 48, -1).sum(dim=1)
             print("sims shape: ", sims.shape)
             # take the argmax
-            class_preds = torch.argmax(sims, dim=1)
+            class_preds = torch.argmax(sims, dim=1).to(device)
             print(class_preds)
             print(targets)
             # compute accuracy
