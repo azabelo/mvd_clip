@@ -493,9 +493,10 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
         optimizer.zero_grad()
 
     # scramble the tensor
-    permutation = torch.randperm(train_video_embeddings.shape[0])
-    random_train_video_embeddings = train_video_embeddings[permutation]
-    random_train_targets = train_targets[permutation]
+    # permutation = torch.randperm(train_video_embeddings.shape[0])
+    # random_train_video_embeddings = train_video_embeddings[permutation]
+    # random_train_targets = train_targets[permutation]
+
     # group in batches
     num_batches = random_train_video_embeddings.shape[0] // batch_size
     random_train_video_embeddings = random_train_video_embeddings[:num_batches * batch_size]
