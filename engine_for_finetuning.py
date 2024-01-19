@@ -647,20 +647,18 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
         while batch_count < len(batched_data):
             print("batch count: ", batch_count)
+            video_embeddings, targets = batched_data[batch_count]
+            video_embeddings = video_embeddings.half().to(device)
+            batch_count += 1
+            total_examples += video_embeddings.shape[0]
 
             # clip-style val prediction loss
-            test_video_embeddings.to(device)
-            video_vectors = model.module.get_video_embeddings(test_video_embeddings)
+            video_vectors = model.module.get_video_embeddings(video_embeddings)
             text_encodings.to(device)
             print("video vectors shape: ", video_vectors.shape)
             print("text encodings shape: ", text_encodings.shape)
 
             # training-style val loss
-
-            video_embeddings, targets = batched_data[batch_count]
-            video_embeddings = video_embeddings.half().to(device)
-            batch_count += 1
-            total_examples += video_embeddings.shape[0]
 
             prompt_index = random.randint(0, 47)
             text_embeddings = text_encodings[torch.tensor([48 * class_index + prompt_index for class_index in targets])]
