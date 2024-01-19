@@ -661,10 +661,14 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             sims = torch.matmul(video_vectors, text_encodings.T)
             # take the softmax over the text encodings
             sims = F.softmax(sims, dim=1)
+            print("sims shape: ", sims.shape)
             # sum each group of 48
             sims = sims.reshape(-1, 48, 48).sum(dim=1)
+            print("sims shape: ", sims.shape)
             # take the argmax
             class_preds = torch.argmax(sims, dim=1)
+            print(class_preds)
+            print(targets)
             # compute accuracy
             class_correct = (class_preds == targets).sum().item()
             total_class_correct += class_correct
