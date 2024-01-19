@@ -351,7 +351,7 @@ def precompute_train_video(model, data_loader):
         return save[0], save[1]
 
     model.eval()
-    video_embeddings = torch.tensor((0, 1569*768)).cuda()
+    video_embeddings = []
     all_targets = []
     with torch.no_grad():
         header = 'Epoch: [{}]'.format("1 epoch")
@@ -372,12 +372,12 @@ def precompute_train_video(model, data_loader):
             #embedding = (embedding - mean) / std
 
             embedding = embedding / torch.norm(embedding, dim=1, keepdim=True)
-            video_embeddings = torch.cat((video_embeddings, embedding.unsqueeze(0)), dim=0)
+            video_embeddings.append(embedding.cpu().numpy())
 
-    # video_embeddings = torch.tensor(np.concatenate(video_embeddings, axis=0), dtype=torch.float32)
-    all_targets = torch.tensor(np.concatenate(all_targets, axis=0), dtype=torch.int64)
-    print(video_embeddings.shape)
-    save = (video_embeddings, all_targets)
+        video_embeddings = torch.tensor(np.concatenate(video_embeddings, axis=0), dtype=torch.float32)
+        print(video_embeddings.shape)
+        all_targets = torch.tensor(np.concatenate(all_targets, axis=0), dtype=torch.int64)
+        save = (video_embeddings, all_targets)
 
     torch.save(save, "train_video_embeddings.pth")
 
