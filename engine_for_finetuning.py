@@ -663,17 +663,22 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             cls_tokens.append(cls_token)
 
             text_encodings.to(device)
+            text_encodings_mean = text_encodings.mean(dim=1, keepdim=True)
+            text_encodings_std = text_encodings.std(dim=1, keepdim=True)
+            text_encodings = (text_encodings - text_encodings_mean) / text_encodings_std
+
             print("video vectors shape: ", video_vectors.shape)
             print("text encodings shape: ", text_encodings.shape)
-            sims = torch.matmul(video_vectors, text_encodings.T)
+            logits = (text_encodings @ video_vectors.T) / model.module.logit_scale
             # take the softmax over the text encodings
-            sims = F.softmax(sims, dim=1)
-            print("sims shape: ", sims.shape)
+            probs = torch.nn.functional.softmax(probs, dim=1)
+            print("probs shape: ", probs.shape)
             # sum each group of 48
-            sims = sims.reshape(batch_size, 48, -1).sum(dim=1)
-            print("sims shape: ", sims.shape)
+            probs = probs.reshape(batch_size, 48, -1).sum(dim=1)
+            print("sims shape: ", probs.shape)
+            print(probs)
             # take the argmax
-            class_preds = torch.argmax(sims, dim=1).to(device)
+            class_preds = torch.argmax(probs, dim=1).to(device)
             print(class_preds)
             print(targets)
             # compute accuracy
@@ -693,7 +698,7 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
             loss, vid_preds_correct, text_preds_correct = model.module(video_embeddings, text_embeddings)
             loss_value = loss.item()
-            total_loss += loss_value
+            total_loss += loss_value * video_embeddings.shape[0]
             total_vid_preds_correct += vid_preds_correct
             total_text_preds_correct += text_preds_correct
 
@@ -702,13 +707,13 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         log_matrix(cls_token_similarity, "cls_token_similarity", 968)
 
         avg_loss = total_loss / total_examples
-        avg_vid_acc = total_vid_preds_correct / total_examples
-        avg_text_acc = total_text_preds_correct / total_examples
-        avg_class_acc = total_class_correct / total_examples
+        # avg_vid_acc = total_vid_preds_correct / total_examples
+        # avg_text_acc = total_text_preds_correct / total_examples
+        # avg_class_acc = total_class_correct / total_examples
 
         # MY CHANGES
-        wandb.log({"epoch": epoch, "val_loss": avg_loss, "val_vid_acc": avg_vid_acc, "val_text_acc": avg_text_acc
-                   , "val_class_acc": avg_class_acc})
+        wandb.log({"epoch": epoch, "val_loss": avg_loss, "val_vid_acc": total_vid_preds_correct,
+                   "val_text_acc": total_text_preds_correct, "val_class_acc": total_class_correct})
         # END MY CHANGES
 
     return

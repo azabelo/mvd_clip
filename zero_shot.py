@@ -365,7 +365,7 @@ def precompute_train_video(model, data_loader):
             print(targets)
 
             output = model(samples)
-            embedding = output.view(output.size(0), -1)  #[:, 0, :]
+            embedding = output[:, 0, :] #.view(output.size(0), -1)
             # normalize each vector
             # mean = torch.mean(embedding, dim=1, keepdim=True)
             # std = torch.std(embedding, dim=1, keepdim=True)
@@ -405,7 +405,7 @@ def precompute_test_video(model, data_loader):
             print(targets)
 
             output = model(samples)
-            embedding = output.view(output.size(0), -1)  # [:, 0, :]
+            embedding = output[:, 0, :] #.view(output.size(0), -1)
             # normalize each vector
             # mean = torch.mean(embedding, dim=1, keepdim=True)
             # std = torch.std(embedding, dim=1, keepdim=True)
@@ -445,8 +445,8 @@ def log_matrix(matrix, title, dpi):
 class Efficient_Align(nn.Module):
     def __init__(self):
         super(Efficient_Align, self).__init__()
-        #self.linear_layer = nn.Linear(768, 512)
-        self.linear_layer = nn.Linear(768*1569, 512)
+        self.linear_layer = nn.Linear(768, 512)
+        #self.linear_layer = nn.Linear(768*1569, 512)
         self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
