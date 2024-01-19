@@ -27,7 +27,7 @@ from timm.data import Mixup
 from optim_factory import create_optimizer, get_parameter_groups, LayerDecayValueAssigner
 
 from datasets import build_dataset
-from engine_for_finetuning import efficient_align_one_epoch, validation_one_epoch, final_test, merge
+from engine_for_finetuning import efficient_align_one_epoch, validation_one_epoch, final_test, merge, align_val_one_epoch
 from utils import NativeScalerWithGradNormCount as NativeScaler
 from utils import multiple_samples_collate
 import utils
