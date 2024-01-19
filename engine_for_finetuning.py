@@ -644,6 +644,7 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         total_vid_preds_correct = 0
         total_text_preds_correct = 0
         total_examples = 0
+        total_class_correct = 0
 
         while batch_count < len(batched_data):
             print("batch count: ", batch_count)
@@ -657,6 +658,17 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             text_encodings.to(device)
             print("video vectors shape: ", video_vectors.shape)
             print("text encodings shape: ", text_encodings.shape)
+            sims = torch.matmul(video_vectors, text_encodings.T)
+            # take the softmax over the text encodings
+            sims = F.softmax(sims, dim=1)
+            # sum each group of 48
+            sims = sims.reshape(-1, 48, 48).sum(dim=1)
+            # take the argmax
+            class_preds = torch.argmax(sims, dim=1)
+            # compute accuracy
+            class_correct = (class_preds == targets).sum().item()
+            total_class_correct += class_correct
+
 
             # training-style val loss
 
@@ -676,9 +688,11 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         avg_loss = total_loss / total_examples
         avg_vid_acc = total_vid_preds_correct / total_examples
         avg_text_acc = total_text_preds_correct / total_examples
+        avg_class_acc = total_class_correct / total_examples
 
         # MY CHANGES
-        wandb.log({"epoch": epoch, "val_loss": avg_loss, "val_vid_acc": avg_vid_acc, "val_text_acc": avg_text_acc})
+        wandb.log({"epoch": epoch, "val_loss": avg_loss, "val_vid_acc": avg_vid_acc, "val_text_acc": avg_text_acc
+                   , "val_class_acc": avg_class_acc})
         # END MY CHANGES
 
     return
