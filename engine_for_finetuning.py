@@ -663,7 +663,7 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             sims = F.softmax(sims, dim=1)
             print("sims shape: ", sims.shape)
             # sum each group of 48
-            sims = sims.reshape(-1, 48, 48).sum(dim=1)
+            sims = sims.reshape(batch_size, 48, -1).sum(dim=1)
             print("sims shape: ", sims.shape)
             # take the argmax
             class_preds = torch.argmax(sims, dim=1)
