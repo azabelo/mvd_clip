@@ -704,7 +704,10 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
         cls_tokens = torch.cat(cls_tokens, dim=0)
         cls_token_similarity = torch.matmul(cls_tokens, cls_tokens.T)
-        log_matrix(cls_token_similarity, "cls_token_similarity", 968)
+        log_matrix(cls_token_similarity, "cls_token_similarity", 400)
+
+        video_similarity = torch.matmul(test_video_embeddings, test_video_embeddings.T)
+        log_matrix(video_similarity, "video_similarity", 400)
 
         avg_loss = total_loss / total_examples
         # avg_vid_acc = total_vid_preds_correct / total_examples
