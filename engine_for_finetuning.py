@@ -527,8 +527,9 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
                 if wd_schedule_values is not None and param_group["weight_decay"] > 0:
                     param_group["weight_decay"] = wd_schedule_values[it]
 
-        prompt_index = random.randint(0, 47)
-        text_embeddings = text_encodings[torch.tensor([48 * class_index + prompt_index for class_index in targets])]
+        # prompt_index = random.randint(0, 47)
+        # text_embeddings = text_encodings[torch.tensor([48 * class_index + prompt_index for class_index in targets])]
+        text_embeddings = text_encodings[targets]
         text_embeddings = text_embeddings.to(device)
         video_embeddings = video_embeddings.to(device)
 
