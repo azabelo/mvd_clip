@@ -514,6 +514,7 @@ class Efficient_Align(nn.Module):
         return video_embeddings
 
 
+
 def main(args, ds_init):
     utils.init_distributed_mode(args)
 
@@ -825,6 +826,9 @@ def main(args, ds_init):
     utils.auto_load_model(
         args=args, model=model, model_without_ddp=model_without_ddp,
         optimizer=optimizer, loss_scaler=loss_scaler, model_ema=model_ema)
+
+
+
 
     if args.output_dir and utils.is_main_process():
         config_name = args.eval_log_name + '_config.txt' if args.eval else "config.txt"

@@ -27,12 +27,14 @@ from timm.data import Mixup
 from optim_factory import create_optimizer, get_parameter_groups, LayerDecayValueAssigner
 
 from datasets import build_dataset
-from engine_for_finetuning import efficient_align_one_epoch, validation_one_epoch, final_test, merge, align_val_one_epoch
+from engine_for_finetuning import efficient_align_one_epoch, validation_one_epoch, final_test, merge, \
+    align_val_one_epoch
 from utils import NativeScalerWithGradNormCount as NativeScaler
 from utils import multiple_samples_collate
 import utils
 
 import modeling_finetune
+
 
 def get_args():
     parser = argparse.ArgumentParser('MVD fine-tuning and evaluation script for video classification', add_help=False)
@@ -240,7 +242,6 @@ def get_args():
     # END MY_CHANGES
 
 
-
 templates = [
     'a photo of a person {}.',
     'a video of a person {}.',
@@ -292,7 +293,14 @@ templates = [
     'a demonstration of the person practicing {}.',
 ]
 
-action_names = ['brushing hair', 'doing a cartwheel', 'catching', 'chewing', 'clapping', 'climbing', 'climbing stairs', 'diving', 'drawing a sword', 'dribbling', 'drinking', 'eating', 'falling to the floor', 'fencing', 'doing flic flac', 'golfing', 'doing a handstand', 'hitting', 'hugging', 'jumping', 'kicking', 'kicking a ball', 'kissing', 'laughing', 'picking', 'pouring', 'doing pullups', 'punching', 'pushing', 'doing pushups', 'riding a bike', 'riding a horse', 'running', 'shaking hands', 'shooting a ball', 'shooting a bow', 'shooting a gun', 'sitting', 'doing situps', 'smiling', 'smoking', 'doing a somersault', 'standing', 'swinging a baseball bat', 'using a sword', 'doing sword exercises', 'talking', 'throwing', 'turning', 'walking', 'waving']
+action_names = ['brushing hair', 'doing a cartwheel', 'catching', 'chewing', 'clapping', 'climbing', 'climbing stairs',
+                'diving', 'drawing a sword', 'dribbling', 'drinking', 'eating', 'falling to the floor', 'fencing',
+                'doing flic flac', 'golfing', 'doing a handstand', 'hitting', 'hugging', 'jumping', 'kicking',
+                'kicking a ball', 'kissing', 'laughing', 'picking', 'pouring', 'doing pullups', 'punching', 'pushing',
+                'doing pushups', 'riding a bike', 'riding a horse', 'running', 'shaking hands', 'shooting a ball',
+                'shooting a bow', 'shooting a gun', 'sitting', 'doing situps', 'smiling', 'smoking',
+                'doing a somersault', 'standing', 'swinging a baseball bat', 'using a sword', 'doing sword exercises',
+                'talking', 'throwing', 'turning', 'walking', 'waving']
 
 
 def precompute_text():
@@ -306,7 +314,6 @@ def precompute_text():
             prompts[name] = []
         for template in templates:
             prompts[name].append(template.format(name))
-
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model, preprocess = clip.load("ViT-B/16", device=device)
@@ -335,6 +342,8 @@ def precompute_text():
 
                 text_encodings[name].append(text_encoding)
             text_encodings[name] = torch.cat(text_encodings[name], dim=0)
+            # average of all prompts
+            text_encodings[name] = torch.mean(text_encodings[name], dim=0, keepdim=True)
 
     action_encodings = torch.cat(list(text_encodings.values()))
     print(action_encodings.shape)
@@ -343,9 +352,7 @@ def precompute_text():
     return action_encodings
 
 
-
 def precompute_train_video(model, data_loader):
-
     if os.path.exists("train_video_embeddings.pth"):
         save = torch.load("train_video_embeddings.pth")
         return save[0], save[1]
@@ -354,7 +361,6 @@ def precompute_train_video(model, data_loader):
     video_embeddings = []
     all_targets = []
     with torch.no_grad():
-        model.eval()
         header = 'Epoch: [{}]'.format("1 epoch")
         print_freq = 10
         metric_logger = utils.MetricLogger(delimiter="  ")
@@ -367,12 +373,11 @@ def precompute_train_video(model, data_loader):
 
             output = model(samples)
             embedding = torch.mean(output, dim=1, keepdim=False)
-            #embedding = output[:, 0, :] #.view(output.size(0), -1)
+            # embedding = output[:, 0, :] #.view(output.size(0), -1)
             # normalize each vector
             # mean = torch.mean(embedding, dim=1, keepdim=True)
             # std = torch.std(embedding, dim=1, keepdim=True)
-            #embedding = (embedding - mean) / std
-
+            # embedding = (embedding - mean) / std
             embedding = embedding / torch.norm(embedding, dim=1, keepdim=True)
             video_embeddings.append(embedding.cpu().numpy())
 
@@ -395,7 +400,6 @@ def precompute_test_video(model, data_loader):
     video_embeddings = []
     all_targets = []
     with torch.no_grad():
-        model.eval()
         header = 'Epoch: [{}]'.format("1 epoch")
         print_freq = 10
         metric_logger = utils.MetricLogger(delimiter="  ")
@@ -408,11 +412,13 @@ def precompute_test_video(model, data_loader):
             print(targets)
 
             output = model(samples)
-            embedding = output[:, 0, :] #.view(output.size(0), -1)
+            embedding = torch.mean(output, dim=1, keepdim=False)
+            # embedding = output[:, 0, :] #.view(output.size(0), -1)
             # normalize each vector
             # mean = torch.mean(embedding, dim=1, keepdim=True)
             # std = torch.std(embedding, dim=1, keepdim=True)
             # embedding = (embedding - mean) / std
+            embedding = embedding / torch.norm(embedding, dim=1, keepdim=True)
 
             embedding = embedding / torch.norm(embedding, dim=1, keepdim=True)
             video_embeddings.append(embedding.cpu().numpy())
@@ -425,8 +431,8 @@ def precompute_test_video(model, data_loader):
 
     return video_embeddings, all_targets
 
-def log_matrix(matrix, title, dpi):
 
+def log_matrix(matrix, title, dpi):
     matrix = matrix.clone().detach().cpu().numpy()
     # Create a figure and axis
     fig, ax = plt.subplots(dpi=dpi)
@@ -449,8 +455,7 @@ class Efficient_Align(nn.Module):
     def __init__(self):
         super(Efficient_Align, self).__init__()
         self.linear_layer = nn.Linear(768, 512)
-
-        #self.linear_layer = nn.Linear(768*1569, 512)
+        # self.linear_layer = nn.Linear(768*1569, 512)
         self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -461,24 +466,25 @@ class Efficient_Align(nn.Module):
             return loss
         elif reduction == "mean":
             return loss.mean()
+
     def forward(self, video_embeddings, text_embeddings):
         bs = video_embeddings.shape[0]
         video_embeddings = self.linear_layer(video_embeddings)
+        #
+        # video_embeddings_mean = video_embeddings.mean(dim=1, keepdim=True)
+        # video_embeddings_std = video_embeddings.std(dim=1, keepdim=True)
+        video_embeddings = video_embeddings / torch.norm(video_embeddings, dim=1, keepdim=True)
 
-        video_embeddings_mean = video_embeddings.mean(dim=1, keepdim=True)
-        video_embeddings_std = video_embeddings.std(dim=1, keepdim=True)
-        video_embeddings = (video_embeddings - video_embeddings_mean) / video_embeddings_std
-
-        text_embeddings_mean = text_embeddings.mean(dim=1, keepdim=True)
-        text_embeddings_std = text_embeddings.std(dim=1, keepdim=True)
-        text_embeddings = (text_embeddings - text_embeddings_mean) / text_embeddings_std
+        # text_embeddings_mean = text_embeddings.mean(dim=1, keepdim=True)
+        # text_embeddings_std = text_embeddings.std(dim=1, keepdim=True)
+        text_embeddings = text_embeddings / torch.norm(text_embeddings, dim=1, keepdim=True)
 
         videos_similarity = video_embeddings @ video_embeddings.T
         texts_similarity = text_embeddings @ text_embeddings.T
 
         logits = (text_embeddings @ video_embeddings.T) * self.logit_scale
         targets = torch.nn.functional.softmax(
-            texts_similarity, dim=-1
+            (videos_similarity + texts_similarity) / 2, dim=-1
         )
 
         max_video_preds = torch.argmax(logits, dim=0)
@@ -507,9 +513,9 @@ class Efficient_Align(nn.Module):
         bs = video_embeddings.shape[0]
         video_embeddings = self.linear_layer(video_embeddings)
 
-        video_embeddings_mean = video_embeddings.mean(dim=1, keepdim=True)
-        video_embeddings_std = video_embeddings.std(dim=1, keepdim=True)
-        video_embeddings = (video_embeddings - video_embeddings_mean) / video_embeddings_std
+        # video_embeddings_mean = video_embeddings.mean(dim=1, keepdim=True)
+        # video_embeddings_std = video_embeddings.std(dim=1, keepdim=True)
+        video_embeddings = video_embeddings / torch.norm(video_embeddings, dim=1, keepdim=True)
 
         return video_embeddings
 
@@ -676,7 +682,7 @@ def main(args, ds_init):
 
             # height (== width) for the checkpoint position embedding
             orig_size = int(((pos_embed_checkpoint.shape[-2] - num_extra_tokens) // (
-                        args.num_frames // model.patch_embed.tubelet_size)) ** 0.5)
+                    args.num_frames // model.patch_embed.tubelet_size)) ** 0.5)
             # height (== width) for the new position embedding
             new_size = int((num_patches // (args.num_frames // model.patch_embed.tubelet_size)) ** 0.5)
             # class_token and dist_token are kept unchanged
@@ -729,11 +735,8 @@ def main(args, ds_init):
     log_matrix(text_similarity,
                "text_encodings similarity heatmap", dpi=727)
 
-
-
     model = Efficient_Align()
     model.to(device)
-
 
     model_ema = None
     if args.model_ema:
@@ -743,8 +746,6 @@ def main(args, ds_init):
             device='cpu' if args.model_ema_force_cpu else '',
             resume='')
         print("Using EMA with decay = %.8f" % args.model_ema_decay)
-
-
 
     model_without_ddp = model
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -762,8 +763,6 @@ def main(args, ds_init):
     print("Update frequent = %d" % args.update_freq)
     print("Number of training examples = %d" % len(dataset_train))
     print("Number of training training per epoch = %d" % num_training_steps_per_epoch)
-
-
 
     num_layers = model_without_ddp.get_num_layers()
     if args.layer_decay < 1.0:
@@ -826,6 +825,86 @@ def main(args, ds_init):
         args=args, model=model, model_without_ddp=model_without_ddp,
         optimizer=optimizer, loss_scaler=loss_scaler, model_ema=model_ema)
 
+    # SECOND MODEL: LINEAR
+
+    linear_model = Efficient_Align()
+    linear_model.to(device)
+
+    linear_model_ema = None
+    if args.model_ema:
+        linear_model_ema = ModelEma(
+            linear_model,
+            decay=args.model_ema_decay,
+            device='cpu' if args.model_ema_force_cpu else '',
+            resume='')
+        print("Using EMA with decay = %.8f" % args.model_ema_decay)
+
+    linear_model_without_ddp = linear_model
+
+
+    linear_num_layers = linear_model_without_ddp.get_num_layers()
+    if args.layer_decay < 1.0:
+        linear_assigner = LayerDecayValueAssigner(
+            list(args.layer_decay ** (linear_num_layers + 1 - i) for i in range(linear_num_layers + 2)))
+    else:
+        linear_assigner = None
+
+    if linear_assigner is not None:
+        print("Assigned values = %s" % str(linear_assigner.values))
+
+    linear_skip_weight_decay_list = linear_model.no_weight_decay()
+    print("Skip weight decay list: ", linear_skip_weight_decay_list)
+
+    if args.enable_deepspeed:
+        linear_loss_scaler = None
+        linear_optimizer_params = get_parameter_groups(
+            linear_model, args.weight_decay, linear_skip_weight_decay_list,
+            linear_assigner.get_layer_id if linear_assigner is not None else None,
+            linear_assigner.get_scale if linear_assigner is not None else None)
+        linear_model, linear_optimizer, _, _ = ds_init(
+            args=args, model=linear_model, model_parameters=linear_optimizer_params, dist_init_required=not args.distributed,
+        )
+
+        print("linear_model.gradient_accumulation_steps() = %d" % linear_model.gradient_accumulation_steps())
+        assert linear_model.gradient_accumulation_steps() == args.update_freq
+    else:
+        if args.distributed:
+            linear_model = torch.nn.parallel.DistributedDataParallel(linear_model, device_ids=[args.gpu], find_unused_parameters=True)
+            linear_model_without_ddp = linear_model.module
+
+        linear_optimizer = create_optimizer(
+            args, linear_model_without_ddp, skip_list=linear_skip_weight_decay_list,
+            get_num_layer=linear_assigner.get_layer_id if linear_assigner is not None else None,
+            get_layer_scale=linear_assigner.get_scale if linear_assigner is not None else None)
+        linear_loss_scaler = NativeScaler()
+
+    print("Use step level LR scheduler!")
+    lr_schedule_values = utils.cosine_scheduler(
+        args.lr, args.min_lr, args.epochs, num_training_steps_per_epoch,
+        warmup_epochs=args.warmup_epochs, warmup_steps=args.warmup_steps,
+    )
+    if args.weight_decay_end is None:
+        args.weight_decay_end = args.weight_decay
+    wd_schedule_values = utils.cosine_scheduler(
+        args.weight_decay, args.weight_decay_end, args.epochs, num_training_steps_per_epoch)
+    print("Max WD = %.7f, Min WD = %.7f" % (max(wd_schedule_values), min(wd_schedule_values)))
+
+    if mixup_fn is not None:
+        # smoothing is handled with mixup label transform
+        linear_criterion = SoftTargetCrossEntropy()
+    elif args.smoothing > 0.:
+        linear_criterion = LabelSmoothingCrossEntropy(smoothing=args.smoothing)
+    else:
+        linear_criterion = torch.nn.CrossEntropyLoss()
+
+    print("criterion = %s" % str(criterion))
+
+    utils.auto_load_model(
+        args=args, model=linear_model, model_without_ddp=linear_model_without_ddp,
+        optimizer=linear_optimizer, loss_scaler=linear_loss_scaler, model_ema=linear_model_ema)
+
+    ## END OF SECOND MODEL
+
     if args.output_dir and utils.is_main_process():
         config_name = args.eval_log_name + '_config.txt' if args.eval else "config.txt"
         with open(os.path.join(args.output_dir, config_name), mode="a", encoding="utf-8") as f:
@@ -848,8 +927,6 @@ def main(args, ds_init):
     #                 f.write(json.dumps(log_stats) + "\n")
     #     exit(0)
 
-
-
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
     max_accuracy = 0.0
@@ -860,17 +937,18 @@ def main(args, ds_init):
             log_writer.set_step(epoch * num_training_steps_per_epoch * args.update_freq)
 
         # val
-        if epoch % 10 == 0:
-            align_val_one_epoch(
-                    model, criterion, data_loader_val, optimizer,
-                    device, epoch, loss_scaler, args.clip_grad, model_ema, mixup_fn,
-                    log_writer=log_writer, start_steps=epoch * num_training_steps_per_epoch,
-                    lr_schedule_values=lr_schedule_values, wd_schedule_values=wd_schedule_values,
-                    num_training_steps_per_epoch=num_training_steps_per_epoch, update_freq=args.update_freq,
-                    test_video_embeddings=test_video_embeddings, test_targets=test_targets,
-                    text_encodings=text_encodings, batch_size=args.batch_size
-            )
-
+        # if epoch % 10 == 0:
+        #     align_val_one_epoch(
+        #         model, criterion, data_loader_val, optimizer,
+        #         device, epoch, loss_scaler, args.clip_grad, model_ema, mixup_fn,
+        #         log_writer=log_writer, start_steps=epoch * num_training_steps_per_epoch,
+        #         lr_schedule_values=lr_schedule_values, wd_schedule_values=wd_schedule_values,
+        #         num_training_steps_per_epoch=num_training_steps_per_epoch, update_freq=args.update_freq,
+        #         test_video_embeddings=test_video_embeddings, test_targets=test_targets,
+        #         text_encodings=text_encodings, batch_size=args.batch_size,
+        #         linear_model=linear_model, linear_criterion=linear_criterion, linear_optimizer=linear_optimizer,
+        #         linear_loss_scaler=linear_loss_scaler, linear_model_ema=linear_model_ema,
+        #     )
 
         print("before epoch")
 
@@ -938,7 +1016,6 @@ def main(args, ds_init):
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
     print('Training time {}'.format(total_time_str))
-
 
 
 if __name__ == '__main__':

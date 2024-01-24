@@ -477,7 +477,11 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
                     model_ema: Optional[ModelEma] = None, mixup_fn=None, log_writer=None,
                     start_steps=None, lr_schedule_values=None, wd_schedule_values=None,
                     num_training_steps_per_epoch=None, update_freq=None,
-                    train_video_embeddings=None, train_targets=None, text_encodings=None, batch_size=64):
+                    train_video_embeddings=None, train_targets=None, text_encodings=None, batch_size=64,
+                              linear_model=None, linear_criterion=None,
+                              linear_optimizer=None,
+                              linear_loss_scaler=None, linear_model_ema=None,
+                              ):
 
     model.train(True)
     metric_logger = utils.MetricLogger(delimiter="  ")
@@ -622,12 +626,8 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
 
-def cls_token_similarity(model: torch.nn.Module, criterion: torch.nn.Module,
-                    data_loader: Iterable, optimizer: torch.optim.Optimizer,
-                    device: torch.device, epoch: int, loss_scaler, max_norm: float = 0,
-                    model_ema: Optional[ModelEma] = None, mixup_fn=None, log_writer=None,
-                    start_steps=None, lr_schedule_values=None, wd_schedule_values=None,
-                    num_training_steps_per_epoch=None, update_freq=None,
+def cls_token_similarity(model: torch.nn.Module,
+                    device: torch.device,
                     test_video_embeddings=None, test_targets=None, text_encodings=None, batch_size=64):
 
     model.eval()
@@ -680,7 +680,8 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
                     test_video_embeddings=None, test_targets=None, text_encodings=None, batch_size=64):
 
     # val scrambles the order, so we call this method to visualize the ordered cls token similarity
-    cls_token_similarity(model, test_video_embeddings, test_targets, text_encodings, device, batch_size)
+    cls_token_similarity(model=model, test_video_embeddings=test_video_embeddings, test_targets=test_targets,
+                         text_encodings=text_encodings, device=device, batch_size=batch_size)
 
     model.eval()
     with torch.no_grad():
