@@ -937,21 +937,21 @@ def main(args, ds_init):
             for arg in vars(args):
                 f.write(format(arg, '<20') + " " + format(str(getattr(args, arg)), '<') + "\n")  # str, arg_type
 
-    # if args.eval:
-    #     if not args.merge_test:
-    #         preds_file = os.path.join(args.output_dir, str(global_rank) + '.txt')
-    #         test_stats = final_test(data_loader_test, model, device, preds_file)
-    #         torch.distributed.barrier()
-    #     if global_rank == 0:
-    #         print("Start merging results...")
-    #         final_top1, final_top5 = merge(args.output_dir, num_tasks)
-    #         print(
-    #             f"Accuracy of the network on the {len(dataset_test)} test videos: Top-1: {final_top1:.2f}%, Top-5: {final_top5:.2f}%")
-    #         log_stats = {'Final top-1': final_top1, 'Final Top-5': final_top5}
-    #         if args.output_dir and utils.is_main_process():
-    #             with open(os.path.join(args.output_dir, args.eval_log_name + ".txt"), mode="a", encoding="utf-8") as f:
-    #                 f.write(json.dumps(log_stats) + "\n")
-    #     exit(0)
+    if args.eval:
+        if not args.merge_test:
+            preds_file = os.path.join(args.output_dir, str(global_rank) + '.txt')
+            test_stats = final_test(data_loader_test, model, device, preds_file)
+            torch.distributed.barrier()
+        if global_rank == 0:
+            print("Start merging results...")
+            final_top1, final_top5 = merge(args.output_dir, num_tasks)
+            print(
+                f"Accuracy of the network on the {len(dataset_test)} test videos: Top-1: {final_top1:.2f}%, Top-5: {final_top5:.2f}%")
+            log_stats = {'Final top-1': final_top1, 'Final Top-5': final_top5}
+            if args.output_dir and utils.is_main_process():
+                with open(os.path.join(args.output_dir, args.eval_log_name + ".txt"), mode="a", encoding="utf-8") as f:
+                    f.write(json.dumps(log_stats) + "\n")
+        exit(0)
 
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
