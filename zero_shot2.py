@@ -529,10 +529,10 @@ class Linear_Model(nn.Module):
         targets.cuda()
         video_embeddings.cuda()
         bs = video_embeddings.shape[0]
-        logits = self.linear_layer(video_embeddings)
-        probabilities = torch.nn.functional.softmax(logits, dim=1)
+        logits = self.linear_layer(video_embeddings).cuda()
+        probabilities = torch.nn.functional.softmax(logits, dim=1).cuda()
         predictions = torch.argmax(probabilities, dim=1).cuda()
-        correct = (predictions == targets).sum().item()
+        correct = (predictions.cuda() == targets.cuda()).sum().item()
 
         return predictions, correct
 
