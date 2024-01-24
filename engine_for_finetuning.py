@@ -677,7 +677,7 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             # take the softmax over the text encodings
             print("probs shape: ", probs.shape)
             # sum each group of 48
-            probs = probs.reshape(batch_size, 48, -1).sum(dim=1)
+            #probs = probs.reshape(batch_size, 48, -1).sum(dim=1)
             print("sims shape: ", probs.shape)
             print(probs)
             # take the argmax
