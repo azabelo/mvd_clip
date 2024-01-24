@@ -970,7 +970,6 @@ def main(args, ds_init):
                 test_video_embeddings=test_video_embeddings, test_targets=test_targets,
                 text_encodings=text_encodings, batch_size=args.batch_size,
                 linear_model=linear_model, linear_criterion=linear_criterion,
-                # linear_loss_scaler=linear_loss_scaler, linear_model_ema=linear_model_ema,
             )
 
         print("before epoch")
