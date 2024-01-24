@@ -747,7 +747,7 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
             linear_probs, linear_correct = linear_model(video_embeddings, targets.float())
             total_linear_correct += linear_correct
-            total_linear_loss += linear_criterion(linear_probs, targets)
+            total_linear_loss += linear_criterion(linear_probs, targets.float())
 
 
             # clip-style val prediction loss
