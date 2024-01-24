@@ -556,8 +556,8 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
 
         # note that the linear model is not affected by anything like loss scaling or gradient accumulation
 
-        linear_logits = linear_model(video_embeddings, targets.float())
-        linear_loss = linear_criterion(linear_logits, targets.float())
+        linear_logits = linear_model(video_embeddings)
+        linear_loss = linear_criterion(linear_logits.cuda(), targets.cuda())
         linear_loss_value = linear_loss.item()
         linear_optimizer.zero_grad()
         linear_loss.backward()
@@ -748,12 +748,12 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             total_examples += video_embeddings.shape[0]
 
 
-            linear_logits = linear_model(video_embeddings, targets.float())
+            linear_logits = linear_model(video_embeddings)
             # probabilities = torch.nn.functional.softmax(linear_logits, dim=1).cuda()
             predictions = torch.argmax(linear_logits, dim=1).cuda()
             linear_correct = (predictions.cuda() == targets.cuda()).sum().item()
             total_linear_correct += linear_correct
-            total_linear_loss += linear_criterion(linear_logits.cuda(), targets.float().cuda())
+            total_linear_loss += linear_criterion(linear_logits.cuda(), targets.cuda())
 
 
             # clip-style val prediction loss

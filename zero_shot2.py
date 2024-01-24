@@ -525,8 +525,7 @@ class Linear_Model(nn.Module):
         self.linear_layer = nn.Linear(768, 51).half()
         self.device = torch.device("cuda")
 
-    def forward(self, video_embeddings, targets):
-        targets.cuda()
+    def forward(self, video_embeddings):
         video_embeddings.cuda()
         bs = video_embeddings.shape[0]
         logits = self.linear_layer(video_embeddings).cuda()
