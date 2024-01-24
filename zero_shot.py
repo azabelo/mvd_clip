@@ -478,7 +478,7 @@ class Efficient_Align(nn.Module):
 
         logits = (text_embeddings @ video_embeddings.T) * self.logit_scale
         targets = torch.nn.functional.softmax(
-            (videos_similarity + texts_similarity) / 2, dim=-1
+            texts_similarity, dim=-1
         )
 
         max_video_preds = torch.argmax(logits, dim=0)
