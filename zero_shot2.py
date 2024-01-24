@@ -522,7 +522,7 @@ class Efficient_Align(nn.Module):
 class Linear_Model(nn.Module):
     def __init__(self):
         super(Linear_Model, self).__init__()
-        self.linear_layer = nn.Linear(768, 51)
+        self.linear_layer = nn.Linear(768, 51).half()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def forward(self, video_embeddings, targets):
