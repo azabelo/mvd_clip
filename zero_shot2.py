@@ -526,6 +526,7 @@ class Linear_Model(nn.Module):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def forward(self, video_embeddings, targets):
+        targets.to(self.device)
         bs = video_embeddings.shape[0]
         logits = self.linear_layer(video_embeddings)
         probabilities = torch.nn.functional.softmax(logits, dim=1)
