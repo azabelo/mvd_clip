@@ -471,26 +471,26 @@ class Efficient_Align(nn.Module):
         bs = video_embeddings.shape[0]
         video_embeddings = self.linear_layer(video_embeddings)
 
-        # video_embeddings_mean = video_embeddings.mean(dim=1, keepdim=True)
-        # video_embeddings_std = video_embeddings.std(dim=1, keepdim=True)
-        # video_embeddings = (video_embeddings - video_embeddings_mean) / video_embeddings_std
+        video_embeddings_mean = video_embeddings.mean(dim=1, keepdim=True)
+        video_embeddings_std = video_embeddings.std(dim=1, keepdim=True)
+        video_embeddings = (video_embeddings - video_embeddings_mean) / video_embeddings_std
 
-        video_embeddings = video_embeddings / torch.norm(video_embeddings, dim=1, keepdim=True)
+        # video_embeddings = video_embeddings / torch.norm(video_embeddings, dim=1, keepdim=True)
 
-        # text_embeddings_mean = text_embeddings.mean(dim=1, keepdim=True)
-        # text_embeddings_std = text_embeddings.std(dim=1, keepdim=True)
-        # text_embeddings = text_embeddings / torch.norm(text_embeddings, dim=1, keepdim=True)
-
+        text_embeddings_mean = text_embeddings.mean(dim=1, keepdim=True)
+        text_embeddings_std = text_embeddings.std(dim=1, keepdim=True)
         text_embeddings = text_embeddings / torch.norm(text_embeddings, dim=1, keepdim=True)
+
+        # text_embeddings = text_embeddings / torch.norm(text_embeddings, dim=1, keepdim=True)
 
         videos_similarity = video_embeddings @ video_embeddings.T
         texts_similarity = text_embeddings @ text_embeddings.T
 
         logits = (text_embeddings @ video_embeddings.T) * self.logit_scale
-        # targets = torch.nn.functional.softmax(
-        #     texts_similarity, dim=-1
-        # )
-        targets = texts_similarity
+        targets = torch.nn.functional.softmax(
+            texts_similarity, dim=-1
+        )
+        # targets = texts_similarity
 
         max_video_preds = torch.argmax(logits, dim=0)
         max_text_preds = torch.argmax(logits, dim=1)
