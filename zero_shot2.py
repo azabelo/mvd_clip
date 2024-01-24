@@ -335,6 +335,7 @@ def precompute_text():
 
                 text_encodings[name].append(text_encoding)
             text_encodings[name] = torch.cat(text_encodings[name], dim=0)
+            text_encodingss[name] = torch.mean(text_encodings[name], dim=0, keepdim=True)
 
     action_encodings = torch.cat(list(text_encodings.values()))
     print(action_encodings.shape)
