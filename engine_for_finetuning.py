@@ -634,6 +634,11 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     with torch.no_grad():
         model.eval()
 
+
+        permutation = torch.randperm(test_video_embeddings.shape[0])
+        test_video_embeddings = test_video_embeddings[permutation]
+        test_targets = test_targets[permutation]
+
         # group in batches
         num_batches = test_video_embeddings.shape[0] // batch_size
         test_video_embeddings = test_video_embeddings[:num_batches * batch_size]
@@ -641,9 +646,6 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         test_video_embeddings = test_video_embeddings.reshape(num_batches, batch_size, -1)
         test_targets = test_targets.reshape(num_batches, batch_size)
 
-        permutation = torch.randperm(test_video_embeddings.shape[0])
-        test_video_embeddings = test_video_embeddings[permutation]
-        test_targets = test_targets[permutation]
 
         batched_data = [(i,j) for _, (i,j) in enumerate(zip(test_video_embeddings, test_targets))]
         batch_count = 0
