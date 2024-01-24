@@ -682,6 +682,7 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             print(probs)
             # take the argmax
             # class_preds = torch.argmax(probs, dim=1).to(device)
+            class_preds = probs
             print(class_preds)
             print(targets)
             # compute accuracy
