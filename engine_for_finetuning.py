@@ -555,13 +555,16 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
         loss_value = loss.item()
 
         # note that the linear model is not affected by anything like loss scaling or gradient accumulation
-        predictions, linear_correct = linear_model(video_embeddings, targets.float())
-        linear_loss = linear_criterion(predictions, targets.float())
+
+        linear_logits = linear_model(video_embeddings, targets.float())
+        linear_loss = linear_criterion(linear_logits, targets.float())
         linear_loss_value = linear_loss.item()
         linear_optimizer.zero_grad()
         linear_loss.backward()
         linear_optimizer.step()
-
+        # probabilities = torch.nn.functional.softmax(linear_logits, dim=1).cuda()
+        predictions = torch.argmax(linear_logits, dim=1).cuda()
+        linear_correct = (predictions.cuda() == targets.cuda()).sum().item()
         total_linear_correct += linear_correct
 
         if not math.isfinite(loss_value):
@@ -700,7 +703,6 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
                     num_training_steps_per_epoch=None, update_freq=None,
                     test_video_embeddings=None, test_targets=None, text_encodings=None, batch_size=64,
                         linear_model=None, linear_criterion=None,
-                        linear_optimizer=None,
                         ):
 
     # val scrambles the order, so we call this method to visualize the ordered cls token similarity
@@ -745,9 +747,13 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             batch_count += 1
             total_examples += video_embeddings.shape[0]
 
-            linear_probs, linear_correct = linear_model(video_embeddings, targets.float())
+
+            linear_logits = linear_model(video_embeddings, targets.float())
+            # probabilities = torch.nn.functional.softmax(linear_logits, dim=1).cuda()
+            predictions = torch.argmax(linear_logits, dim=1).cuda()
+            linear_correct = (predictions.cuda() == targets.cuda()).sum().item()
             total_linear_correct += linear_correct
-            total_linear_loss += linear_criterion(linear_probs, targets.float())
+            total_linear_loss += linear_criterion(linear_logits, targets.float())
 
 
             # clip-style val prediction loss
