@@ -667,9 +667,9 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             cls_tokens.append(cls_token)
 
             text_encodings.to(device)
-            text_encodings_mean = text_encodings.mean(dim=1, keepdim=True)
-            text_encodings_std = text_encodings.std(dim=1, keepdim=True)
-            text_encodings = (text_encodings - text_encodings_mean) / text_encodings_std
+            # text_encodings_mean = text_encodings.mean(dim=1, keepdim=True)
+            # text_encodings_std = text_encodings.std(dim=1, keepdim=True)
+            # text_encodings = (text_encodings - text_encodings_mean) / text_encodings_std
 
             print("video vectors shape: ", video_vectors.shape)
             print("text encodings shape: ", text_encodings.shape)
@@ -694,8 +694,8 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
             # training-style val loss
 
-            prompt_index = random.randint(0, 47)
-            text_embeddings = text_encodings[torch.tensor([48 * class_index + prompt_index for class_index in targets])]
+            # prompt_index = random.randint(0, 47)
+            text_embeddings = text_encodings[targets]
             text_embeddings = text_embeddings.to(device)
             video_embeddings = video_embeddings.to(device)
 
