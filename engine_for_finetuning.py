@@ -753,7 +753,7 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             predictions = torch.argmax(linear_logits, dim=1).cuda()
             linear_correct = (predictions.cuda() == targets.cuda()).sum().item()
             total_linear_correct += linear_correct
-            total_linear_loss += linear_criterion(linear_logits, targets.float())
+            total_linear_loss += linear_criterion(linear_logits.cuda(), targets.float().cuda())
 
 
             # clip-style val prediction loss
