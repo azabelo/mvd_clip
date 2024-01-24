@@ -519,6 +519,27 @@ class Efficient_Align(nn.Module):
 
         return video_embeddings
 
+class Linear_Model(nn.Module):
+    def __init__(self):
+        super(Efficient_Align, self).__init__()
+        self.linear_layer = nn.Linear(768, 51)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    def forward(self, video_embeddings, targets):
+        bs = video_embeddings.shape[0]
+        logits = self.linear_layer(video_embeddings)
+        probabilities = torch.nn.functional.softmax(logits, dim=1)
+        predictions = torch.argmax(probabilities, dim=1)
+        correct = (predictions == targets).sum().item()
+
+        return predictions, correct
+
+    def get_num_layers(self):
+        return 1
+
+    def no_weight_decay(self):
+        return {'pos_embed', 'cls_token'}
+
 
 def main(args, ds_init):
     utils.init_distributed_mode(args)
@@ -827,81 +848,84 @@ def main(args, ds_init):
 
     # SECOND MODEL: LINEAR
 
-    linear_model = Efficient_Align()
+    linear_model = Linear_Model()
     linear_model.to(device)
 
-    linear_model_ema = None
-    if args.model_ema:
-        linear_model_ema = ModelEma(
-            linear_model,
-            decay=args.model_ema_decay,
-            device='cpu' if args.model_ema_force_cpu else '',
-            resume='')
-        print("Using EMA with decay = %.8f" % args.model_ema_decay)
+    # linear_model_ema = None
+    # if args.model_ema:
+    #     linear_model_ema = ModelEma(
+    #         linear_model,
+    #         decay=args.model_ema_decay,
+    #         device='cpu' if args.model_ema_force_cpu else '',
+    #         resume='')
+    #     print("Using EMA with decay = %.8f" % args.model_ema_decay)
+    #
+    # linear_model_without_ddp = linear_model
+    #
+    #
+    # linear_num_layers = linear_model_without_ddp.get_num_layers()
+    # if args.layer_decay < 1.0:
+    #     linear_assigner = LayerDecayValueAssigner(
+    #         list(args.layer_decay ** (linear_num_layers + 1 - i) for i in range(linear_num_layers + 2)))
+    # else:
+    #     linear_assigner = None
+    #
+    # if linear_assigner is not None:
+    #     print("Assigned values = %s" % str(linear_assigner.values))
+    #
+    # linear_skip_weight_decay_list = linear_model.no_weight_decay()
+    # print("Skip weight decay list: ", linear_skip_weight_decay_list)
+    #
+    # if args.enable_deepspeed:
+    #     linear_loss_scaler = None
+    #     linear_optimizer_params = get_parameter_groups(
+    #         linear_model, args.weight_decay, linear_skip_weight_decay_list,
+    #         linear_assigner.get_layer_id if linear_assigner is not None else None,
+    #         linear_assigner.get_scale if linear_assigner is not None else None)
+    #     linear_model, linear_optimizer, _, _ = ds_init(
+    #         args=args, model=linear_model, model_parameters=linear_optimizer_params, dist_init_required=not args.distributed,
+    #     )
+    #
+    #     print("linear_model.gradient_accumulation_steps() = %d" % linear_model.gradient_accumulation_steps())
+    #     assert linear_model.gradient_accumulation_steps() == args.update_freq
+    # else:
+    #     if args.distributed:
+    #         linear_model = torch.nn.parallel.DistributedDataParallel(linear_model, device_ids=[args.gpu], find_unused_parameters=True)
+    #         linear_model_without_ddp = linear_model.module
+    #
+    #     linear_optimizer = create_optimizer(
+    #         args, linear_model_without_ddp, skip_list=linear_skip_weight_decay_list,
+    #         get_num_layer=linear_assigner.get_layer_id if linear_assigner is not None else None,
+    #         get_layer_scale=linear_assigner.get_scale if linear_assigner is not None else None)
+    #     linear_loss_scaler = NativeScaler()
+    #
+    # print("Use step level LR scheduler!")
+    # lr_schedule_values = utils.cosine_scheduler(
+    #     args.lr, args.min_lr, args.epochs, num_training_steps_per_epoch,
+    #     warmup_epochs=args.warmup_epochs, warmup_steps=args.warmup_steps,
+    # )
+    # if args.weight_decay_end is None:
+    #     args.weight_decay_end = args.weight_decay
+    # wd_schedule_values = utils.cosine_scheduler(
+    #     args.weight_decay, args.weight_decay_end, args.epochs, num_training_steps_per_epoch)
+    # print("Max WD = %.7f, Min WD = %.7f" % (max(wd_schedule_values), min(wd_schedule_values)))
+    #
+    # if mixup_fn is not None:
+    #     # smoothing is handled with mixup label transform
+    #     linear_criterion = SoftTargetCrossEntropy()
+    # elif args.smoothing > 0.:
+    #     linear_criterion = LabelSmoothingCrossEntropy(smoothing=args.smoothing)
+    # else:
+    #     linear_criterion = torch.nn.CrossEntropyLoss()
+    #
+    # print("criterion = %s" % str(criterion))
+    #
+    # utils.auto_load_model(
+    #     args=args, model=linear_model, model_without_ddp=linear_model_without_ddp,
+    #     optimizer=linear_optimizer, loss_scaler=linear_loss_scaler, model_ema=linear_model_ema)
 
-    linear_model_without_ddp = linear_model
-
-
-    linear_num_layers = linear_model_without_ddp.get_num_layers()
-    if args.layer_decay < 1.0:
-        linear_assigner = LayerDecayValueAssigner(
-            list(args.layer_decay ** (linear_num_layers + 1 - i) for i in range(linear_num_layers + 2)))
-    else:
-        linear_assigner = None
-
-    if linear_assigner is not None:
-        print("Assigned values = %s" % str(linear_assigner.values))
-
-    linear_skip_weight_decay_list = linear_model.no_weight_decay()
-    print("Skip weight decay list: ", linear_skip_weight_decay_list)
-
-    if args.enable_deepspeed:
-        linear_loss_scaler = None
-        linear_optimizer_params = get_parameter_groups(
-            linear_model, args.weight_decay, linear_skip_weight_decay_list,
-            linear_assigner.get_layer_id if linear_assigner is not None else None,
-            linear_assigner.get_scale if linear_assigner is not None else None)
-        linear_model, linear_optimizer, _, _ = ds_init(
-            args=args, model=linear_model, model_parameters=linear_optimizer_params, dist_init_required=not args.distributed,
-        )
-
-        print("linear_model.gradient_accumulation_steps() = %d" % linear_model.gradient_accumulation_steps())
-        assert linear_model.gradient_accumulation_steps() == args.update_freq
-    else:
-        if args.distributed:
-            linear_model = torch.nn.parallel.DistributedDataParallel(linear_model, device_ids=[args.gpu], find_unused_parameters=True)
-            linear_model_without_ddp = linear_model.module
-
-        linear_optimizer = create_optimizer(
-            args, linear_model_without_ddp, skip_list=linear_skip_weight_decay_list,
-            get_num_layer=linear_assigner.get_layer_id if linear_assigner is not None else None,
-            get_layer_scale=linear_assigner.get_scale if linear_assigner is not None else None)
-        linear_loss_scaler = NativeScaler()
-
-    print("Use step level LR scheduler!")
-    lr_schedule_values = utils.cosine_scheduler(
-        args.lr, args.min_lr, args.epochs, num_training_steps_per_epoch,
-        warmup_epochs=args.warmup_epochs, warmup_steps=args.warmup_steps,
-    )
-    if args.weight_decay_end is None:
-        args.weight_decay_end = args.weight_decay
-    wd_schedule_values = utils.cosine_scheduler(
-        args.weight_decay, args.weight_decay_end, args.epochs, num_training_steps_per_epoch)
-    print("Max WD = %.7f, Min WD = %.7f" % (max(wd_schedule_values), min(wd_schedule_values)))
-
-    if mixup_fn is not None:
-        # smoothing is handled with mixup label transform
-        linear_criterion = SoftTargetCrossEntropy()
-    elif args.smoothing > 0.:
-        linear_criterion = LabelSmoothingCrossEntropy(smoothing=args.smoothing)
-    else:
-        linear_criterion = torch.nn.CrossEntropyLoss()
-
-    print("criterion = %s" % str(criterion))
-
-    utils.auto_load_model(
-        args=args, model=linear_model, model_without_ddp=linear_model_without_ddp,
-        optimizer=linear_optimizer, loss_scaler=linear_loss_scaler, model_ema=linear_model_ema)
+    linear_criterion = torch.nn.CrossEntropyLoss()
+    linear_optimizer = torch.optim.Adam(linear_model.parameters(), lr=0.001)
 
     ## END OF SECOND MODEL
 
@@ -947,7 +971,7 @@ def main(args, ds_init):
                 test_video_embeddings=test_video_embeddings, test_targets=test_targets,
                 text_encodings=text_encodings, batch_size=args.batch_size,
                 linear_model=linear_model, linear_criterion=linear_criterion, linear_optimizer=linear_optimizer,
-                linear_loss_scaler=linear_loss_scaler, linear_model_ema=linear_model_ema,
+                # linear_loss_scaler=linear_loss_scaler, linear_model_ema=linear_model_ema,
             )
 
         print("before epoch")

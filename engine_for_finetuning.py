@@ -484,6 +484,8 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
                               ):
 
     model.train(True)
+    linear_model.train(True)
+
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter('lr', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
     metric_logger.add_meter('min_lr', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
@@ -508,7 +510,9 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
     random_train_video_embeddings = random_train_video_embeddings.reshape(num_batches, batch_size, -1)
     random_train_targets = random_train_targets.reshape(num_batches, batch_size)
 
-
+    total_linear_correct = 0
+    total_vid_correct = 0
+    total_text_correct = 0
     batched_data = [(i,j) for _, (i,j) in enumerate(zip(random_train_video_embeddings, random_train_targets))]
     batch_count = 0
     for data_iter_step, (samples, targets, _, _) in enumerate(
@@ -540,11 +544,25 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
         if loss_scaler is None:
             samples = samples.half()
             loss, vid_preds_correct, text_preds_correct = model(video_embeddings, text_embeddings)
+            total_vid_correct += vid_preds_correct
+            total_text_correct += text_preds_correct
         else:
             with torch.cuda.amp.autocast():
                 loss, vid_preds_correct, text_preds_correct = model(video_embeddings, text_embeddings)
+                total_vid_correct += vid_preds_correct
+                total_text_correct += text_preds_correct
 
         loss_value = loss.item()
+
+        # note that the linear model is not affected by anything like loss scaling or gradient accumulation
+        predictions, linear_correct = linear_model(video_embeddings, targets)
+        linear_loss = linear_criterion(predictions, targets)
+        linear_loss_value = linear_loss.item()
+        linear_optimizer.zero_grad()
+        linear_loss.backward()
+        linear_optimizer.step()
+
+        total_linear_correct += linear_correct
 
         if not math.isfinite(loss_value):
             print("Loss is {}, stopping training".format(loss_value))
@@ -615,9 +633,12 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
         # MY CHANGES
         wandb.log({"epoch": epoch, "batch": step, "train_loss": loss_value, "max_lr": max_lr, "min_lr": min_lr,
                    "weight_decay": weight_decay_value, "grad_norm": grad_norm, "loss_scale": loss_scale_value,
-                   "text_acc": text_preds_correct, "vid_acc": vid_preds_correct})
+                   "text_correct": text_preds_correct, "vid_correct": vid_preds_correct,
+                   "linear_loss": linear_loss_value, "linear_acc": linear_correct})
         # END MY CHANGES
 
+    wandb.log({"total_linear_correct": total_linear_correct, "total_vid_correct": total_vid_correct,
+               "total_text_correct": total_text_correct})
 
 
     # gather the stats from all processes
@@ -680,16 +701,17 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
                     test_video_embeddings=None, test_targets=None, text_encodings=None, batch_size=64,
                         linear_model=None, linear_criterion=None,
                         linear_optimizer=None,
-                        linear_loss_scaler=None, linear_model_ema=None,
                         ):
 
     # val scrambles the order, so we call this method to visualize the ordered cls token similarity
     cls_token_similarity(model=model, test_video_embeddings=test_video_embeddings, test_targets=test_targets,
                          text_encodings=text_encodings, device=device, batch_size=batch_size)
 
+    linear_model.eval()
     model.eval()
     with torch.no_grad():
         model.eval()
+        linear_model.eval()
 
 
         permutation = torch.randperm(test_video_embeddings.shape[0])
@@ -712,6 +734,9 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         total_examples = 0
         total_class_correct = 0
 
+        total_linear_correct = 0
+        total_linear_loss = 0
+
         while batch_count < len(batched_data):
             print("batch count: ", batch_count)
             video_embeddings, targets = batched_data[batch_count]
@@ -719,6 +744,10 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             targets.to(device)
             batch_count += 1
             total_examples += video_embeddings.shape[0]
+
+            linear_probs, linear_correct = linear_model(video_embeddings, targets)
+            total_linear_correct += linear_correct
+            total_linear_loss += linear_criterion(linear_probs, targets)
 
 
             # clip-style val prediction loss
@@ -770,9 +799,13 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         # avg_text_acc = total_text_preds_correct / total_examples
         # avg_class_acc = total_class_correct / total_examples
 
+        avg_linear_loss = total_linear_loss / total_examples
+        linear_acc = total_linear_correct / total_examples
+
         # MY CHANGES
         wandb.log({"epoch": epoch, "val_loss": avg_loss, "val_vid_acc": total_vid_preds_correct,
-                   "val_text_acc": total_text_preds_correct, "val_class_acc": total_class_correct})
+                   "val_text_acc": total_text_preds_correct, "val_class_acc": total_class_correct,
+                   "val_linear_loss": avg_linear_loss, "val_linear_acc": linear_acc})
         # END MY CHANGES
 
     return
