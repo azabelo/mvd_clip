@@ -641,6 +641,10 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         test_video_embeddings = test_video_embeddings.reshape(num_batches, batch_size, -1)
         test_targets = test_targets.reshape(num_batches, batch_size)
 
+        permutation = torch.randperm(test_video_embeddings.shape[0])
+        test_video_embeddings = test_video_embeddings[permutation]
+        test_targets = test_targets[permutation]
+
         batched_data = [(i,j) for _, (i,j) in enumerate(zip(test_video_embeddings, test_targets))]
         batch_count = 0
         total_loss = 0
@@ -681,8 +685,7 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             print("sims shape: ", probs.shape)
             print(probs)
             # take the argmax
-            # class_preds = torch.argmax(probs, dim=1).to(device)
-            class_preds = probs
+            class_preds = torch.argmax(probs, dim=1).to(device)
             print(class_preds)
             print(targets)
             # compute accuracy
