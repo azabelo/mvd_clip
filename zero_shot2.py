@@ -479,7 +479,7 @@ class Efficient_Align(nn.Module):
 
         text_embeddings_mean = text_embeddings.mean(dim=1, keepdim=True)
         text_embeddings_std = text_embeddings.std(dim=1, keepdim=True)
-        text_embeddings = text_embeddings / torch.norm(text_embeddings, dim=1, keepdim=True)
+        text_embeddings = (text_embeddings - text_embeddings_mean) / text_embeddings_std
 
         # text_embeddings = text_embeddings / torch.norm(text_embeddings, dim=1, keepdim=True)
 
