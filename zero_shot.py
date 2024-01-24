@@ -296,8 +296,8 @@ action_names = ['brushing hair', 'doing a cartwheel', 'catching', 'chewing', 'cl
 
 
 def precompute_text():
-    # if os.path.exists('action_encodings.pth'):
-    #     return torch.load('action_encodings.pth')
+    if os.path.exists('action_encodings.pth'):
+        return torch.load('action_encodings.pth')
 
     # each group of 48 correspond to one class, get index by integer division
     prompts = {}
@@ -348,9 +348,9 @@ def precompute_text():
 
 def precompute_train_video(model, data_loader):
 
-    # if os.path.exists("train_video_embeddings.pth"):
-    #     save = torch.load("train_video_embeddings.pth")
-    #     return save[0], save[1]
+    if os.path.exists("train_video_embeddings.pth"):
+        save = torch.load("train_video_embeddings.pth")
+        return save[0], save[1]
 
     model.eval()
     video_embeddings = []
@@ -387,9 +387,9 @@ def precompute_train_video(model, data_loader):
 
 
 def precompute_test_video(model, data_loader):
-    # if os.path.exists("test_video_embeddings.pth"):
-    #     save = torch.load("test_video_embeddings.pth")
-    #     return save[0], save[1]
+    if os.path.exists("test_video_embeddings.pth"):
+        save = torch.load("test_video_embeddings.pth")
+        return save[0], save[1]
 
     model.eval()
     video_embeddings = []
