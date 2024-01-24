@@ -523,14 +523,15 @@ class Linear_Model(nn.Module):
     def __init__(self):
         super(Linear_Model, self).__init__()
         self.linear_layer = nn.Linear(768, 51).half()
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda")
 
     def forward(self, video_embeddings, targets):
-        targets.to("cuda")
+        targets.cuda()
+        video_embeddings.cuda()
         bs = video_embeddings.shape[0]
         logits = self.linear_layer(video_embeddings)
         probabilities = torch.nn.functional.softmax(logits, dim=1)
-        predictions = torch.argmax(probabilities, dim=1).to("cuda")
+        predictions = torch.argmax(probabilities, dim=1).cuda()
         correct = (predictions == targets).sum().item()
 
         return predictions, correct
