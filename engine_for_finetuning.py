@@ -677,7 +677,11 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
                     model_ema: Optional[ModelEma] = None, mixup_fn=None, log_writer=None,
                     start_steps=None, lr_schedule_values=None, wd_schedule_values=None,
                     num_training_steps_per_epoch=None, update_freq=None,
-                    test_video_embeddings=None, test_targets=None, text_encodings=None, batch_size=64):
+                    test_video_embeddings=None, test_targets=None, text_encodings=None, batch_size=64,
+                        linear_model=None, linear_criterion=None,
+                        linear_optimizer=None,
+                        linear_loss_scaler=None, linear_model_ema=None,
+                        ):
 
     # val scrambles the order, so we call this method to visualize the ordered cls token similarity
     cls_token_similarity(model=model, test_video_embeddings=test_video_embeddings, test_targets=test_targets,

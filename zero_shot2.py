@@ -484,7 +484,7 @@ class Efficient_Align(nn.Module):
 
         logits = (text_embeddings @ video_embeddings.T) * self.logit_scale
         targets = torch.nn.functional.softmax(
-            (videos_similarity + texts_similarity) / 2, dim=-1
+            texts_similarity, dim=-1
         )
 
         max_video_preds = torch.argmax(logits, dim=0)
@@ -959,7 +959,9 @@ def main(args, ds_init):
             lr_schedule_values=lr_schedule_values, wd_schedule_values=wd_schedule_values,
             num_training_steps_per_epoch=num_training_steps_per_epoch, update_freq=args.update_freq,
             train_video_embeddings=train_video_embeddings, train_targets=train_targets,
-            text_encodings=text_encodings, batch_size=args.batch_size
+            text_encodings=text_encodings, batch_size=args.batch_size,
+            linear_model=linear_model, linear_criterion=linear_criterion, linear_optimizer=linear_optimizer,
+            linear_loss_scaler=linear_loss_scaler, linear_model_ema=linear_model_ema,
         )
 
         print("after epoch")
