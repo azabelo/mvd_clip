@@ -557,9 +557,10 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
         # note that the linear model is not affected by anything like loss scaling or gradient accumulation
 
         linear_logits = linear_model(video_embeddings)
+        print(linear_logits)
+        print(targets)
         linear_loss = linear_criterion(linear_logits.cuda(), targets.cuda())
         linear_optimizer.zero_grad()
-        print("linear loss: ", linear_loss)
         linear_loss.backward()
         print("linear loss: ", linear_loss)
         linear_optimizer.step()
