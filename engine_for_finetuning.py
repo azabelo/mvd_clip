@@ -555,8 +555,8 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
         loss_value = loss.item()
 
         # note that the linear model is not affected by anything like loss scaling or gradient accumulation
-        predictions, linear_correct = linear_model(video_embeddings, targets)
-        linear_loss = linear_criterion(predictions, targets)
+        predictions, linear_correct = linear_model(video_embeddings, targets.float())
+        linear_loss = linear_criterion(predictions, targets.float())
         linear_loss_value = linear_loss.item()
         linear_optimizer.zero_grad()
         linear_loss.backward()
@@ -745,7 +745,7 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             batch_count += 1
             total_examples += video_embeddings.shape[0]
 
-            linear_probs, linear_correct = linear_model(video_embeddings, targets)
+            linear_probs, linear_correct = linear_model(video_embeddings, targets.float())
             total_linear_correct += linear_correct
             total_linear_loss += linear_criterion(linear_probs, targets)
 
