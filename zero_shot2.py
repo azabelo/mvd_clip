@@ -473,10 +473,14 @@ class Efficient_Align(nn.Module):
         #
         # video_embeddings_mean = video_embeddings.mean(dim=1, keepdim=True)
         # video_embeddings_std = video_embeddings.std(dim=1, keepdim=True)
+        # video_embeddings = (video_embeddings - video_embeddings_mean) / video_embeddings_std
+
         video_embeddings = video_embeddings / torch.norm(video_embeddings, dim=1, keepdim=True)
 
         # text_embeddings_mean = text_embeddings.mean(dim=1, keepdim=True)
         # text_embeddings_std = text_embeddings.std(dim=1, keepdim=True)
+        # text_embeddings = text_embeddings / torch.norm(text_embeddings, dim=1, keepdim=True)
+
         text_embeddings = text_embeddings / torch.norm(text_embeddings, dim=1, keepdim=True)
 
         videos_similarity = video_embeddings @ video_embeddings.T
