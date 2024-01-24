@@ -982,7 +982,6 @@ def main(args, ds_init):
             train_video_embeddings=train_video_embeddings, train_targets=train_targets,
             text_encodings=text_encodings, batch_size=args.batch_size,
             linear_model=linear_model, linear_criterion=linear_criterion, linear_optimizer=linear_optimizer,
-            linear_loss_scaler=linear_loss_scaler, linear_model_ema=linear_model_ema,
         )
 
         print("after epoch")
