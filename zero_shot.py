@@ -368,9 +368,10 @@ def precompute_train_video(model, data_loader):
             embedding = torch.mean(output, dim=1, keepdim=False)
             #embedding = output[:, 0, :] #.view(output.size(0), -1)
             # normalize each vector
-            mean = torch.mean(embedding, dim=1, keepdim=True)
-            std = torch.std(embedding, dim=1, keepdim=True)
-            embedding = (embedding - mean) / std
+            # mean = torch.mean(embedding, dim=1, keepdim=True)
+            # std = torch.std(embedding, dim=1, keepdim=True)
+            # embedding = (embedding - mean) / std
+            embedding = embedding / torch.norm(embedding, dim=1, keepdim=True)
             video_embeddings.append(embedding.cpu().numpy())
 
         video_embeddings = torch.tensor(np.concatenate(video_embeddings, axis=0), dtype=torch.float32)
@@ -407,9 +408,10 @@ def precompute_test_video(model, data_loader):
             embedding = torch.mean(output, dim=1, keepdim=False)
             #embedding = output[:, 0, :] #.view(output.size(0), -1)
             # normalize each vector
-            mean = torch.mean(embedding, dim=1, keepdim=True)
-            std = torch.std(embedding, dim=1, keepdim=True)
-            embedding = (embedding - mean) / std
+            # mean = torch.mean(embedding, dim=1, keepdim=True)
+            # std = torch.std(embedding, dim=1, keepdim=True)
+            # embedding = (embedding - mean) / std
+            embedding = embedding / torch.norm(embedding, dim=1, keepdim=True)
 
             embedding = embedding / torch.norm(embedding, dim=1, keepdim=True)
             video_embeddings.append(embedding.cpu().numpy())
