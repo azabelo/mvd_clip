@@ -870,11 +870,8 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             # sum each group of 48
             #probs = probs.reshape(batch_size, 48, -1).sum(dim=1)
             #print("sims shape: ", probs.shape)
-            print(probs)
             # take the argmax
             class_preds = torch.argmax(probs, dim=0).to(device)
-            print(class_preds)
-            print(targets)
             # compute accuracy
 
             class_preds = class_preds.to(device)
