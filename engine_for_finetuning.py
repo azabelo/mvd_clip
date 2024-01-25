@@ -554,6 +554,8 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
 
         loss_value = loss.item()
 
+        torch.autograd.detect_anomaly()
+
         # note that the linear model is not affected by anything like loss scaling or gradient accumulation
         linear_logits = linear_model(video_embeddings)
         print(linear_logits.shape)
