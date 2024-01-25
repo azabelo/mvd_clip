@@ -982,7 +982,6 @@ def main(args, ds_init):
             num_training_steps_per_epoch=num_training_steps_per_epoch, update_freq=args.update_freq,
             train_video_embeddings=train_video_embeddings, train_targets=train_targets,
             text_encodings=text_encodings, batch_size=args.batch_size,
-            linear_model=linear_model, linear_criterion=linear_criterion, linear_optimizer=linear_optimizer,
         )
 
         print("after epoch")
