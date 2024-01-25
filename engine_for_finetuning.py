@@ -628,8 +628,8 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
                    })
         # END MY CHANGES
 
-    wandb.log({"total_vid_acc": total_vid_correct / len(train_loader),
-               "total_text_acc": total_text_correct / len(train_loader),})
+    wandb.log({"total_vid_acc": total_vid_correct / total_samples,
+               "total_text_acc": total_text_correct / total_samples,})
 
 
     # gather the stats from all processes
