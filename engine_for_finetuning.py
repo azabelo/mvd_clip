@@ -721,8 +721,6 @@ def linear_train_one_epoch(linear_model=None, linear_criterion=None, linear_opti
         total_linear_correct += linear_correct
 
 
-        wandb.log({"linear_loss": linear_loss, "linear_acc": linear_correct, "linear_grad_norm": linear_grad_norm})
-
     wandb.log({"total_linear_acc": total_linear_correct / total_examples,})
 
 
