@@ -920,7 +920,7 @@ def main(args, ds_init):
 
     linear_criterion = torch.nn.CrossEntropyLoss()
     linear_criterion.to(device)
-    linear_optimizer = torch.optim.Adam(linear_model.parameters(), lr=0.0000001)
+    linear_optimizer = torch.optim.Adam(linear_model.parameters(), lr=1e-3)
 
     ## END OF SECOND MODEL
 

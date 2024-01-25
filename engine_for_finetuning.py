@@ -507,9 +507,9 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
     random_train_video_embeddings = random_train_video_embeddings.reshape(num_batches, batch_size, -1)
     random_train_targets = random_train_targets.reshape(num_batches, batch_size)
 
-    total_linear_correct = 0
     total_vid_correct = 0
     total_text_correct = 0
+    total_samples = 0
     batched_data = [(i,j) for _, (i,j) in enumerate(zip(random_train_video_embeddings, random_train_targets))]
     batch_count = 0
     for data_iter_step, (samples, targets, _, _) in enumerate(
@@ -519,6 +519,8 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
         video_embeddings, targets = batched_data[batch_count]
         video_embeddings = video_embeddings.half().to(device)
         batch_count += 1
+
+        total_samples += video_embeddings.shape[0]
 
         step = data_iter_step // update_freq
         if step >= num_training_steps_per_epoch:
@@ -623,12 +625,11 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
         wandb.log({"epoch": epoch, "batch": step, "train_loss": loss_value, "max_lr": max_lr, "min_lr": min_lr,
                    "weight_decay": weight_decay_value, "grad_norm": grad_norm, "loss_scale": loss_scale_value,
                    "text_correct": text_preds_correct, "vid_correct": vid_preds_correct,
-                   #"linear_loss": linear_loss, "linear_acc": linear_correct, "linear_grad_norm": linear_grad_norm
                    })
         # END MY CHANGES
 
-    wandb.log({"total_vid_correct": total_vid_correct,
-               "total_text_correct": total_text_correct})
+    wandb.log({"total_vid_acc": total_vid_correct / len(train_loader),
+               "total_text_acc": total_text_correct / len(train_loader),})
 
 
     # gather the stats from all processes
@@ -722,7 +723,7 @@ def linear_train_one_epoch(linear_model=None, linear_criterion=None, linear_opti
 
         wandb.log({"linear_loss": linear_loss, "linear_acc": linear_correct, "linear_grad_norm": linear_grad_norm})
 
-    wandb.log({"total_linear_correct": total_linear_correct})
+    wandb.log({"total_linear_acc": total_linear_correct / total_examples,})
 
 
 
@@ -832,17 +833,18 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             total_text_preds_correct += text_preds_correct
 
         avg_loss = total_loss / total_examples
-        # avg_vid_acc = total_vid_preds_correct / total_examples
-        # avg_text_acc = total_text_preds_correct / total_examples
-        # avg_class_acc = total_class_correct / total_examples
+        avg_vid_acc = total_vid_preds_correct / total_examples
+        avg_text_acc = total_text_preds_correct / total_examples
+        avg_class_acc = total_class_correct / total_examples
 
         avg_linear_loss = total_linear_loss / total_examples
         linear_acc = total_linear_correct / total_examples
 
         # MY CHANGES
-        wandb.log({"epoch": epoch, "val_loss": avg_loss, "val_vid_acc": total_vid_preds_correct,
-                   "val_text_acc": total_text_preds_correct, "val_class_acc": total_class_correct,
-                   "val_linear_loss": avg_linear_loss, "val_linear_acc": linear_acc})
+        wandb.log({"epoch": epoch, "val_loss": avg_loss, "val_vid_correct": total_vid_preds_correct,
+                   "val_text_correct": total_text_preds_correct, "val_class_correct": total_class_correct,
+                   "val_linear_loss": avg_linear_loss, "val_linear_acc": linear_acc,
+                   "val_vid_acc": avg_vid_acc, "val_text_acc": avg_text_acc, "val_class_acc": avg_class_acc})
         # END MY CHANGES
 
     return
