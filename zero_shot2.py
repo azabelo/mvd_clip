@@ -963,7 +963,7 @@ def main(args, ds_init):
             log_writer.set_step(epoch * num_training_steps_per_epoch * args.update_freq)
 
         # val
-        if epoch % 10 == 0:
+        if epoch % 1 == 0:
             align_val_one_epoch(
                 model, criterion, data_loader_val, optimizer,
                 device, epoch, loss_scaler, args.clip_grad, model_ema, mixup_fn,
