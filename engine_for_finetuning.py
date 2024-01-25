@@ -670,7 +670,7 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
         # #     class_acc = None
         #
         # metric_logger.update(loss=loss_value)
-        # metric_logger.update(class_acc=class_acc)
+        metric_logger.update(class_acc=class_acc)
         # metric_logger.update(loss_scale=loss_scale_value)
         # min_lr = 10.
         # max_lr = 0.
