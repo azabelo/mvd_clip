@@ -700,6 +700,7 @@ def linear_train_one_epoch(linear_model=None, linear_criterion=None, linear_opti
     batch_count = 0
     total_examples = 0
     total_linear_correct = 0
+    total_linear_loss = 0
     while batch_count < len(batched_data):
         print("batch count: ", batch_count)
         video_embeddings, targets = batched_data[batch_count]
@@ -711,6 +712,7 @@ def linear_train_one_epoch(linear_model=None, linear_criterion=None, linear_opti
         # note that the linear model is not affected by anything like loss scaling or gradient accumulation
         linear_logits = linear_model(video_embeddings)
         linear_loss = linear_criterion(linear_logits.cuda(), targets.cuda())
+        total_linear_loss += linear_loss.item()
         linear_loss.backward()
         linear_grad_norm = torch.nn.utils.clip_grad_norm_(linear_model.parameters(), 1.0)
         linear_optimizer.step()
@@ -721,7 +723,7 @@ def linear_train_one_epoch(linear_model=None, linear_criterion=None, linear_opti
         total_linear_correct += linear_correct
 
 
-    wandb.log({"total_linear_acc": total_linear_correct / total_examples,})
+    wandb.log({"total_linear_acc": total_linear_correct / total_examples, "linear_loss": total_linear_loss / total_examples,})
 
 
 
