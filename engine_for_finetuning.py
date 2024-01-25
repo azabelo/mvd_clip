@@ -558,7 +558,7 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
 
         linear_optimizer.zero_grad()
         print(video_embeddings)
-        linear_logits = linear_model(video_embeddings).float()
+        linear_logits = linear_model(video_embeddings).float().detach()
         print(linear_logits)
         print(targets)
         linear_loss = linear_criterion(linear_logits.cuda(), targets.cuda())
