@@ -930,7 +930,6 @@ def main(args, ds_init):
     linear_criterion.to(device)
     linear_optimizer = torch.optim.Adam(linear_model.parameters(), lr=0.001)
     linear_optimizer.zero_grad()
-    linear_optimizer.to(device)
 
     ## END OF SECOND MODEL
 
