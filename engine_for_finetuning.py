@@ -632,7 +632,8 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
         wandb.log({"epoch": epoch, "batch": step, "train_loss": loss_value, "max_lr": max_lr, "min_lr": min_lr,
                    "weight_decay": weight_decay_value, "grad_norm": grad_norm, "loss_scale": loss_scale_value,
                    "text_correct": text_preds_correct, "vid_correct": vid_preds_correct,
-                   "linear_loss": linear_loss, "linear_acc": linear_correct, "linear_grad_norm": linear_grad_norm})
+                   #"linear_loss": linear_loss, "linear_acc": linear_correct, "linear_grad_norm": linear_grad_norm
+                   })
         # END MY CHANGES
 
     wandb.log({"total_linear_correct": total_linear_correct, "total_vid_correct": total_vid_correct,
