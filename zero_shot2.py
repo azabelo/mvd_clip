@@ -927,7 +927,9 @@ def main(args, ds_init):
     #     optimizer=linear_optimizer, loss_scaler=linear_loss_scaler, model_ema=linear_model_ema)
 
     linear_criterion = torch.nn.CrossEntropyLoss()
+    linear_criterion.to(device)
     linear_optimizer = torch.optim.Adam(linear_model.parameters(), lr=0.001)
+    linear_optimizer.zero_grad()
 
     ## END OF SECOND MODEL
 
