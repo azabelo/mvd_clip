@@ -765,7 +765,7 @@ def cls_token_similarity(model: torch.nn.Module,
     return
 
 def linear_train_one_epoch(linear_model=None, linear_criterion=None, linear_optimizer=None, train_video_embeddings=None,
-                           train_targets=None, device=None, epoch=None, batch_size=64, ):
+                           train_targets=None, device=None, epoch=None, batch_size=None, ):
     permutation = torch.randperm(train_video_embeddings.shape[0])
     train_video_embeddings = train_video_embeddings[permutation]
     train_targets = train_targets[permutation]
@@ -791,7 +791,7 @@ def linear_train_one_epoch(linear_model=None, linear_criterion=None, linear_opti
     while batch_count < len(batched_data):
         print("batch count: ", batch_count)
         video_embeddings, targets = batched_data[batch_count]
-        video_embeddings = video_embeddings.half().to(device)
+        video_embeddings = video_embeddings.to(device)
         targets.to(device)
         batch_count += 1
 
@@ -800,16 +800,13 @@ def linear_train_one_epoch(linear_model=None, linear_criterion=None, linear_opti
         if torch.isnan(linear_model.linear_layer.weight).any():
             exit(1)
         # note that the linear model is not affected by anything like loss scaling or gradient accumulation
-        input = torch.randn((1,768))
-        input = input.half().to(device)
-        input = input / torch.norm(input, dim=1, keepdim=True)
-        linear_logits = linear_model(input)
+        linear_logits = linear_model(video_embeddings)
         print(linear_logits.shape)
         print(linear_logits)
         print(targets.shape)
         print(targets)
 
-        linear_loss = linear_criterion(linear_logits.cuda(), torch.empty(1, dtype=torch.long).random_(51).cuda())
+        linear_loss = linear_criterion(linear_logits.cuda(), targets.cuda())
         print(linear_loss)
         # print the grad of the linear layer
         print(linear_model.linear_layer.weight.grad)
