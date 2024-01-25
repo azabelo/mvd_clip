@@ -773,13 +773,15 @@ def linear_train_one_epoch(linear_model=None, linear_criterion=None, linear_opti
         linear_logits = linear_model(video_embeddings)
         linear_loss = linear_criterion(linear_logits.cuda(), targets.cuda())
         linear_loss.backward()
+        linear_grad_norm = torch.nn.utils.clip_grad_norm_(linear_model.parameters(), 1.0)
         linear_optimizer.step()
         linear_optimizer.zero_grad()
 
         linear_preds = torch.argmax(linear_logits, dim=1)
         linear_correct = torch.sum(linear_preds.cuda() == targets.cuda())
         total_linear_correct += linear_correct
-        linear_grad_norm = torch.nn.utils.clip_grad_norm_(linear_model.parameters(), 10.0)
+
+
         wandb.log({"linear_loss": linear_loss, "linear_acc": linear_correct, "linear_grad_norm": linear_grad_norm})
 
     wandb.log({"total_linear_correct": total_linear_correct})
@@ -842,7 +844,7 @@ def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             total_examples += video_embeddings.shape[0]
 
 
-            linear_logits = linear_model(video_embeddings)
+            linear_logits = linear_model(video_embeddings.float())
             # probabilities = torch.nn.functional.softmax(linear_logits, dim=1).cuda()
             predictions = torch.argmax(linear_logits, dim=1).cuda()
             linear_correct = (predictions.cuda() == targets.cuda()).sum().item()
