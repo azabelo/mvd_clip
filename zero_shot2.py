@@ -329,6 +329,7 @@ def precompute_text():
                 text_encodings[name] = []
             for prompt in prompts[name]:
                 print(count)
+                print("classnames")
                 count += 1
                 tokenized = clip.tokenize(prompt).to(device)
                 text_encoding = model.encode_text(tokenized)
@@ -414,6 +415,7 @@ def precompute_random_text():
         model.eval()
 
         for text in random_texts:
+            print("random")
             tokenized = clip.tokenize(text).to(device)
             text_encoding = model.encode_text(tokenized)
             text_encoding = text_encoding / torch.norm(text_encoding, dim=1, keepdim=True)
