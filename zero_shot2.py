@@ -527,7 +527,7 @@ class Efficient_Align(nn.Module):
 class Linear_Model(nn.Module):
     def __init__(self):
         super(Linear_Model, self).__init__()
-        self.linear_layer = nn.Linear(768, 51).half()
+        self.linear_layer = nn.Linear(768, 51).half().requires_grad_(True)
 
     def forward(self, video_embeddings):
         video_embeddings.cuda()
