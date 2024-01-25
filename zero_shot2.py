@@ -618,6 +618,7 @@ class Clip_Frame_Encoder(nn.Module):
     def forward(self, videos):
         #  [32, 3, 16, 224, 224]
         bs, c, f, h, w = videos.shape
+        videos = videos.half().cuda()
         videos = videos[:, :, 0::2, :, :]
         frames = videos.view(bs * f // 2, c, h, w)
         frame_embeddings = self.clip_visual(frames)
