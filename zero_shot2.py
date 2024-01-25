@@ -1047,7 +1047,7 @@ def main(args, ds_init):
 
         linear_train_one_epoch(linear_model=linear_model, linear_criterion=linear_criterion
                                , linear_optimizer=linear_optimizer, train_video_embeddings=train_video_embeddings,
-                           train_targets=train_targets, device="cuda", epoch=None, batch_size=64, )
+                           train_targets=train_targets, device="cuda", epoch=None, batch_size=args.batch_size, )
 
         train_stats = efficient_align_one_epoch(
             model, criterion, data_loader_train, optimizer,
