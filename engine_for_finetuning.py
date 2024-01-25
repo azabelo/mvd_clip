@@ -689,7 +689,7 @@ def cls_token_similarity(model: torch.nn.Module,
             # clip-style val prediction loss
             video_vectors = model.module.get_video_embeddings(video_embeddings)
             cls_token = video_vectors #[:, 0, :]
-            cls_token = cls_token / torch.norm( cls_token, dim=-1, keepdim=True)
+            cls_token = cls_token / torch.norm( cls_token, dim=1, keepdim=True)
             cls_tokens.append(cls_token)
 
         cls_tokens = torch.cat(cls_tokens, dim=0)
