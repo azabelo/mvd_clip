@@ -797,7 +797,10 @@ def linear_train_one_epoch(linear_model=None, linear_criterion=None, linear_opti
 
         print(linear_model.linear_layer.weight)
         # note that the linear model is not affected by anything like loss scaling or gradient accumulation
-        linear_logits = linear_model(torch.randn((1,768), requires_grad=True).half().cuda())
+        input = torch.randn((1,768))
+        input = input.half().to(device)
+        input = input / torch.norm(input, dim=1, keepdim=True)
+        linear_logits = linear_model(input)
         print(linear_logits.shape)
         print(linear_logits)
         print(targets.shape)
