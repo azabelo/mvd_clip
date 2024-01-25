@@ -669,34 +669,40 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
         # # else:
         # #     class_acc = None
         #
-        # metric_logger.update(loss=loss_value)
-        metric_logger.update(class_acc=0)
-        # metric_logger.update(loss_scale=loss_scale_value)
-        # min_lr = 10.
-        # max_lr = 0.
-        # for group in optimizer.param_groups:
-        #     min_lr = min(min_lr, group["lr"])
-        #     max_lr = max(max_lr, group["lr"])
-        #
-        # metric_logger.update(lr=max_lr)
-        # metric_logger.update(min_lr=min_lr)
-        # weight_decay_value = None
-        # for group in optimizer.param_groups:
-        #     if group["weight_decay"] > 0:
-        #         weight_decay_value = group["weight_decay"]
-        # metric_logger.update(weight_decay=weight_decay_value)
-        # metric_logger.update(grad_norm=grad_norm)
-        #
-        # if log_writer is not None:
-        #     log_writer.update(loss=loss_value, head="loss")
-        #     log_writer.update(class_acc=class_acc, head="loss")
-        #     log_writer.update(loss_scale=loss_scale_value, head="opt")
-        #     log_writer.update(lr=max_lr, head="opt")
-        #     log_writer.update(min_lr=min_lr, head="opt")
-        #     log_writer.update(weight_decay=weight_decay_value, head="opt")
-        #     log_writer.update(grad_norm=grad_norm, head="opt")
-        #
-        #     log_writer.set_step()
+
+        class_acc = 0
+        loss_scale_value = 0
+        grad_norm = 0
+        loss_value = 0
+
+        metric_logger.update(loss=loss_value)
+        metric_logger.update(class_acc=class_acc)
+        metric_logger.update(loss_scale=loss_scale_value)
+        min_lr = 10.
+        max_lr = 0.
+        for group in optimizer.param_groups:
+            min_lr = min(min_lr, group["lr"])
+            max_lr = max(max_lr, group["lr"])
+
+        metric_logger.update(lr=max_lr)
+        metric_logger.update(min_lr=min_lr)
+        weight_decay_value = None
+        for group in optimizer.param_groups:
+            if group["weight_decay"] > 0:
+                weight_decay_value = group["weight_decay"]
+        metric_logger.update(weight_decay=weight_decay_value)
+        metric_logger.update(grad_norm=grad_norm)
+
+        if log_writer is not None:
+            log_writer.update(loss=loss_value, head="loss")
+            log_writer.update(class_acc=class_acc, head="loss")
+            log_writer.update(loss_scale=loss_scale_value, head="opt")
+            log_writer.update(lr=max_lr, head="opt")
+            log_writer.update(min_lr=min_lr, head="opt")
+            log_writer.update(weight_decay=weight_decay_value, head="opt")
+            log_writer.update(grad_norm=grad_norm, head="opt")
+
+            log_writer.set_step()
         #
         # # MY CHANGES
         # wandb.log({"epoch": epoch, "batch": step, "train_loss": loss_value, "max_lr": max_lr, "min_lr": min_lr,
