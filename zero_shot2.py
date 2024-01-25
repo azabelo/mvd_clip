@@ -443,6 +443,7 @@ def precompute_train_video(model, data_loader):
                 metric_logger.log_every(data_loader, print_freq, header)):
             print(len(video_embeddings))
             samples = samples.cuda().float()
+            print(samples.shape)
             all_targets.append(targets)
             print(targets)
 
@@ -505,7 +506,6 @@ def precompute_test_video(model, data_loader):
     torch.save(save, "test_video_embeddings.pth")
 
     return video_embeddings, all_targets
-
 
 def log_matrix(matrix, title, dpi):
     matrix = matrix.clone().detach().cpu().numpy()
@@ -608,6 +608,12 @@ class Linear_Model(nn.Module):
         video_embeddings = self.linear_layer(video_embeddings)
         return video_embeddings
 
+class Clip_Frame_Encoder(nn.Module):
+    def __init__(self, model, args):
+        super(Clip_Frame_Encoder, self).__init__()
+
+    def forward(self, videos):
+        pass
 
 
 def main(args, ds_init):
