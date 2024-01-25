@@ -557,7 +557,7 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
         torch.autograd.detect_anomaly()
 
         # note that the linear model is not affected by anything like loss scaling or gradient accumulation
-        linear_logits = linear_model(torch.randn((1,768), requires_grad=True).cuda())
+        linear_logits = linear_model(torch.randn((1,768), requires_grad=True).half()cuda())
         print(linear_logits.shape)
         print(linear_logits)
         print(targets.shape)
