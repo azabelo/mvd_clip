@@ -533,11 +533,6 @@ class Linear_Model(nn.Module):
         video_embeddings = self.linear_layer(video_embeddings)
         return video_embeddings
 
-    def get_num_layers(self):
-        return 1
-
-    def no_weight_decay(self):
-        return {'pos_embed', 'cls_token'}
 
 
 def main(args, ds_init):
