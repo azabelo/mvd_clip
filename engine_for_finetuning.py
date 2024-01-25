@@ -796,6 +796,9 @@ def linear_train_one_epoch(linear_model=None, linear_criterion=None, linear_opti
         batch_count += 1
 
         print(linear_model.linear_layer.weight)
+        # stop if it contains nan
+        if torch.isnan(linear_model.linear_layer.weight).any():
+            exit(1)
         # note that the linear model is not affected by anything like loss scaling or gradient accumulation
         input = torch.randn((1,768))
         input = input.half().to(device)
