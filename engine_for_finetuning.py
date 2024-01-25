@@ -554,24 +554,6 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
 
         loss_value = loss.item()
 
-        torch.autograd.detect_anomaly()
-
-        # note that the linear model is not affected by anything like loss scaling or gradient accumulation
-        linear_logits = linear_model(torch.randn((1,768), requires_grad=True).half().cuda())
-        print(linear_logits.shape)
-        print(linear_logits)
-        print(targets.shape)
-        print(targets)
-
-        linear_loss = linear_criterion(linear_logits.cuda(), torch.empty(1, dtype=torch.long).random_(51).cuda())
-        print(linear_loss)
-        # print the grad of the linear layer
-        print(linear_model.linear_layer.weight.grad)
-        linear_loss.backward()
-        print(linear_model.linear_layer.weight.grad)
-        linear_optimizer.step()
-        linear_optimizer.zero_grad()
-
 
 
 
@@ -781,6 +763,55 @@ def cls_token_similarity(model: torch.nn.Module,
         cls_token_similarity = torch.matmul(cls_tokens, cls_tokens.T)
         log_matrix(cls_token_similarity, "cls_token_similarity", 400)
     return
+
+def linear_train_one_epoch(linear_model=None, linear_criterion=None, linear_optimizer=None, train_video_embeddings=None,
+                           train_targets=None, device=None, epoch=None, batch_size=64, ):
+    permutation = torch.randperm(train_video_embeddings.shape[0])
+    train_video_embeddings = train_video_embeddings[permutation]
+    train_targets = train_targets[permutation]
+
+    # group in batches
+    num_batches = train_video_embeddings.shape[0] // batch_size
+    train_video_embeddings = train_video_embeddings[:num_batches * batch_size]
+    train_targets = train_targets[:num_batches * batch_size]
+    train_video_embeddings = train_video_embeddings.reshape(num_batches, batch_size, -1)
+    train_targets = train_targets.reshape(num_batches, batch_size)
+
+    batched_data = [(i, j) for _, (i, j) in enumerate(zip(train_video_embeddings, train_targets))]
+    batch_count = 0
+    total_loss = 0
+    total_vid_preds_correct = 0
+    total_text_preds_correct = 0
+    total_examples = 0
+    total_class_correct = 0
+
+    total_linear_correct = 0
+    total_linear_loss = 0
+
+    while batch_count < len(batched_data):
+        print("batch count: ", batch_count)
+        video_embeddings, targets = batched_data[batch_count]
+        video_embeddings = video_embeddings.half().to(device)
+        targets.to(device)
+        batch_count += 1
+
+        # note that the linear model is not affected by anything like loss scaling or gradient accumulation
+        linear_logits = linear_model(torch.randn((1,768), requires_grad=True).half().cuda())
+        print(linear_logits.shape)
+        print(linear_logits)
+        print(targets.shape)
+        print(targets)
+
+        linear_loss = linear_criterion(linear_logits.cuda(), torch.empty(1, dtype=torch.long).random_(51).cuda())
+        print(linear_loss)
+        # print the grad of the linear layer
+        print(linear_model.linear_layer.weight.grad)
+        linear_loss.backward()
+        print(linear_model.linear_layer.weight.grad)
+        linear_optimizer.step()
+        linear_optimizer.zero_grad()
+
+
 
 def align_val_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
                     data_loader: Iterable, optimizer: torch.optim.Optimizer,

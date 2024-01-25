@@ -28,7 +28,7 @@ from optim_factory import create_optimizer, get_parameter_groups, LayerDecayValu
 
 from datasets import build_dataset
 from engine_for_finetuning import efficient_align_one_epoch, validation_one_epoch, final_test, merge, \
-    align_val_one_epoch
+    align_val_one_epoch, linear_train_one_epoch
 from utils import NativeScalerWithGradNormCount as NativeScaler
 from utils import multiple_samples_collate
 import utils
@@ -974,6 +974,10 @@ def main(args, ds_init):
         #     )
 
         print("before epoch")
+
+        linear_train_one_epoch(linear_model=linear_model, linear_criterion=linear_criterion
+                               , linear_optimizer=linear_optimizer, train_video_embeddings=train_video_embeddings,
+                           train_targets=train_targets, device="cuda", epoch=None, batch_size=64, )
 
         train_stats = efficient_align_one_epoch(
             model, criterion, data_loader_train, optimizer,
