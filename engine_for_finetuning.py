@@ -556,26 +556,25 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
 
         # note that the linear model is not affected by anything like loss scaling or gradient accumulation
 
-        # linear_logits = linear_model(video_embeddings)
-        # # probabilities = torch.nn.functional.softmax(linear_logits, dim=1).cuda()
-        # predictions = torch.argmax(linear_logits, dim=1).cuda()
-        # linear_correct = (predictions.cuda() == targets.cuda()).sum().item()
-        # total_linear_correct += linear_correct
-        # total_linear_loss += linear_criterion(linear_logits.cuda(), targets.cuda())
-
-        linear_optimizer.zero_grad()
-        print(video_embeddings)
-        linear_logits = linear_model(video_embeddings).float()
+        linear_logits = linear_model(video_embeddings)
+        # probabilities = torch.nn.functional.softmax(linear_logits, dim=1).cuda()
         predictions = torch.argmax(linear_logits, dim=1).cuda()
         linear_correct = (predictions.cuda() == targets.cuda()).sum().item()
         total_linear_correct += linear_correct
-        print(linear_logits)
-        print(targets)
-        linear_loss = linear_criterion(linear_logits.cuda(), targets.cuda())
-        linear_loss.backward()
-        linear_grad_norm = torch.nn.utils.clip_grad_norm_(linear_model.parameters(), max_norm=10.0)
-        print("linear loss: ", linear_loss)
-        linear_optimizer.step()
+
+        # linear_optimizer.zero_grad()
+        # print(video_embeddings)
+        # linear_logits = linear_model(video_embeddings).float()
+        # predictions = torch.argmax(linear_logits, dim=1).cuda()
+        # linear_correct = (predictions.cuda() == targets.cuda()).sum().item()
+        # total_linear_correct += linear_correct
+        # print(linear_logits)
+        # print(targets)
+        # linear_loss = linear_criterion(linear_logits.cuda(), targets.cuda())
+        # linear_loss.backward()
+        # linear_grad_norm = torch.nn.utils.clip_grad_norm_(linear_model.parameters(), max_norm=10.0)
+        # print("linear loss: ", linear_loss)
+        # linear_optimizer.step()
         # probabilities = torch.nn.functional.softmax(linear_logits, dim=1).cuda()
 
 
