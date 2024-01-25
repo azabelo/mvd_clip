@@ -795,23 +795,14 @@ def linear_train_one_epoch(linear_model=None, linear_criterion=None, linear_opti
         targets.to(device)
         batch_count += 1
 
-        print(linear_model.linear_layer.weight)
+
         # stop if it contains nan
         if torch.isnan(linear_model.linear_layer.weight).any():
             exit(1)
         # note that the linear model is not affected by anything like loss scaling or gradient accumulation
         linear_logits = linear_model(video_embeddings)
-        print(linear_logits.shape)
-        print(linear_logits)
-        print(targets.shape)
-        print(targets)
-
         linear_loss = linear_criterion(linear_logits.cuda(), targets.cuda())
-        print(linear_loss)
-        # print the grad of the linear layer
-        print(linear_model.linear_layer.weight.grad)
         linear_loss.backward()
-        print(linear_model.linear_layer.weight.grad)
         linear_optimizer.step()
         linear_optimizer.zero_grad()
 
