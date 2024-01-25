@@ -616,14 +616,17 @@ class Clip_Frame_Encoder(nn.Module):
         self.clip_visual = model.visual
 
     def forward(self, videos):
-        #  [32, 3, 16, 224, 224]
-        bs, c, f, h, w = videos.shape
-        videos = videos.half().cuda()
-        videos = videos[:, :, 0::2, :, :]
-        frames = videos.view(bs * f // 2, c, h, w)
-        frame_embeddings = self.clip_visual(frames)
-        video_embeddings = frame_embeddings.view(bs, f // 2, -1)
-        return video_embeddings
+        self.clip_visual.eval()
+        with torch.no_grad():
+            self.clip_visual.eval()
+            #  [32, 3, 16, 224, 224]
+            bs, c, f, h, w = videos.shape
+            videos = videos.half().cuda()
+            videos = videos[:, :, 0::2, :, :]
+            frames = videos.view(bs * f // 2, c, h, w)
+            frame_embeddings = self.clip_visual(frames)
+            video_embeddings = frame_embeddings.view(bs, f // 2, -1)
+            return video_embeddings
 
 
 
