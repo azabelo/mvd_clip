@@ -806,7 +806,8 @@ def main(args, ds_init):
         wandb.config.update(args)
     # END MY CHANGES
 
-    text_encodings = precompute_text()
+    # text_encodings = precompute_text()
+    text_encodings = precompute_random_text()
     train_video_embeddings, train_targets = precompute_train_video(model, data_loader_train)
     test_video_embeddings, test_targets = precompute_test_video(model, data_loader_val)
 
