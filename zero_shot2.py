@@ -351,6 +351,79 @@ def precompute_text():
 
     return action_encodings
 
+def precompute_random_text():
+    random_texts = ["I have a rubiks cube",
+                    "my dog is brown",
+                    "give me that banana",
+                    "three hundred and fifty five",
+                    "chocolate chip eraser",
+                    "halt who goes there",
+                    "a comma and a period",
+                    "try harder on that problem",
+                    "you can't spell caffeine without fein",
+                    "uh oh, that was the wrong submarine",
+                    "lets play cards",
+                    "he got out of the car",
+                    "loud headphones are bad for your ears",
+                    "car eggo waffles",
+                    "punctuation insulation foam",
+                    "international ego",
+                    "group theoretic rave party",
+                    "masked autoencoders are lit",
+                    "hey hey hey hey hey",
+                    "yessir pirate bryan",
+                    "sun is down freezing cold",
+                    "that is how we already know",
+                    "my dog will probably do it",
+                    "california is a toaster",
+                    "hi how are you",
+                    "what color is this shirt",
+                    "calculate the square root of zero",
+                    "a a a a a a a ",
+                    "weiofnsdkfnlandlkdnfaklsdnf",
+                    "long live novak djokovic",
+                    "jailbreak a large language model",
+                    "amazon is better at AI than facebook",
+                    "and also better than open AI",
+                    "matplotlib",
+                    "bicycle",
+                    "the quick brown fox jumps over the lazy dog",
+                    "e to the i pi plus one equals zero",
+                    "just come outside for the night",
+                    "playboi carti is a lyrical magician",
+                    "amazon web services",
+                    "password is password",
+                    "electromagnetism is a cool word",
+                    "singularity",
+                    "achoo",
+                    "bottle of water of bottle",
+                    "two drums and a cymbal fall off a cliff",
+                    "hard to come up with random words",
+                    "this statement is false",
+                    "don't imagine a pink elephant",
+                    "two more to go",
+                    "last sentence",
+                    ]
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model, preprocess = clip.load("ViT-B/16", device=device)
+
+    text_encodings = []
+    model.eval()
+    with torch.no_grad():
+        model.eval()
+
+        for text in random_texts:
+            tokenized = clip.tokenize(text).to(device)
+            text_encoding = model.encode_text(tokenized)
+            text_encoding = text_encoding / torch.norm(text_encoding, dim=1, keepdim=True)
+            text_encodings.append(text_encoding)
+
+    action_encodings = torch.cat(text_encodings)
+    print(action_encodings.shape)
+    torch.save(action_encodings, "action_encodings.pth")
+
+    return action_encodings
 
 def precompute_train_video(model, data_loader):
     if os.path.exists("train_video_embeddings.pth"):
