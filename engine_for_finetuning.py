@@ -560,7 +560,8 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
         print(linear_logits)
         print(targets.shape)
         print(targets)
-        linear_loss = linear_criterion(linear_logits, targets)
+
+        linear_loss = linear_criterion(linear_logits.cuda(), targets.cuda())
         print(linear_loss)
 
 
