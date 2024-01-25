@@ -777,7 +777,7 @@ def linear_train_one_epoch(linear_model=None, linear_criterion=None, linear_opti
         linear_optimizer.zero_grad()
 
         linear_preds = torch.argmax(linear_logits, dim=1)
-        linear_correct = torch.sum(linear_preds == targets)
+        linear_correct = torch.sum(linear_preds.cuda() == targets.cuda())
         total_linear_correct += linear_correct
         linear_grad_norm = torch.nn.utils.clip_grad_norm_(linear_model.parameters(), 10.0)
         wandb.log({"linear_loss": linear_loss, "linear_acc": linear_correct, "linear_grad_norm": linear_grad_norm})
