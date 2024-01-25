@@ -556,11 +556,11 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
 
         # note that the linear model is not affected by anything like loss scaling or gradient accumulation
 
+        linear_optimizer.zero_grad()
         linear_logits = linear_model(video_embeddings)
         print(linear_logits)
         print(targets)
         linear_loss = linear_criterion(linear_logits.cuda(), targets.cuda())
-        linear_optimizer.zero_grad()
         linear_loss.backward()
         print("linear loss: ", linear_loss)
         linear_optimizer.step()
@@ -568,6 +568,13 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
         predictions = torch.argmax(linear_logits, dim=1).cuda()
         linear_correct = (predictions.cuda() == targets.cuda()).sum().item()
         total_linear_correct += linear_correct
+
+        linear_logits = linear_model(video_embeddings)
+        # probabilities = torch.nn.functional.softmax(linear_logits, dim=1).cuda()
+        predictions = torch.argmax(linear_logits, dim=1).cuda()
+        linear_correct = (predictions.cuda() == targets.cuda()).sum().item()
+        total_linear_correct += linear_correct
+        total_linear_loss += linear_criterion(linear_logits.cuda(), targets.cuda())
 
         if not math.isfinite(loss_value):
             print("Loss is {}, stopping training".format(loss_value))
