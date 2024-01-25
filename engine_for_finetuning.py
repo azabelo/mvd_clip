@@ -563,8 +563,8 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
 
         linear_loss = linear_criterion(linear_logits.cuda(), targets.cuda())
         print(linear_loss)
-        # print the grad
-        print(linear_model.fc.weight.grad)
+        # print the grad of the linear layer
+        print(linear_model.linear_layer.weight.grad)
         linear_loss.backward()
         linear_optimizer.step()
         linear_optimizer.zero_grad()
