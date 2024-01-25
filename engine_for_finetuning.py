@@ -478,13 +478,10 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
                     start_steps=None, lr_schedule_values=None, wd_schedule_values=None,
                     num_training_steps_per_epoch=None, update_freq=None,
                     train_video_embeddings=None, train_targets=None, text_encodings=None, batch_size=64,
-                              linear_model=None, linear_criterion=None,
-                              linear_optimizer=None,
-                              linear_loss_scaler=None, linear_model_ema=None,
+
                               ):
 
     model.train(True)
-    linear_model.train(True)
 
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter('lr', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
@@ -555,113 +552,105 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
         loss_value = loss.item()
 
 
+        if not math.isfinite(loss_value):
+            print("Loss is {}, stopping training".format(loss_value))
+            sys.exit(1)
 
+        if loss_scaler is None:
+            loss /= update_freq
+            model.backward(loss)
+            model.step()
 
-        # if not math.isfinite(loss_value):
-        #     print("Loss is {}, stopping training".format(loss_value))
-        #     sys.exit(1)
-        #
-        # if loss_scaler is None:
-        #     loss /= update_freq
-        #     model.backward(loss)
-        #     model.step()
-        #
-        #     if (data_iter_step + 1) % update_freq == 0:
-        #         # model.zero_grad()
-        #         # Deepspeed will call step() & model.zero_grad() automatic
-        #         if model_ema is not None:
-        #             model_ema.update(model)
-        #     grad_norm = None
-        #     loss_scale_value = get_loss_scale_for_deepspeed(model)
+            if (data_iter_step + 1) % update_freq == 0:
+                # model.zero_grad()
+                # Deepspeed will call step() & model.zero_grad() automatic
+                if model_ema is not None:
+                    model_ema.update(model)
+            grad_norm = None
+            loss_scale_value = get_loss_scale_for_deepspeed(model)
+        else:
+            # this attribute is added by timm on one optimizer (adahessian)
+            is_second_order = hasattr(optimizer, 'is_second_order') and optimizer.is_second_order
+            loss /= update_freq
+            grad_norm = loss_scaler(loss, optimizer, clip_grad=max_norm,
+                                    parameters=model.parameters(), create_graph=is_second_order,
+                                    update_grad=(data_iter_step + 1) % update_freq == 0)
+            if (data_iter_step + 1) % update_freq == 0:
+                optimizer.zero_grad()
+                if model_ema is not None:
+                    model_ema.update(model)
+            loss_scale_value = loss_scaler.state_dict()["scale"]
+
+        torch.cuda.synchronize()
+
+        class_acc = text_preds_correct
+        # if mixup_fn is None:
+        #     class_acc = (output.max(-1)[-1] == targets).float().mean()
         # else:
-        #     # this attribute is added by timm on one optimizer (adahessian)
-        #     is_second_order = hasattr(optimizer, 'is_second_order') and optimizer.is_second_order
-        #     loss /= update_freq
-        #     grad_norm = loss_scaler(loss, optimizer, clip_grad=max_norm,
-        #                             parameters=model.parameters(), create_graph=is_second_order,
-        #                             update_grad=(data_iter_step + 1) % update_freq == 0)
-        #     if (data_iter_step + 1) % update_freq == 0:
-        #         optimizer.zero_grad()
-        #         if model_ema is not None:
-        #             model_ema.update(model)
-        #     loss_scale_value = loss_scaler.state_dict()["scale"]
-        #
-        # torch.cuda.synchronize()
-        #
-        # class_acc = text_preds_correct
-        # # if mixup_fn is None:
-        # #     class_acc = (output.max(-1)[-1] == targets).float().mean()
-        # # else:
-        # #     class_acc = None
-        #
-        # metric_logger.update(loss=loss_value)
+        #     class_acc = None
+
+        metric_logger.update(loss=loss_value)
         metric_logger.update(class_acc=0)
-        # metric_logger.update(loss_scale=loss_scale_value)
-        # min_lr = 10.
-        # max_lr = 0.
-        # for group in optimizer.param_groups:
-        #     min_lr = min(min_lr, group["lr"])
-        #     max_lr = max(max_lr, group["lr"])
-        #
-        # metric_logger.update(lr=max_lr)
-        # metric_logger.update(min_lr=min_lr)
-        # weight_decay_value = None
-        # for group in optimizer.param_groups:
-        #     if group["weight_decay"] > 0:
-        #         weight_decay_value = group["weight_decay"]
-        # metric_logger.update(weight_decay=weight_decay_value)
-        # metric_logger.update(grad_norm=grad_norm)
-        #
-        # if log_writer is not None:
-        #     log_writer.update(loss=loss_value, head="loss")
-        #     log_writer.update(class_acc=class_acc, head="loss")
-        #     log_writer.update(loss_scale=loss_scale_value, head="opt")
-        #     log_writer.update(lr=max_lr, head="opt")
-        #     log_writer.update(min_lr=min_lr, head="opt")
-        #     log_writer.update(weight_decay=weight_decay_value, head="opt")
-        #     log_writer.update(grad_norm=grad_norm, head="opt")
-        #if not math.isfinite(loss_value):
-        #     print("Loss is {}, stopping training".format(loss_value))
-        #     sys.exit(1)
-        #
-        # if loss_scaler is None:
-        #     loss /= update_freq
-        #     model.backward(loss)
-        #     model.step()
-        #
-        #     if (data_iter_step + 1) % update_freq == 0:
-        #         # model.zero_grad()
-        #         # Deepspeed will call step() & model.zero_grad() automatic
-        #         if model_ema is not None:
-        #             model_ema.update(model)
-        #     grad_norm = None
-        #     loss_scale_value = get_loss_scale_for_deepspeed(model)
-        # else:
-        #     # this attribute is added by timm on one optimizer (adahessian)
-        #     is_second_order = hasattr(optimizer, 'is_second_order') and optimizer.is_second_order
-        #     loss /= update_freq
-        #     grad_norm = loss_scaler(loss, optimizer, clip_grad=max_norm,
-        #                             parameters=model.parameters(), create_graph=is_second_order,
-        #                             update_grad=(data_iter_step + 1) % update_freq == 0)
-        #     if (data_iter_step + 1) % update_freq == 0:
-        #         optimizer.zero_grad()
-        #         if model_ema is not None:
-        #             model_ema.update(model)
-        #     loss_scale_value = loss_scaler.state_dict()["scale"]
-        #
-        # torch.cuda.synchronize()
-        #
-        # class_acc = text_preds_correct
-        # # if mixup_fn is None:
-        # #     class_acc = (output.max(-1)[-1] == targets).float().mean()
-        # # else:
-        # #     class_acc = None
-        #
+        metric_logger.update(loss_scale=loss_scale_value)
+        min_lr = 10.
+        max_lr = 0.
+        for group in optimizer.param_groups:
+            min_lr = min(min_lr, group["lr"])
+            max_lr = max(max_lr, group["lr"])
 
-        class_acc = 0
-        loss_scale_value = 0
-        grad_norm = 0
-        loss_value = 0
+        metric_logger.update(lr=max_lr)
+        metric_logger.update(min_lr=min_lr)
+        weight_decay_value = None
+        for group in optimizer.param_groups:
+            if group["weight_decay"] > 0:
+                weight_decay_value = group["weight_decay"]
+        metric_logger.update(weight_decay=weight_decay_value)
+        metric_logger.update(grad_norm=grad_norm)
+
+        if log_writer is not None:
+            log_writer.update(loss=loss_value, head="loss")
+            log_writer.update(class_acc=class_acc, head="loss")
+            log_writer.update(loss_scale=loss_scale_value, head="opt")
+            log_writer.update(lr=max_lr, head="opt")
+            log_writer.update(min_lr=min_lr, head="opt")
+            log_writer.update(weight_decay=weight_decay_value, head="opt")
+            log_writer.update(grad_norm=grad_norm, head="opt")
+        if not math.isfinite(loss_value):
+            print("Loss is {}, stopping training".format(loss_value))
+            sys.exit(1)
+
+        if loss_scaler is None:
+            loss /= update_freq
+            model.backward(loss)
+            model.step()
+
+            if (data_iter_step + 1) % update_freq == 0:
+                # model.zero_grad()
+                # Deepspeed will call step() & model.zero_grad() automatic
+                if model_ema is not None:
+                    model_ema.update(model)
+            grad_norm = None
+            loss_scale_value = get_loss_scale_for_deepspeed(model)
+        else:
+            # this attribute is added by timm on one optimizer (adahessian)
+            is_second_order = hasattr(optimizer, 'is_second_order') and optimizer.is_second_order
+            loss /= update_freq
+            grad_norm = loss_scaler(loss, optimizer, clip_grad=max_norm,
+                                    parameters=model.parameters(), create_graph=is_second_order,
+                                    update_grad=(data_iter_step + 1) % update_freq == 0)
+            if (data_iter_step + 1) % update_freq == 0:
+                optimizer.zero_grad()
+                if model_ema is not None:
+                    model_ema.update(model)
+            loss_scale_value = loss_scaler.state_dict()["scale"]
+
+        torch.cuda.synchronize()
+
+        class_acc = text_preds_correct
+        # if mixup_fn is None:
+        #     class_acc = (output.max(-1)[-1] == targets).float().mean()
+        # else:
+        #     class_acc = None
 
         metric_logger.update(loss=loss_value)
         metric_logger.update(class_acc=class_acc)
@@ -691,25 +680,16 @@ def efficient_align_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module
             log_writer.update(grad_norm=grad_norm, head="opt")
 
             log_writer.set_step()
-        #
-        # # MY CHANGES
-        # wandb.log({"epoch": epoch, "batch": step, "train_loss": loss_value, "max_lr": max_lr, "min_lr": min_lr,
-        #            "weight_decay": weight_decay_value, "grad_norm": grad_norm, "loss_scale": loss_scale_value,
-        #            "text_correct": text_preds_correct, "vid_correct": vid_preds_correct,
-        #            #"linear_loss": linear_loss, "linear_acc": linear_correct, "linear_grad_norm": linear_grad_norm
-        #            })
-        # # END MY CHANGES
-        #     log_writer.set_step()
-        #
-        # # MY CHANGES
-        # wandb.log({"epoch": epoch, "batch": step, "train_loss": loss_value, "max_lr": max_lr, "min_lr": min_lr,
-        #            "weight_decay": weight_decay_value, "grad_norm": grad_norm, "loss_scale": loss_scale_value,
-        #            "text_correct": text_preds_correct, "vid_correct": vid_preds_correct,
-        #            #"linear_loss": linear_loss, "linear_acc": linear_correct, "linear_grad_norm": linear_grad_norm
-        #            })
-        # # END MY CHANGES
 
-    wandb.log({"total_linear_correct": total_linear_correct, "total_vid_correct": total_vid_correct,
+        # MY CHANGES
+        wandb.log({"epoch": epoch, "batch": step, "train_loss": loss_value, "max_lr": max_lr, "min_lr": min_lr,
+                   "weight_decay": weight_decay_value, "grad_norm": grad_norm, "loss_scale": loss_scale_value,
+                   "text_correct": text_preds_correct, "vid_correct": vid_preds_correct,
+                   #"linear_loss": linear_loss, "linear_acc": linear_correct, "linear_grad_norm": linear_grad_norm
+                   })
+        # END MY CHANGES
+
+    wandb.log({"total_vid_correct": total_vid_correct,
                "total_text_correct": total_text_correct})
 
 
@@ -779,21 +759,15 @@ def linear_train_one_epoch(linear_model=None, linear_criterion=None, linear_opti
 
     batched_data = [(i, j) for _, (i, j) in enumerate(zip(train_video_embeddings, train_targets))]
     batch_count = 0
-    total_loss = 0
-    total_vid_preds_correct = 0
-    total_text_preds_correct = 0
     total_examples = 0
-    total_class_correct = 0
-
     total_linear_correct = 0
-    total_linear_loss = 0
-
     while batch_count < len(batched_data):
         print("batch count: ", batch_count)
         video_embeddings, targets = batched_data[batch_count]
         video_embeddings = video_embeddings.to(device)
         targets.to(device)
         batch_count += 1
+        total_examples += video_embeddings.shape[0]
 
         # note that the linear model is not affected by anything like loss scaling or gradient accumulation
         linear_logits = linear_model(video_embeddings)
@@ -801,6 +775,17 @@ def linear_train_one_epoch(linear_model=None, linear_criterion=None, linear_opti
         linear_loss.backward()
         linear_optimizer.step()
         linear_optimizer.zero_grad()
+
+        linear_preds = torch.argmax(linear_logits, dim=1)
+        linear_correct = torch.sum(linear_preds == targets)
+        total_linear_correct += linear_correct
+        linear_grad_norm = torch.nn.utils.clip_grad_norm_(linear_model.parameters(), 10.0)
+        wandb.log({"linear_loss": linear_loss, "linear_acc": linear_correct, "linear_grad_norm": linear_grad_norm})
+
+    wandb.log({"total_linear_correct": total_linear_correct})
+
+
+
 
 
 
