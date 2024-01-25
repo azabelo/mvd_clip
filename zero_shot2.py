@@ -609,7 +609,7 @@ class Linear_Model(nn.Module):
         return video_embeddings
 
 class Clip_Frame_Encoder(nn.Module):
-    def __init__(self, model, args):
+    def __init__(self):
         super(Clip_Frame_Encoder, self).__init__()
         device = "cuda" if torch.cuda.is_available() else "cpu"
         model, preprocess = clip.load("ViT-B/16", device=device)
