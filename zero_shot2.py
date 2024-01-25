@@ -611,9 +611,18 @@ class Linear_Model(nn.Module):
 class Clip_Frame_Encoder(nn.Module):
     def __init__(self, model, args):
         super(Clip_Frame_Encoder, self).__init__()
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model, preprocess = clip.load("ViT-B/16", device=device)
+        self.clip_visual = model.visual
 
     def forward(self, videos):
-        pass
+        #  [32, 3, 16, 224, 224]
+        bs, c, f, h, w = videos.shape
+        videos = videos[:, :, 0::2, :, :]
+        frames = videos.view(bs * f // 2, c, h, w)
+        frame_embeddings = self.clip_visual(frames)
+        print(frame_embeddings.shape)
+
 
 
 def main(args, ds_init):
