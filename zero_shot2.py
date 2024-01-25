@@ -626,6 +626,7 @@ class Clip_Frame_Encoder(nn.Module):
             frames = videos.view(bs * f // 2, c, h, w)
             frame_embeddings = self.clip_visual(frames)
             video_embeddings = frame_embeddings.view(bs, f // 2, -1)
+            print(video_embeddings.shape)
             return video_embeddings
 
 
