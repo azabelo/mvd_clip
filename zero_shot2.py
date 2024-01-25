@@ -832,8 +832,8 @@ def main(args, ds_init):
         wandb.config.update(args)
     # END MY CHANGES
 
-    #text_encodings = precompute_text()
-    text_encodings = precompute_random_text()
+    text_encodings = precompute_text()
+    #text_encodings = precompute_random_text()
 
     model = Clip_Frame_Encoder()
 
