@@ -531,11 +531,7 @@ class Linear_Model(nn.Module):
 
     def forward(self, video_embeddings):
         video_embeddings.cuda()
-        print(video_embeddings.shape)
         logits = self.linear_layer(video_embeddings)
-        print(logits.shape)
-        print(logits)
-
         return logits
 
     def get_num_layers(self):
