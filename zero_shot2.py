@@ -530,9 +530,8 @@ class Linear_Model(nn.Module):
         self.linear_layer = nn.Linear(768, 51).half().requires_grad_(True)
 
     def forward(self, video_embeddings):
-        video_embeddings.cuda()
-        logits = self.linear_layer(video_embeddings)
-        return logits
+        video_embeddings = self.linear_layer(video_embeddings)
+        return video_embeddings
 
     def get_num_layers(self):
         return 1
@@ -926,7 +925,7 @@ def main(args, ds_init):
 
     linear_criterion = torch.nn.CrossEntropyLoss()
     linear_criterion.to(device)
-    linear_optimizer = torch.optim.Adam(linear_model.parameters(), lr=0.001)
+    linear_optimizer = torch.optim.Adam(linear_model.parameters(), lr=0.0000001)
     linear_optimizer.zero_grad()
 
     ## END OF SECOND MODEL
