@@ -28,44 +28,6 @@ import seaborn as sns
 Loss_func_choice = {'L1': torch.nn.L1Loss, 'L2': torch.nn.MSELoss, 'SmoothL1': torch.nn.SmoothL1Loss}
 
 
-class Alignment_Model(nn.Module):
-    def __init__(self, backbone, align_matrix_only=True):
-        super(Alignment_Model, self).__init__()
-        if os.path.exists("alignment_matrix.pth"):
-            alignment_matrix = torch.load("alignment_matrix.pth")
-        else:
-            clip_model, _ = clip.load("ViT-B/16", device="cuda")
-            # need to transpose it to give it to a linear layer
-            alignment_matrix = clip_model.visual.proj.float()
-
-        self.align_matrix_only = align_matrix_only
-        self.backbone = backbone
-        # Initialize a linear layer
-        self.linear_layer = nn.Linear(768, 512)
-        # Set the weight of the linear layer to the CLIP matrix
-        with torch.no_grad():
-            self.linear_layer.weight.copy_(alignment_matrix.t())
-
-    def forward(self, x):
-        empty_mask = torch.zeros((x.shape[0], 1568), dtype=torch.bool)
-        empty_mask = empty_mask.to('cuda', non_blocking=True)
-        # assuming that backbone is model.module
-        if self.align_matrix_only:
-            self.backbone.eval()
-            with torch.no_grad():
-                self.backbone.eval()
-                x = self.backbone.forward_encoder(x, empty_mask)
-                x = x[:, 0, :]
-        else:
-            self.backbone.train()
-            x = self.backbone.forward_encoder(x, empty_mask)
-            x = x[:, 0, :]
-        x = self.linear_layer(x)
-        return x
-
-    def retrieve_alignment_matrix(self):
-        return self.linear_layer.weight.data.t()
-
 def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimizer: torch.optim.Optimizer,
                     device: torch.device, epoch: int, loss_scaler, max_norm: float = 0,
                     log_writer=None, lr_scheduler=None, start_steps=None, lr_schedule_values=None,
@@ -143,221 +105,127 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
     tubelet_size = args.tubelet_size
 
-    action_embeddings = torch.load("action_encodings.pth")
-    class_names_str = "brush_hair clap draw_sword fall_floor handstand kick pick push run shoot_gun smoke sword turn cartwheel climb dribble fencing hit kick_ball pour pushup shake_hands sit somersault sword_exercise walk catch climb_stairs drink flic_flac hug kiss pullup ride_bike shoot_ball situp stand talk wave chew dive eat golf jump laugh punch ride_horse shoot_bow smile swing_baseball throw"
-    all_action_names = ['brushing hair', 'doing a cartwheel', 'catching', 'chewing', 'clapping', 'climbing',
-                    'climbing stairs', 'diving', 'drawing a sword', 'dribbling', 'drinking', 'eating',
-                    'falling to the floor', 'fencing', 'doing flic flac', 'golfing', 'doing a handstand',
-                    'hitting',
-                    'hugging', 'jumping', 'kicking', 'kicking a ball', 'kissing', 'laughing', 'picking',
-                    'pouring',
-                    'doing pullups', 'punching', 'pushing', 'doing pushups', 'riding a bike',
-                    'riding a horse',
-                    'running', 'shaking hands', 'shooting a ball', 'shooting a bow', 'shooting a gun',
-                    'sitting',
-                    'doing situps', 'smiling', 'smoking', 'doing a somersault', 'standing',
-                    'swinging a baseball bat',
-                    'using a sword', 'doing sword exercises', 'talking', 'throwing', 'turning', 'walking',
-                    'waving']
-    all_class_names = class_names_str.split()
-
-    alignment = True
-
-    if alignment:
-        alignment_model = Alignment_Model(model.module, align_matrix_only=True)
-        alignment_model.to(args.device)
-        alignment_model.train()
-        alignment_optimizer = torch.optim.Adam(alignment_model.parameters(), lr=args.lr)
-        # two different cross entropy losses, one should be for comparing one text encoding to
-        # all the video encodings, the other should be for comparing one video encoding to all
-        # the text encodings
-        loss_func_text = nn.CrossEntropyLoss() # comparing the one text encoding
-        loss_func_vid = nn.CrossEntropyLoss() # comparing the one video encoding
-
 
 
     for step, batch in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
 
-        if not alignment:
-            # assign learning rate & weight decay for each step
-            update_step = step // update_freq
-            it = start_steps + update_step  # global training iteration
-            if lr_schedule_values is not None or wd_schedule_values is not None and step % update_freq == 0:
-                for i, param_group in enumerate(optimizer.param_groups):
-                    if lr_schedule_values is not None:
-                        param_group["lr"] = lr_schedule_values[it] * param_group["lr_scale"] * lr_scale
-                    if wd_schedule_values is not None and param_group["weight_decay"] > 0:
-                        param_group["weight_decay"] = wd_schedule_values[it]
+        # assign learning rate & weight decay for each step
+        update_step = step // update_freq
+        it = start_steps + update_step  # global training iteration
+        if lr_schedule_values is not None or wd_schedule_values is not None and step % update_freq == 0:
+            for i, param_group in enumerate(optimizer.param_groups):
+                if lr_schedule_values is not None:
+                    param_group["lr"] = lr_schedule_values[it] * param_group["lr_scale"] * lr_scale
+                if wd_schedule_values is not None and param_group["weight_decay"] > 0:
+                    param_group["weight_decay"] = wd_schedule_values[it]
 
-            videos, videos_for_teacher, bool_masked_pos, class_names = batch
-            print(class_names)
-            action_names = [all_action_names[all_class_names.index(class_name)] for class_name in class_names]
-            embeddings = [action_embeddings[action_name] for action_name in action_names]
-            embeddings = torch.stack(embeddings)
-            print(embeddings.shape)
+        videos, videos_for_teacher, bool_masked_pos, class_names = batch
+        print(class_names)
 
-            videos = videos.to(device, non_blocking=True)
-            videos_for_teacher = videos_for_teacher.to(device, non_blocking=True)
-            bool_masked_pos = bool_masked_pos.to(device, non_blocking=True).flatten(1).to(torch.bool)
-            _, _, T, _, _ = videos.shape
+        videos = videos.to(device, non_blocking=True)
+        videos_for_teacher = videos_for_teacher.to(device, non_blocking=True)
+        bool_masked_pos = bool_masked_pos.to(device, non_blocking=True).flatten(1).to(torch.bool)
+        _, _, T, _, _ = videos.shape
 
-            with torch.cuda.amp.autocast():
-                output_features, output_video_features = model(videos, bool_masked_pos)
-                with torch.no_grad():
-                    image_teacher_model.eval()
-                    if time_stride_loss:
-                        teacher_features = image_teacher_model(
-                            rearrange(videos_for_teacher[:, :, ::tubelet_size, :, :], 'b c t h w -> (b t) c h w'),
-                        )
-                        teacher_features = rearrange(teacher_features, '(b t) l c -> b (t l) c', t=T//tubelet_size)
-                    else:
-                        teacher_features = image_teacher_model(
-                            rearrange(videos_for_teacher, 'b c t h w -> (b t) c h w'),
-                        )
-                        teacher_features = rearrange(teacher_features, '(b t d) l c -> b (t l) (d c)', t=T//tubelet_size, d=tubelet_size)
-                    if norm_feature:
-                        teacher_features = LN_img(teacher_features)
+        with torch.cuda.amp.autocast():
+            output_features, output_video_features = model(videos, bool_masked_pos)
+            with torch.no_grad():
+                image_teacher_model.eval()
+                if time_stride_loss:
+                    teacher_features = image_teacher_model(
+                        rearrange(videos_for_teacher[:, :, ::tubelet_size, :, :], 'b c t h w -> (b t) c h w'),
+                    )
+                    teacher_features = rearrange(teacher_features, '(b t) l c -> b (t l) c', t=T//tubelet_size)
+                else:
+                    teacher_features = image_teacher_model(
+                        rearrange(videos_for_teacher, 'b c t h w -> (b t) c h w'),
+                    )
+                    teacher_features = rearrange(teacher_features, '(b t d) l c -> b (t l) (d c)', t=T//tubelet_size, d=tubelet_size)
+                if norm_feature:
+                    teacher_features = LN_img(teacher_features)
 
-                    video_teacher_model.eval()
-                    videos_for_video_teacher = videos if args.video_teacher_input_size == args.input_size \
-                        else videos_for_teacher
+                video_teacher_model.eval()
+                videos_for_video_teacher = videos if args.video_teacher_input_size == args.input_size \
+                    else videos_for_teacher
 
-                    video_teacher_features = video_teacher_model(videos_for_video_teacher)
-                    if norm_feature:
-                        video_teacher_features = LN_vid(video_teacher_features)
+                video_teacher_features = video_teacher_model(videos_for_video_teacher)
+                if norm_feature:
+                    video_teacher_features = LN_vid(video_teacher_features)
 
-                B, _, D = output_features.shape
-                loss_img_feat = loss_func_img_feat(
-                    input=output_features,
-                    target=teacher_features[bool_masked_pos].reshape(B, -1, D)
-                )
-                loss_value_img_feat = loss_img_feat.item()
+            B, _, D = output_features.shape
+            loss_img_feat = loss_func_img_feat(
+                input=output_features,
+                target=teacher_features[bool_masked_pos].reshape(B, -1, D)
+            )
+            loss_value_img_feat = loss_img_feat.item()
 
-                B, _, D = output_video_features.shape
-                loss_vid_feat = loss_func_vid_feat(
-                    input=output_video_features,
-                    target=video_teacher_features[bool_masked_pos].reshape(B, -1, D)
-                )
-                loss_value_vid_feat = loss_vid_feat.item()
+            B, _, D = output_video_features.shape
+            loss_vid_feat = loss_func_vid_feat(
+                input=output_video_features,
+                target=video_teacher_features[bool_masked_pos].reshape(B, -1, D)
+            )
+            loss_value_vid_feat = loss_vid_feat.item()
 
-                loss = image_loss_weight * loss_img_feat + video_loss_weight * loss_vid_feat
+            loss = image_loss_weight * loss_img_feat + video_loss_weight * loss_vid_feat
 
-            loss_value = loss.item()
+        loss_value = loss.item()
 
-            if not math.isfinite(loss_value):
-                print("Loss is {}, stopping training".format(loss_value))
-                sys.exit(1)
+        if not math.isfinite(loss_value):
+            print("Loss is {}, stopping training".format(loss_value))
+            sys.exit(1)
 
-            # this attribute is added by timm on one optimizer (adahessian)
-            is_second_order = hasattr(optimizer, 'is_second_order') and optimizer.is_second_order
-            loss /= update_freq
-            grad_norm = loss_scaler(loss, optimizer, clip_grad=max_norm,
-                                    parameters=model.parameters(), create_graph=is_second_order,
-                                    update_grad=(step + 1) % update_freq == 0)
-            if (step + 1) % update_freq == 0:
-                optimizer.zero_grad()
-            loss_scale_value = loss_scaler.state_dict()["scale"]
+        # this attribute is added by timm on one optimizer (adahessian)
+        is_second_order = hasattr(optimizer, 'is_second_order') and optimizer.is_second_order
+        loss /= update_freq
+        grad_norm = loss_scaler(loss, optimizer, clip_grad=max_norm,
+                                parameters=model.parameters(), create_graph=is_second_order,
+                                update_grad=(step + 1) % update_freq == 0)
+        if (step + 1) % update_freq == 0:
+            optimizer.zero_grad()
+        loss_scale_value = loss_scaler.state_dict()["scale"]
 
-            torch.cuda.synchronize()
+        torch.cuda.synchronize()
 
-            metric_logger.update(loss=loss_value)
-            metric_logger.update(loss_img_feat=loss_value_img_feat)
-            metric_logger.update(loss_vid_feat=loss_value_vid_feat)
-            metric_logger.update(loss_scale=loss_scale_value)
-            min_lr = 10.
-            max_lr = 0.
-            for group in optimizer.param_groups:
-                min_lr = min(min_lr, group["lr"])
-                max_lr = max(max_lr, group["lr"])
+        metric_logger.update(loss=loss_value)
+        metric_logger.update(loss_img_feat=loss_value_img_feat)
+        metric_logger.update(loss_vid_feat=loss_value_vid_feat)
+        metric_logger.update(loss_scale=loss_scale_value)
+        min_lr = 10.
+        max_lr = 0.
+        for group in optimizer.param_groups:
+            min_lr = min(min_lr, group["lr"])
+            max_lr = max(max_lr, group["lr"])
 
-            metric_logger.update(lr=max_lr)
-            metric_logger.update(min_lr=min_lr)
-            weight_decay_value = None
-            for group in optimizer.param_groups:
-                if group["weight_decay"] > 0:
-                    weight_decay_value = group["weight_decay"]
-            metric_logger.update(weight_decay=weight_decay_value)
-            metric_logger.update(grad_norm=grad_norm)
+        metric_logger.update(lr=max_lr)
+        metric_logger.update(min_lr=min_lr)
+        weight_decay_value = None
+        for group in optimizer.param_groups:
+            if group["weight_decay"] > 0:
+                weight_decay_value = group["weight_decay"]
+        metric_logger.update(weight_decay=weight_decay_value)
+        metric_logger.update(grad_norm=grad_norm)
 
-            if log_writer is not None:
-                log_writer.update(loss=loss_value, head="loss")
-                log_writer.update(loss_img_feat=loss_value_img_feat, head="loss_img_feat")
-                log_writer.update(loss_vid_feat=loss_value_vid_feat, head="loss_vid_feat")
-                log_writer.update(loss_scale=loss_scale_value, head="opt")
-                log_writer.update(lr=max_lr, head="opt")
-                log_writer.update(min_lr=min_lr, head="opt")
-                log_writer.update(weight_decay=weight_decay_value, head="opt")
-                log_writer.update(grad_norm=grad_norm, head="opt")
-                log_writer.set_step()
+        if log_writer is not None:
+            log_writer.update(loss=loss_value, head="loss")
+            log_writer.update(loss_img_feat=loss_value_img_feat, head="loss_img_feat")
+            log_writer.update(loss_vid_feat=loss_value_vid_feat, head="loss_vid_feat")
+            log_writer.update(loss_scale=loss_scale_value, head="opt")
+            log_writer.update(lr=max_lr, head="opt")
+            log_writer.update(min_lr=min_lr, head="opt")
+            log_writer.update(weight_decay=weight_decay_value, head="opt")
+            log_writer.update(grad_norm=grad_norm, head="opt")
+            log_writer.set_step()
 
-                # MY CHANGES
-                wandb.log(
-                    {"epoch": epoch, "batch": step, "train_loss": loss_value, " train_img_feat_loss": loss_value_img_feat,
-                     "min_lr": min_lr, "max_lr": max_lr, "train_vid_feat_loss": loss_value_vid_feat,
-                     "grad_norm": grad_norm, "loss_scale": loss_scale_value, "weight_decay": weight_decay_value,
-                     "lr_scale": lr_scale, })
-                # END MY CHANGES
-
-            if lr_scheduler is not None:
-                lr_scheduler.step_update(start_steps + step)
-        else:
-            # alignment!!!
-
-            videos, videos_for_teacher, bool_masked_pos, class_names = batch
-
-            action_names = [all_action_names[all_class_names.index(class_name)] for class_name in class_names]
-            embeddings = [action_embeddings[action_name] for action_name in action_names]
-            embeddings = torch.cat(embeddings)
-            videos = videos.to(device, non_blocking=True)
-
-            video_embeddings = alignment_model(videos)
-            embeddings = embeddings.to(device, non_blocking=True).float()
-
-            tensor1 = video_embeddings.unsqueeze(1)
-            tensor2 = embeddings.unsqueeze(0)
-            # cosine similarity matrix [8 , 384]
-            logit_matrix = torch.nn.functional.cosine_similarity(tensor1, tensor2, dim=2)
-
-            # take softmax of every row (row-wise is across the text prompts)
-            row_probs = torch.nn.functional.softmax(logit_matrix, dim=1)
-            # add each group of 48 elements in each row
-            row_probs = row_probs.view(len(class_names), len(class_names), -1).sum(dim=2)
-            # 8x8
-            # print(row_probs.shape)
-
-            # take softmax of every column (column-wise is across the videos)
-            col_probs = torch.nn.functional.softmax(logit_matrix, dim=0).t()
-            # no need for adding probs of columns because we only have 1 video
-            # 384x8
-            # print(col_probs.shape)
-
-            video_target = torch.arange(len(class_names)).to(dtype=torch.long).to(device, non_blocking=True)
-            vid_loss = loss_func_vid(row_probs, video_target)
-
-            text_target = torch.arange(len(class_names)).to(dtype=torch.long).repeat(48).to(device, non_blocking=True)
-            text_loss = loss_func_text(col_probs, text_target)
-
-            # could weigh these differently
-            loss = vid_loss + text_loss
-
-            #loss = loss.mean()
-            alignment_optimizer.zero_grad()
-            loss.backward(retain_graph=True)
-            alignment_optimizer.step()
-
+            # MY CHANGES
             wandb.log(
-                {"batch": step, "alignment loss": loss.mean().item()})
+                {"epoch": epoch, "batch": step, "train_loss": loss_value, " train_img_feat_loss": loss_value_img_feat,
+                 "min_lr": min_lr, "max_lr": max_lr, "train_vid_feat_loss": loss_value_vid_feat,
+                 "grad_norm": grad_norm, "loss_scale": loss_scale_value, "weight_decay": weight_decay_value,
+                 "lr_scale": lr_scale, })
+            # END MY CHANGES
 
-            metric_logger.update(loss=loss)
-            metric_logger.update()
-            metric_logger.update(lr=1)
-            metric_logger.update(min_lr=1)
-            if log_writer is not None:
-                log_writer.update(loss=loss, head="loss")
-                log_writer.set_step()
-
-    if alignment:
-        torch.save(alignment_model.retrieve_alignment_matrix(), "alignment_matrix.pth")
+        if lr_scheduler is not None:
+            lr_scheduler.step_update(start_steps + step)
 
 
     # gather the stats from all processes
@@ -368,29 +236,6 @@ def train_one_epoch(args, model: torch.nn.Module, data_loader: Iterable, optimiz
 
 
 def pretraining_accuracy(model, video_teacher_model, args):
-    action_embeddings = torch.load("action_encodings.pth")
-    class_names_str = "brush_hair clap draw_sword fall_floor handstand kick pick push run shoot_gun smoke sword turn cartwheel climb dribble fencing hit kick_ball pour pushup shake_hands sit somersault sword_exercise walk catch climb_stairs drink flic_flac hug kiss pullup ride_bike shoot_ball situp stand talk wave chew dive eat golf jump laugh punch ride_horse shoot_bow smile swing_baseball throw"
-    action_names = ['brushing hair', 'doing a cartwheel', 'catching', 'chewing', 'clapping', 'climbing',
-                    'climbing stairs', 'diving', 'drawing a sword', 'dribbling', 'drinking', 'eating',
-                    'falling to the floor', 'fencing', 'doing flic flac', 'golfing', 'doing a handstand',
-                    'hitting',
-                    'hugging', 'jumping', 'kicking', 'kicking a ball', 'kissing', 'laughing', 'picking',
-                    'pouring',
-                    'doing pullups', 'punching', 'pushing', 'doing pushups', 'riding a bike',
-                    'riding a horse',
-                    'running', 'shaking hands', 'shooting a ball', 'shooting a bow', 'shooting a gun',
-                    'sitting',
-                    'doing situps', 'smiling', 'smoking', 'doing a somersault', 'standing',
-                    'swinging a baseball bat',
-                    'using a sword', 'doing sword exercises', 'talking', 'throwing', 'turning', 'walking',
-                    'waving']
-    all_class_names = class_names_str.split()
-    action_embeddings = [action_embeddings[action_name] for action_name in action_names]
-    action_embeddings = torch.stack(action_embeddings)
-
-    test_teacher = False
-    if test_teacher:
-        model = video_teacher_model
 
     # add other finetuning thing here
 
@@ -436,65 +281,11 @@ def pretraining_accuracy(model, video_teacher_model, args):
     )
 
 
-    # unnecessary
-    linear_probe_video_teacher = False
-    if linear_probe_video_teacher:
-        class VideoLinearTrainer(nn.Module):
-            def __init__(self, classes):
-                super(VideoLinearTrainer, self).__init__()
-                #just uses class token
-                self.linear_layer = nn.Linear(768, classes)
-
-            def forward(self, x):
-                # just uses class token
-                x = self.linear_layer(x)
-                return x
-
-        test_video_teacher = VideoLinearTrainer(51)
-        test_video_teacher.to(args_copy.device, non_blocking=True)
-        criterion = nn.CrossEntropyLoss()
-        optimizer = optim.Adam(test_video_teacher.parameters(), lr=1e-3)
-
-        num_epochs = 3
-
-        for epoch in range(num_epochs):
-            total_correct = 0
-            total_samples = 0
-            for batch_idx, (input_data, target, _, _) in enumerate(data_loader_train):
-                if batch_idx % 10 == 0:
-                    print("vid teacher test: ", batch_idx)
-                input_data = input_data.to('cuda', non_blocking=True)
-                target = target.to('cuda', non_blocking=True)
-                # just uses class token
-                features = video_teacher_model(input_data)[:,0,:]
-                output = test_video_teacher(features)
-                loss = criterion(output, target)
-
-                # Compute accuracy
-                predicted_labels = torch.argmax(output, dim=1)
-                correct = (predicted_labels == target).sum().item()
-                total_correct += correct
-                total_samples += target.size(0)
-
-                # Backward and optimize
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-
-            # Calculate and print accuracy
-            accuracy = total_correct / total_samples
-            print(f"Accuracy: {accuracy * 100:.2f}%")
-    # end unnecessary
-
-
     class LinearClassifier(nn.Module):
         def __init__(self):
             super(LinearClassifier, self).__init__()
 
-            if test_teacher:
-                self.fc = nn.Linear(768 * 1568, 51)
-            else:
-                self.fc = nn.Linear(768*1569, 51)
+            self.fc = nn.Linear(768*1569, 51)
 
         def forward(self, x):
             # when for video teacher:
@@ -510,9 +301,6 @@ def pretraining_accuracy(model, video_teacher_model, args):
     linear_criterion = nn.CrossEntropyLoss()
     linear_optimizer = optim.SGD(linear_model.parameters(), lr=1e-3)
 
-    alignment_model = Alignment_Model(model.module)
-    alignment_model.to('cuda', non_blocking=True)
-    alignment_model.train()
 
     # class TwoLayerClassifier(nn.Module):
     #     def __init__(self):
@@ -556,11 +344,8 @@ def pretraining_accuracy(model, video_teacher_model, args):
 
     video_encodings = []
     total_zero_shot = 0
-    zero_shot_correct = 0
-    avg_zero_shot_correct = 0
     for batch_idx, (input_data, target, _, _) in enumerate(data_loader_train):
         linear_optimizer.zero_grad()
-        alignment_model.zero_grad()
 
         empty_mask = torch.zeros((input_data.shape[0], 1568), dtype=torch.bool)
         empty_mask = empty_mask.to('cuda', non_blocking=True)
@@ -569,46 +354,12 @@ def pretraining_accuracy(model, video_teacher_model, args):
         input_data = input_data.to('cuda', non_blocking=True)
         target = target.to('cuda', non_blocking=True)
 
-        # zero shot
-        alignment_model.eval()
-        with torch.no_grad():
-            alignment_model.eval()
-            video_encoding = alignment_model.forward(input_data)
-            video_encodings.append(video_encoding.cpu().numpy())
-            tensor1 = video_encoding.unsqueeze(1)
-            tensor2 = action_embeddings.unsqueeze(0)
-            cosine_sim = torch.nn.functional.cosine_similarity(tensor1, tensor2, dim=2)
-            total_zero_shot += cosine_sim.shape[0]
-
-            # highest zero_shot
-            max_index = torch.argmax(cosine_sim, dim=1)
-            max_index = max_index // 48 #48 different prompts
-            print("max index: ", max_index)
-            print("target: ", target)
-            # find how many of these match the target
-            zero_shot_correct += torch.sum(max_index == target).item()
-
-            # avg zero shot
-            cosine_sim = cosine_sim.view(8, 51, 48)
-            cosine_sim = torch.sum(cosine_sim, dim=2)
-            # find the index of the highest cosine similarity for each of the features
-            max_index = torch.argmax(cosine_sim, dim=1)
-            print("max index: ", max_index)
-            avg_zero_shot_correct += torch.sum(max_index == target).item()
-
 
         model.eval()
         with torch.no_grad():
             model.eval()
-            # if you want to test video teacher:
-            if test_teacher:
-                # video mae v2
-                # features = model.forward_features(input_data)
-                # video teacher
-                features = model.forward(input_data)
-            else:
-                features = model.module.forward_encoder(input_data, empty_mask)
-                # image_features, _ = model.module.forward(input_data, empty_mask)
+            features = model.module.forward_encoder(input_data, empty_mask)
+            # image_features, _ = model.module.forward(input_data, empty_mask)
 
             # features = features.detach()
             cls_token = features[:, 0, :]
@@ -648,39 +399,12 @@ def pretraining_accuracy(model, video_teacher_model, args):
         # print("linear accuracy: ", linear_accuracy)
         wandb.log({'linear_loss': linear_loss.item(),
                    'linear_accuracy train': linear_accuracy,
-                   'zero_shot_correct': zero_shot_correct,
-                     'total_zero_shot': total_zero_shot,
-                        'avg_zero_shot_correct': avg_zero_shot_correct})
+                     'total_zero_shot': total_zero_shot})
 
         # wandb.log({'linear_loss': linear_loss.item(),
         #            'two_layer_loss': two_layer_loss.item(),
         #           'linear_accuracy train': linear_accuracy,
         #         'two_layer_accuracy train': two_layer_accuracy})
-
-    zero_shot_accuracy = zero_shot_correct / total_zero_shot
-    avg_zero_shot_accuracy = avg_zero_shot_correct / total_zero_shot
-    print("zero shot accuracy: ", zero_shot_accuracy)
-    print("avg zero shot accuracy: ", avg_zero_shot_accuracy)
-
-
-    visualize = False
-    if visualize:
-        ## this is for generating the heatmap of the cosine similarities of the videos
-        video_encodings = torch.cat(video_encodings)
-        vid_path = "vid_encodings.pth"
-        torch.save(video_encodings, vid_path)
-        print(f"vid encodings saved to {vid_path}")
-
-        # create vid cosine heatmap with itself
-        create_cosine_heatmap(video_encodings, video_encodings, "vid_cosine_heatmap.png")
-        wandb.log({"vid-vid heatmap": wandb.Image("vid_cosine_heatmap.png")})
-
-        action_encodings = torch.load("action_encodings.pth")
-        # it is a dictionary of tensors, so we need to concatenate them
-        action_encodings = torch.cat(list(action_encodings.values()), dim=0)
-        # create vid cosine heatmap with text
-        create_cosine_heatmap(video_encodings, action_encodings, "vid_action_cosine_heatmap.png")
-        wandb.log({"vid-action heatmap": wandb.Image("vid_action_cosine_heatmap.png")})
 
 
 
@@ -720,14 +444,7 @@ def pretraining_accuracy(model, video_teacher_model, args):
             input_data = input_data.to('cuda', non_blocking=True)
             target = target.to('cuda', non_blocking=True)
 
-            # if you want to test video teacher:
-            if test_teacher:
-                # video mae v2
-                #features = model.forward_features(input_data)
-                # video teacher
-                features = model.forward(input_data)
-            else:
-                features = model.module.forward_encoder(input_data, empty_mask)
+            features = model.module.forward_encoder(input_data, empty_mask)
 
             # features = features.detach()
             cls_token = features[:, 0, :]
