@@ -12,7 +12,7 @@ from collections import OrderedDict
 from timm.models import create_model
 from optim_factory import create_optimizer
 from datasets import build_distillation_dataset
-from engine_for_pretraining2 import train_one_epoch
+from engine_for_pretraining import train_one_epoch
 from utils import NativeScalerWithGradNormCount as NativeScaler
 import utils
 from utils import multiple_pretrain_samples_collate
