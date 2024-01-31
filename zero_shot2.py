@@ -531,7 +531,7 @@ class Efficient_Align(nn.Module):
         super(Efficient_Align, self).__init__()
         self.linear_layer = nn.Linear(768, 512)
         # self.linear_layer = nn.Linear(768*1569, 512)
-        self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
+        self.logit_scale = nn.Parameter(torch.ones([]) * 0.07) # was np.log(1 / 0.07)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def cross_entropy(self, preds, targets, reduction='none'):
@@ -543,6 +543,7 @@ class Efficient_Align(nn.Module):
             return loss.mean()
 
     def forward(self, video_embeddings, text_embeddings):
+        print("logit scale: ", self.logit_scale)
         bs = video_embeddings.shape[0]
         video_embeddings = self.linear_layer(video_embeddings)
 
@@ -835,7 +836,7 @@ def main(args, ds_init):
     text_encodings = precompute_text()
     #text_encodings = precompute_random_text()
 
-    model = Clip_Frame_Encoder()
+    #model = Clip_Frame_Encoder()
 
     train_video_embeddings, train_targets = precompute_train_video(model, data_loader_train)
     test_video_embeddings, test_targets = precompute_test_video(model, data_loader_val)
