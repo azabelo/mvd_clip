@@ -1027,7 +1027,7 @@ def main(args, ds_init):
 
     linear_criterion = torch.nn.CrossEntropyLoss()
     linear_criterion.to(device)
-    linear_optimizer = torch.optim.SGD(linear_model.parameters(), lr=0.1, momentum=0.9)
+    linear_optimizer = torch.optim.SGD(linear_model.parameters(), lr=0.01, momentum=0.9)
 
     ## END OF SECOND MODEL
 
