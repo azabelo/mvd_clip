@@ -531,7 +531,8 @@ class Efficient_Align(nn.Module):
         super(Efficient_Align, self).__init__()
         self.linear_layer = nn.Linear(768, 512)
         # self.linear_layer = nn.Linear(768*1569, 512)
-        self.logit_scale = nn.Parameter(torch.ones([]) * 0.07) # was np.log(1 / 0.07)
+        #self.logit_scale = nn.Parameter(torch.ones([]) * 0.07) # was np.log(1 / 0.07)
+        self.logit_scale = (torch.ones([]) * 0.07).to(self.device)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def cross_entropy(self, preds, targets, reduction='none'):
@@ -833,8 +834,8 @@ def main(args, ds_init):
         wandb.config.update(args)
     # END MY CHANGES
 
-    #text_encodings = precompute_text()
-    text_encodings = precompute_random_text()
+    text_encodings = precompute_text()
+    #text_encodings = precompute_random_text()
 
     #model = Clip_Frame_Encoder()
 
