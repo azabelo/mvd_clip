@@ -135,6 +135,8 @@ mv train.csv original.csv
 mv alpha.csv train.csv
 cd ..
 
-python3 naive_zero_shot.py
+chmod +x zero_shot.sh
+./zero_shot.sh
+
 
 
