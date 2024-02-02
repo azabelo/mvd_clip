@@ -532,7 +532,7 @@ class Efficient_Align(nn.Module):
         self.linear_layer = nn.Linear(768, 512)
         # self.linear_layer = nn.Linear(768*1569, 512)
         #self.logit_scale = nn.Parameter(torch.ones([]) * 0.07) # was np.log(1 / 0.07)
-        self.logit_scale = (torch.ones([]) * 0.07).to(self.device)
+        self.logit_scale = (torch.ones([]) * 0.07).to("cuda")
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def cross_entropy(self, preds, targets, reduction='none'):
@@ -1025,7 +1025,7 @@ def main(args, ds_init):
 
     linear_criterion = torch.nn.CrossEntropyLoss()
     linear_criterion.to(device)
-    linear_optimizer = torch.optim.Adam(linear_model.parameters(), lr=1e-3)
+    linear_optimizer = torch.optim.SGD(linear_model.parameters(), lr=0.1, momentum=0.9)
 
     ## END OF SECOND MODEL
 
