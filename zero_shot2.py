@@ -836,7 +836,7 @@ def main(args, ds_init):
     text_encodings = precompute_text()
     #text_encodings = precompute_random_text()
 
-    #model = Clip_Frame_Encoder()
+    model = Clip_Frame_Encoder()
 
     train_video_embeddings, train_targets = precompute_train_video(model, data_loader_train)
     test_video_embeddings, test_targets = precompute_test_video(model, data_loader_val)
