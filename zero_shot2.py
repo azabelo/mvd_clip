@@ -605,8 +605,10 @@ class Linear_Model(nn.Module):
     def __init__(self):
         super(Linear_Model, self).__init__()
         self.linear_layer = nn.Linear(768, 51)
+        self.batch_norm = nn.BatchNorm1d(768)
 
     def forward(self, video_embeddings):
+        video_embeddings = self.batch_norm(video_embeddings)
         video_embeddings = self.linear_layer(video_embeddings)
         return video_embeddings
 
